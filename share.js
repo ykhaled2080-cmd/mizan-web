@@ -305,6 +305,7 @@
     const payGrid=payItems.length?'<div class="pdf-pay-grid">'+payItems.join('')+'</div>':'';
     const charges=[];
     for(const e of s.extras){
+      if(e.label==='maintenance')continue;
       const label=(names[e.label]?names[e.label]():e.label)+(e.label==='maintenance'&&p.maintenance>0?pct(s.maintenancePct):'');
       const due=e.label==='maintenance'?maintenanceLabel:extraDateCond(e);
       charges.push('<div class="pdf-charge"><span class="lbl">'+label+(due?' · '+due:'')+'</span><b class="val">'+amount(e.amount)+'</b></div>');
@@ -316,8 +317,9 @@
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const extrasHtml=charges.length?sectionTitle(t('المستحقات الإضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const support=[];
+    if(s.maintenance)support.push('<div class="pdf-support-line pdf-deposit-line"><b>'+names.maintenance()+(p.maintenance>0?pct(s.maintenancePct):'')+(maintenanceLabel?' · '+maintenanceLabel:'')+':</b> '+amount(s.maintenance)+' <span class="pdf-not-counted">'+t('لا تُحسب في الإجمالي','not included in the total')+'</span></div>');
     if(s.includes.length)support.push('<div class="pdf-support-line"><b>'+t('السعر يشمل:','Price includes:')+'</b> '+esc(s.includes.map(k=>names[k]?names[k]():k).join('، ')+'.')+'</div>');
-    const legalFinancial=p.legal&&p.legal.noDues?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):'';
+ const legalFinancial=p.legal&&p.legal.noDues?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):'';
     const legalItems=[];
     if(p.legal&&p.legal.poa)legalItems.push(t('يوجد توكيل.','A power of attorney exists.'));
     if(p.legal&&p.legal.contract)legalItems.push(t('يوجد عقد نهائي.','A final contract exists.'));

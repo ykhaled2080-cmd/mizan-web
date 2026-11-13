@@ -277,7 +277,8 @@ function schedule(input) {
     label: 'maintenance',
     amount: maintenanceExtra,
     due: maintenanceSplit ? 'split' : maintenanceDate,
-    dueMode: p.maintenanceDateMode
+    dueMode: p.maintenanceDateMode,
+    excluded: true
   });
   for (const key of ITEM_KEYS) {
     const item = p.items[key];
@@ -290,7 +291,7 @@ function schedule(input) {
   if (p.maintenanceState === 'included') includes.push('maintenance');
   for (const key of ITEM_KEYS) if (p.items[key].state === 'included') includes.push(key);
 
-  const extrasTotal = extras.reduce((sum, item) => sum + item.amount, 0);
+  const extrasTotal = extras.reduce((sum, item) => sum + (item.excluded ? 0 : item.amount), 0);
   const total = price + extrasTotal + (p.payer === 'buyer' ? commission : 0);
   const activeTotal = active.reduce((sum, row) => sum + row.value, 0);
   const gap = valid && !cash ? Math.max(0, total - activeTotal) : 0;
