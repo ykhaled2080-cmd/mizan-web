@@ -1,0 +1,27 @@
+﻿{
+  "name": "ميزان | العروض العقارية",
+  "short_name": "ميزان",
+  "description": "حاسبة عروض السداد العقارية وإخراج ملفات PDF ومشاركة واتساب",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f7f2",
+  "theme_color": "#123d36",
+  "icons": [
+    {
+      "purpose": "any",
+      "type": "image/png",
+      "sizes": "64x64",
+      "src": "assets/favicon.png"
+    },
+    {
+      "purpose": "any maskable",
+      "type": "image/png",
+      "sizes": "180x180",
+      "src": "assets/apple-touch-icon.png"
+    }
+  ]
+}
