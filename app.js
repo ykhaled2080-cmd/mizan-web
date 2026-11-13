@@ -297,13 +297,17 @@ function calculator(){
   const feeMeta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
   infoLines.push('<p class="summary-note">'+names.fee()+(feeMeta?' ('+feeMeta+')':'')+': <b>'+fmtMoney(s.commission/100)+' '+curr()+'</b></p>');
  }
- const summaryLine='<div class="schedule-summary-line">'+(s.extras.length?'<span class="schedule-extras-title">'+t('المستحقات الإضافية','Additional charges')+'</span>':'')+'<span class="schedule-count">'+paymentCountText(s.rows.length)+'</span>'+(p.showTotal===false?'':'<div class="summary-total"><span>'+t('إجمالي المطلوب من العميل','Total payable by buyer')+'</span><b>'+money(s.total)+' '+curr()+'</b></div>')+'</div>';
+ const summaryLine='<div class="schedule-summary-line">'+(s.extras.some(e=>e.label!=='maintenance')?'<span class="schedule-extras-title">'+t('المستحقات الإضافية','Additional charges')+'</span>':'')+'<span class="schedule-count">'+paymentCountText(s.rows.length)+'</span>'+(p.showTotal===false?'':'<div class="summary-total"><span>'+t('إجمالي المطلوب من العميل','Total payable by buyer')+'</span><b>'+money(s.total)+' '+curr()+'</b></div>')+'</div>';
  const underTable=infoLines.length?'<div class="under-table"><div class="under-info">'+infoLines.join('')+'</div></div>':'';
- const extrasSection=s.extras.length?'<section class="extras-block"><div class="extras-grid">'+s.extras.map(e=>{const meta=extraMeta(normalizeOffer(p),e);const note=e.label==='maintenance'?' · '+t('لا تُحسب في الإجمالي','not counted in the total'):'';return '<div class="extra-line"><b class="extra-name">'+itemName(e.label)+':</b><b class="extra-amount">'+fmtMoney(e.amount/100)+' '+curr()+'</b>'+(meta?'<span class="extra-dash">–</span><span class="extra-due">'+esc(meta)+'.</span>':'')+(note?'<span class="extra-due">'+esc(note)+'</span>':'')+'</div>'}).join('')+'</div></section>':'';
+ const extraItems=s.extras.filter(e=>e.label!=='maintenance');
+ const extrasSection=extraItems.length?'<section class="extras-block"><div class="extras-grid">'+extraItems.map(e=>{const meta=extraMeta(normalizeOffer(p),e);return '<div class="extra-line"><b class="extra-name">'+itemName(e.label)+':</b><b class="extra-amount">'+fmtMoney(e.amount/100)+' '+curr()+'</b>'+(meta?'<span class="extra-dash">–</span><span class="extra-due">'+esc(meta)+'.</span>':'')+'</div>'}).join('')+'</div></section>':'';
+ const maintenanceExtra=s.extras.find(e=>e.label==='maintenance');
+ const maintenanceMeta=maintenanceExtra?extraMeta(normalizeOffer(p),maintenanceExtra):'';
+ const depositSection=s.maintenance?'<section class="extras-block"><h3>'+t('مبالغ إضافية','Additional amounts')+'</h3><div class="extras-grid"><div class="extra-line"><b class="extra-name">'+names.maintenance()+(p.maintenance>0?' ('+fmtPct(p.maintenance)+'%)':'')+(maintenanceMeta?' · '+esc(maintenanceMeta):'')+':</b><b class="extra-amount">'+fmtMoney(s.maintenance/100)+' '+curr()+'</b><span class="extra-due">'+t('لا تُحسب في الإجمالي','not counted in the total')+'</span></div></div></section>':'';
  const error=s.overAllocated?t('المبلغ المخصص للأقساط يتجاوز المتبقي من سعر الوحدة. راجع التوزيع أو الصفوف المضافة.','Custom installment amounts exceed the remaining unit price. Check the allocation or added rows.'):t('راجع سعر الوحدة ومقدم التعاقد ودفعة الاستلام وترتيب التواريخ.','Check price, down payment, handover payment and dates.');
  const scheduleActions='<details class="pop"><summary class="btn">'+icon('list')+t('إجراءات الجدول','Schedule actions')+'</summary><div class="menu">'+B('editSelected',t('تعديل المحدد','Edit selected'),'pen')+B('addRow',t('إضافة','Add'),'plus')+B('selectInst',t('تحديد الأقساط فقط','Select installments'))+B('clear',t('مسح الجدول','Clear schedule'))+B('restore',t('استعادة جميع الدفعات','Restore all payments'))+B('redistribute',t('توزيع رصيد الوحدة على الأقساط','Distribute property balance'))+'</div></details>'+(selected.size?B('delete',t('حذف المحدد','Delete selected')+' ('+selected.size+')','trash'):'')+(beforeDelete?B('undo',t('تراجع','Undo'),'undo'):'');
  const scheduleHead='<div class="sectionhead schedule-head"><div class="schedule-title"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2><span class="muted">'+t('من','From')+' '+dateNum(fullDate(p.start,p.startDay))+'</span></div><div class="section-actions">'+scheduleActions+'</div></div>';
- const scheduleBody=rowEditorPanel(s)+'<div class="tablewrap">'+table(s)+(s.rows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div>'+summaryLine+extrasSection+underTable+selSummary;
+ const scheduleBody=rowEditorPanel(s)+'<div class="tablewrap">'+table(s)+(s.rows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div>'+summaryLine+extrasSection+depositSection+underTable+selSummary;
  return title+hero(s)+'<div class="workspace">'+editor(s)+'<section>'+scheduleHead+(!good?'<p class="error">'+error+'</p>':scheduleBody)+'</section></div>';
 }
 function feeLabel(s){const meta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');return names.fee()+(meta?' ('+meta+')':'')+' · '+fmtMoney(s.commission/100)+' '+curr()}
@@ -476,7 +480,10 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
   }).join(sep));
  }
  if(src.showTotal!==false)summary.push('',(s.selectedOnly?t('إجمالي الدفعات المحددة','Selected payments total'):t('إجمالي العرض','Offer total'))+': '+value(s.selectedOnly?s.selectedTotal:s.total));
- if(s.maintenance)summary.push('',names.maintenance()+(src.maintenance>0?pct(s.maintenancePct):'')+': '+value(s.maintenance)+(maintenanceDue()?' · '+maintenanceDue():'')+' · '+t('لا تُحسب في الإجمالي','not counted in the total'));
+ if(s.maintenance){
+  const maintenanceMeta=[names.maintenance()+(src.maintenance>0?pct(s.maintenancePct):''),maintenanceDue()].filter(Boolean).join(' · ');
+  summary.push('',t('مبالغ إضافية','Additional amounts'),maintenanceMeta+': '+value(s.maintenance)+' '+t('لا تُحسب في الإجمالي','not counted in the total'));
+ }
  if(s.commission){
   const feeMeta=[src.feeMode==='rate'?fmtPct(s.commissionPct)+'%':'',src.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
   summary.push('',names.fee()+(feeMeta?' ('+feeMeta+')':'')+': '+value(s.commission));

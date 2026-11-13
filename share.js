@@ -316,8 +316,9 @@
     }
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const extrasHtml=charges.length?sectionTitle(t('المستحقات الإضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
+    const depositLine='<div class="pdf-support-line pdf-deposit-line"><b>'+names.maintenance()+(p.maintenance>0?pct(s.maintenancePct):'')+(maintenanceLabel?' · '+maintenanceLabel:'')+':</b> '+amount(s.maintenance)+' <span class="pdf-not-counted">'+t('لا تُحسب في الإجمالي','not included in the total')+'</span></div>';
+    const depositHtml=s.maintenance?sectionTitle(t('مبالغ إضافية','Additional amounts'),'pdf-deposit-title')+'<div class="pdf-deposit-block">'+depositLine+'</div>':'';
     const support=[];
-    if(s.maintenance)support.push('<div class="pdf-support-line pdf-deposit-line"><b>'+names.maintenance()+(p.maintenance>0?pct(s.maintenancePct):'')+(maintenanceLabel?' · '+maintenanceLabel:'')+':</b> '+amount(s.maintenance)+' <span class="pdf-not-counted">'+t('لا تُحسب في الإجمالي','not included in the total')+'</span></div>');
     if(s.includes.length)support.push('<div class="pdf-support-line"><b>'+t('السعر يشمل:','Price includes:')+'</b> '+esc(s.includes.map(k=>names[k]?names[k]():k).join('، ')+'.')+'</div>');
  const legalFinancial=p.legal&&p.legal.noDues?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):'';
     const legalItems=[];
@@ -333,7 +334,7 @@
     const label=s.selectedOnly?t('إجمالي الدفعات المحددة','Selected payments total'):t('إجمالي العرض','Offer total');
     const totalHtml=p.showTotal===false?'':'<div class="pdf-total'+(charges.length?' with-extras':'')+'"><span>'+label+'</span><span class="amt"><bdi dir="ltr">'+cash(s.selectedOnly?s.selectedTotal:s.total)+'</bdi> '+data.curr+'</span></div>';
     const identity='<div class="pdf-identity"><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div></div>';
-    return heading+identity+priceBlock+payGrid+extrasHtml+totalHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
+    return heading+identity+priceBlock+payGrid+extrasHtml+totalHtml+depositHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
   }
   function pdfTableShell(lang,layout){
     const t=(ar,en)=>lang==='ar'?ar:en;
