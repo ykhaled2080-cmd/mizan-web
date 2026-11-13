@@ -18,9 +18,8 @@ const logoSkins=[
  {id:'short-columns',ar:'أعمدة مختصرة',en:'Shortened columns'},
  {id:'short-tone',ar:'أعمدة مختصرة · لون موحّد',en:'Shortened columns · single tone'}
 ];
-let logoSkin=read('logoSkin','roof-edges-soft');
-if(!logoSkins.some(x=>x.id===logoSkin))logoSkin='roof-edges-soft';
-let logoPickerHidden=read('logoPickerHidden',false);
+let logoSkin='roof-edges-soft';
+let logoPickerHidden=true;
 let lang=read('lang','ar'), theme=read('theme','system'), page='calc';
 let includeIntro=read('includeIntro',false), includeOutro=read('includeOutro',false);
 const t=(ar,en)=>lang==='ar'?ar:en;
