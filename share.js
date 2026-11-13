@@ -299,7 +299,7 @@
       payItems.push('<div class="pdf-pay-item"><span class="lbl">'+names.delivery()+(p.delivery>0?pct(s.deliveryPct):'')+(deliveryLabel?' · '+deliveryLabel:'')+'</span><b class="val">'+amount(s.delivery)+'</b></div>');
     }
     if(!s.cash&&inst.length){
-      const instValue=fixedPlan?amount(fixedValue)+(roundingAdjusted?'<small>'+t('الأخير','Final')+' '+cash(lastInstValue)+'</small>':''):t('متغيرة حسب الفترة','Variable by period');
+      const instValue=fixedPlan?amount(fixedValue):t('متغيرة حسب الفترة','Variable by period');
       payItems.push('<div class="pdf-pay-item"><span class="lbl">'+t('قيمة القسط','Installment amount')+'</span><b class="val">'+instValue+'</b></div>');
     }
     const payGrid=payItems.length?'<div class="pdf-pay-grid">'+payItems.join('')+'</div>':'';
