@@ -357,9 +357,8 @@
   function makePage(lang,data,cont,layout){
     const page=document.createElement('section');
     page.className='pdf-page'+(lang==='en'?' ltr':'')+(layout==='vertical'?' pdf-vertical':'');
-    const watermark='<img class="pdf-watermark" src="assets/logo-approved.png" alt="" aria-hidden="true" contenteditable="false">';
-    page.innerHTML=pdfHeader(lang,data,cont)+(data.s.cash?watermark:'<div class="pdf-schedule">'+watermark+pdfTableShell(lang,layout)+'</div>')+'<div class="pdf-folio"></div>';
-    page.prepend(page.querySelector('.pdf-watermark'));
+    const watermark=(!cont&&!data.s.cash)?'<img class="pdf-watermark" src="assets/logo-approved.png" alt="" aria-hidden="true" contenteditable="false">':'';
+    page.innerHTML=pdfHeader(lang,data,cont)+(data.s.cash?'':'<div class="pdf-schedule">'+watermark+pdfTableShell(lang,layout)+'</div>')+'<div class="pdf-folio"></div>';
     page.lang=lang;page.dir=lang==='ar'?'rtl':'ltr';
     applyPdfStyle(page);
     return page;

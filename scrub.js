@@ -128,6 +128,17 @@
     const step=range.step;
     e.target.title=t('اكتب القيمة أو اسحب يمينًا للزيادة ويسارًا للنقصان','Type a value or drag right to increase and left to decrease')+' · '+fmt(step);
   });
+  document.addEventListener('pointerleave',e=>{
+    const target=e.target;
+    if(!target||!target.closest)return;
+    for(const sel of [selector,dateTextSelector,monthSelector]){
+      const field=target.closest(sel);
+      if(field)field._mizanWheelArmed=false;
+    }
+  },true);
+  document.addEventListener('blur',e=>{
+    if(e.target&&e.target._mizanWheelArmed)e.target._mizanWheelArmed=false;
+  },true);
   document.addEventListener('pointerdown',e=>{
     if(drag||e.button!==0)return;
     const month=e.target.closest(monthSelector);
@@ -138,6 +149,7 @@
       month._mizanMonthPart=part||undefined;
       if(part&&month.dataset.key)monthPartByKey[month.dataset.key]=part;
       if(!part)return;
+      month._mizanWheelArmed=true;
       drag={kind:'month',part,input:month,field:fieldOf(month),grip:null,id:e.pointerId,x:e.clientX,y:e.clientY,origin:{year:+parsed[1],month:+parsed[2]},original:month.value,active:false,touch:e.pointerType==='touch'||e.pointerType==='pen'};
       return;
     }
@@ -147,12 +159,14 @@
       if(!parsed)return;
       const segment=dateSegmentAt(dateInput,e.clientX)||dateInput._mizanDatePart||(parsed.kind==='dmy'?'day':'month');
       dateInput._mizanDatePart=segment;
+      dateInput._mizanWheelArmed=true;
       drag={kind:'datepart',input:dateInput,field:fieldOf(dateInput),segment,origin:parsed,id:e.pointerId,x:e.clientX,y:e.clientY,original:dateInput.value,active:false,touch:e.pointerType==='touch'||e.pointerType==='pen'};
       return;
     }
     const grip=e.target.closest('.grip');
     const input=grip?grip.closest('.field')?.querySelector(selector):(e.target.matches(selector)?e.target:null);
     if(!input)return;
+    input._mizanWheelArmed=true;
     const value=num(input.value);
     if(!Number.isFinite(value))return;
     if(grip)e.preventDefault();
@@ -257,6 +271,7 @@
     const field=e.target;
     const monthField=field.closest?.(monthSelector);
     if(monthField){
+      if(document.activeElement!==monthField||!monthField._mizanWheelArmed)return;
       if(drag||e.ctrlKey||e.metaKey||!e.deltaY||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
       if(e.deltaMode===0&&Math.abs(e.deltaY)<90)return;
       const key=monthField.dataset.key||'';
@@ -284,6 +299,7 @@
     }
     const dateField=field.closest?.(dateTextSelector);
     if(dateField){
+      if(document.activeElement!==dateField||!dateField._mizanWheelArmed)return;
       if(drag||e.ctrlKey||e.metaKey||!e.deltaY||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
       if(e.deltaMode===0&&Math.abs(e.deltaY)<90)return;
       const parsed=dateParts(dateField);
@@ -300,6 +316,7 @@
       dateField._mizanWheelTimer=setTimeout(()=>dateField.dispatchEvent(new Event('change',{bubbles:true})),240);
       return;
     }
+    if(document.activeElement!==field||!field._mizanWheelArmed)return;
     if(drag||e.ctrlKey||e.metaKey||!field.matches(selector)||!e.deltaY||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
     // Trackpad two-finger scrolling sends small pixel deltas; do not change values from it.
     // A classic mouse wheel sends deltaMode line/page or a large pixel delta.

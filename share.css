@@ -604,13 +604,14 @@ html[data-dark] .pv-toast{background:#9ed4bc;color:#0f1a17}
 .pdf-charge .val{display:block;font-size:12.5px;color:#19302a;font-weight:600;margin-top:1px;white-space:normal;overflow-wrap:anywhere}
 .pdf-total.with-extras{border-top:1px solid #d2dcd5;margin-top:8px}
 .pdf-identity{padding-bottom:6px;margin-bottom:6px}
-.pdf-price-block{padding:2px 0 7px;margin-bottom:8px}
+.pdf-price-block{padding:1px 0 4px;margin-bottom:6px}
 .pdf-price-block .lbl{font-size:11px;margin-bottom:1px}
-.pdf-price-block .amt{font-size:19px}
+.pdf-price-block .amt{font-size:18px}
 .pdf-pay-grid{gap:5px 24px;margin:4px 0 8px}
 .pdf-pay-item{padding:3px 0}
 .pdf-pay-item .lbl{font-size:10.5px}
 .pdf-pay-item .val{font-size:12.5px;margin-top:0}
+.pdf-pay-item .lbl{min-height:3em}
 .pdf-section-title{margin:12px 0 5px}
 .pdf-section-title h3{font-size:11.5px}
 .pdf-charges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 16px;margin-bottom:6px}
