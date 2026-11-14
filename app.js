@@ -310,7 +310,7 @@ function table(s,printed=false){
  const headCols=printed
   ?[[t('تاريخ الدفعة','Payment date'),'date'],[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']]
   :[[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance'],[t('تاريخ الدفعة','Payment date'),'date']];
- const cols=printed?'':'<colgroup><col style="width:36px"><col style="width:25%"><col style="width:25%"><col><col style="width:16%"></colgroup>';
+ const cols=printed?'':'<colgroup><col style="width:36px"><col style="width:23%"><col style="width:25%"><col><col style="width:16%"></colgroup>';
  const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
  const allChecked=rows.length&&rows.every(r=>selected.has(r.id));
  const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(allChecked?'checked':'')+'></th>':'';

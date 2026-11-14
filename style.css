@@ -508,3 +508,15 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-row-tools{right:-28px;width:28px;padding:0;border:0;background:transparent;box-shadow:none;gap:0}
 .schedule-float-btn{width:14px;height:18px;min-width:14px}
 }
+
+/* 1.0.20: even column rhythm in the payments table. */
+@media(min-width:761px){
+.schedule-layout{grid-template-columns:minmax(0,1fr) 250px}
+.schedule-grid th.cell-value,.schedule-grid td.cell-value,
+.schedule-grid th.cell-balance,.schedule-grid td.cell-balance{text-align:right!important;direction:ltr!important}
+}
+
+@media(min-width:761px){
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:6px}
+.schedule-grid th.cell-date,.schedule-grid td.cell-date{text-align:right!important;padding-inline:6px}
+}
