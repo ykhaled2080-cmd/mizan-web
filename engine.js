@@ -295,7 +295,9 @@ function schedule(input) {
   const includedItems = includes.map(key => ({ key, amount: key === 'maintenance' ? 0 : itemAmountCents(p.items[key]) }));
 
   const extrasTotal = extras.reduce((sum, item) => sum + (item.excluded ? 0 : item.amount), 0);
-  const total = price + extrasTotal + (p.payer === 'buyer' ? commission : 0);
+  /* The unit price is the offer total; extra charges and commission are shown
+     separately and are not rolled into this figure. */
+  const total = price;
   const activeTotal = active.reduce((sum, row) => sum + row.value, 0);
   const gap = valid && !cash ? Math.max(0, total - activeTotal) : 0;
   const paid = active.reduce((sum, row) => sum + (principalTypes.includes(row.type) ? row.value : 0), 0);

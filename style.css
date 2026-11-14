@@ -456,3 +456,20 @@ html[data-font-custom] #app{font-size:var(--ui-base-size)}
 .schedule-side .side-lines .extra-name{color:var(--side-ink);font-weight:600}
 .schedule-side .side-lines .extra-due,.schedule-side .side-lines .extra-dash{color:var(--side-muted)}
 .schedule-side .side-info .summary-note{color:var(--side-muted)}
+
+/* 1.0.16 schedule refinements: right-side stacked actions, fixed viewport, arrows. */
+@media(min-width:761px){
+.schedule-grid th.cell-edit,.schedule-grid td.cell-edit{width:26px;padding:0;text-align:center;vertical-align:middle;display:table-cell!important}
+.schedule-grid .row-actions{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transform:none!important;visibility:visible}
+.schedule-grid .row-add-btn,.schedule-grid .row-edit-btn{display:inline-grid;place-items:center;width:20px;height:17px;min-width:20px;padding:0;border:1px solid transparent;border-radius:4px;background:transparent;line-height:1}
+.schedule-grid .row-add-btn{color:var(--green);font-size:14px}
+.schedule-grid .row-edit-btn{color:var(--table-muted)}
+.schedule-table-col .tablewrap{max-height:436px;overflow-y:hidden}
+.schedule-grid thead th{position:sticky;top:0;z-index:3;background:var(--tint)}
+}
+.schedule-scroll{display:inline-flex;align-items:center;gap:3px;margin-inline-start:4px}
+.schedule-scroll-btn{display:inline-grid;place-items:center;width:27px;height:27px;min-width:27px;padding:0;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--green);line-height:1}
+.schedule-scroll-btn:hover{background:var(--tint)}
+.schedule-scroll-btn:disabled{opacity:.3;cursor:default}
+@media(max-width:760px){.schedule-scroll{display:none}}
+.item-name{flex-basis:82px;width:82px;font-size:13.5px;line-height:31px}

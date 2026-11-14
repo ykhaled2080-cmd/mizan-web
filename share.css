@@ -844,3 +844,34 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-font-color{display:inline-flex;align-items:center;gap:4px;color:var(--sub);font-size:10px}
 .pdf-font-color input{width:26px;height:26px;padding:0;border:1px solid var(--rule);border-radius:5px;background:var(--field)}
 .pdf-font-hex{width:80px;height:27px;padding:2px 5px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px;direction:ltr}
+
+/* Intro/outro toggles with preset menu */
+.note-toggle-wrap{display:inline-flex;align-items:center;gap:1px;min-width:0}
+.note-preset-btn{display:inline-grid;place-items:center;width:22px;height:24px;padding:0;border:1px solid var(--rule);border-radius:5px;background:var(--surface);color:var(--sub);font-size:10px;line-height:1}
+.note-preset-btn:hover{background:var(--tint);color:var(--green)}
+
+/* Single-line, button-invoked PDF text formatting bar */
+.pdf-font-bar{position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:320;display:flex;flex-direction:row;align-items:center;gap:4px;width:auto;max-width:calc(100vw - 20px);padding:6px 7px;border:1px solid var(--rule);border-radius:9px;background:var(--surface);color:var(--text);box-shadow:0 14px 38px #11322933;overflow-x:auto;overflow-y:hidden}
+.pdf-font-bar[hidden]{display:none}
+.pdf-font-mark{display:inline-grid;place-items:center;min-width:24px;height:26px;color:var(--green);font-size:12px;font-weight:800;letter-spacing:-.5px}
+.pdf-fb-btn{display:inline-grid;place-items:center;width:27px;height:26px;min-width:27px;padding:0;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:13px;line-height:1}
+.pdf-fb-btn:hover{background:var(--tint);color:var(--green)}
+.pdf-fb-btn.on{background:var(--green);border-color:var(--green);color:var(--surface)}
+.pdf-fb-bold{font-weight:800}
+.pdf-fb-semi{font-size:10px;font-weight:600}
+.pdf-font-bar select{height:26px;max-width:150px;padding:1px 4px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px}
+.pdf-font-bar .pdf-font-hex{width:74px;height:26px;padding:1px 5px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px;direction:ltr}
+.pdf-font-bar .pdf-font-color{display:inline-flex;align-items:center;justify-content:center;width:28px;height:26px;padding:0;border:1px solid var(--rule);border-radius:5px;background:var(--field);overflow:hidden}
+.pdf-font-bar .pdf-font-color input{width:26px;height:24px;padding:0;border:0;background:transparent;cursor:pointer}
+.pdf-font-swatch{display:none}
+.pdf-fb-close{display:inline-grid;place-items:center;width:26px;height:26px;min-width:26px;padding:0;border:0;border-radius:5px;background:transparent;color:var(--sub);font-size:17px;line-height:1}
+.pdf-fb-close:hover{background:var(--tint);color:var(--text)}
+@media(max-width:760px){.pdf-font-bar{top:64px;max-width:calc(100vw - 12px);padding:5px}}
+
+.pdf-font-bar .pdf-fb-preset{width:auto;min-width:0;padding:0 6px;font-size:10.5px;font-weight:600}
+
+.notes-panel-toggles{margin-inline-start:auto;margin-inline-end:8px;display:inline-flex;align-items:center}
+.notes-panel-toggles .note-toggles{gap:7px}
+.share-font-btn{font-size:11px;font-weight:800;letter-spacing:-.4px;min-width:28px}
+
+.pdf-schedule{margin-top:2px}
