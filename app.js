@@ -284,11 +284,10 @@ function rowSource(r){
  return {kind:'custom'};
 }
 function rowTypeChoices(r,src){
- const base=[['down',names.down()],['installment',names.installment()],['payment',names.payment()],['maintenance',names.maintenance()],['garage',names.garage()],['storage',names.storage()],['utilities',names.utilities()]];
- if(src.kind==='installment')return [['installment',names.installment()],['payment',names.payment()]];
+ const base=[['down',names.down()],['installment',names.installment()],['payment',names.payment()],['delivery',names.delivery()],['maintenance',names.maintenance()],['garage',names.garage()],['storage',names.storage()],['utilities',names.utilities()]];
+ if(src.kind==='installment')return [['installment',names.installment()],['payment',names.payment()],['delivery',names.delivery()]];
  if(src.kind==='maintenanceSplit')return [['maintenance',names.maintenance()]];
  if(src.kind==='fee')base.unshift(['fee',names.fee()]);
- if(src.kind==='delivery')base.unshift(['delivery',names.delivery()]);
  if(src.kind==='item')base.unshift([src.key,itemName(src.key)]);
  return base;
 }
@@ -788,9 +787,9 @@ function applyRowEdit(r,type,parsed,valueCents){
   return true;
  }
  if(src.kind==='installment'){
-  if(type!=='installment'&&type!=='payment'){note(t('قسط الخطة يمكن تحويله إلى دفعة فقط.','A plan installment can only become a payment.'));return false}
+  if(!['installment','payment','delivery'].includes(type)){note(t('قسط الخطة يمكن تحويله إلى قسط أو دفعة أو دفعة استلام.','A plan installment can become an installment, payment or handover payment.'));return false}
   p.edits={...p.edits,[r.id]:{value:valueCents,date}};
-  if(type==='payment')p.types={...p.types,[r.id]:'payment'};else{delete p.types[r.id]}
+  if(type==='installment')delete p.types[r.id];else p.types={...p.types,[r.id]:type};
   return true;
  }
  if(src.kind==='custom'){

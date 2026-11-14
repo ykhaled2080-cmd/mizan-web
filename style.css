@@ -497,3 +497,14 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-row-tools{right:2px}
 }
 .pdf-page .pdf-table td.num{font-weight:700!important}
+
+@media(min-width:761px){
+.schedule-table-col{padding-right:0}
+.schedule-grid{min-width:520px}
+.schedule-grid th,.schedule-grid td{padding-left:6px;padding-right:6px}
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{padding-inline-start:8px;padding-inline-end:6px}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{padding-inline:4px}
+.schedule-table-col .tablewrap{max-height:556px}
+.schedule-row-tools{right:-28px;width:28px;padding:0;border:0;background:transparent;box-shadow:none;gap:0}
+.schedule-float-btn{width:14px;height:18px;min-width:14px}
+}

@@ -194,7 +194,8 @@ function schedule(input) {
   }
 
   for (const row of rows) {
-    if (p.types && p.types[row.id] === 'payment' && row.type === 'installment') row.type = 'payment';
+    const override = p.types && p.types[row.id];
+    if (row.type === 'installment' && (override === 'payment' || override === 'delivery')) row.type = override;
   }
 
   if ((valid || installmentBudget < 0) && p.customRows.length) {

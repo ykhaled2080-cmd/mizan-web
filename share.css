@@ -890,3 +890,12 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-page .pdf-table td.date{font-size:12.5px!important}
 .pdf-page .pdf-table .type{font-size:12px!important;font-weight:700!important}
 .pdf-page .pdf-folio,.pdf-page .pdf-sectionhead span{font-size:12.5px!important}
+
+.pdf-schedule-total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:6px;padding:6px 4px 0;border-top:1px solid #d2dcd5;font-family:var(--pdf-font-body);font-size:13px;font-weight:700;color:#193f34}
+.pdf-schedule-total span{font-family:var(--pdf-font-sub);font-size:13px;font-weight:700;color:#193f34}
+.pdf-schedule-total b{font-size:13px;font-weight:700;color:#123e35;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.pdf-font-trigger{position:fixed;z-index:319;width:30px;height:26px;padding:0;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--green);font-size:11px;font-weight:800;letter-spacing:-.4px;box-shadow:0 6px 18px #11322933;line-height:1}
+.pdf-font-trigger:hover{background:var(--tint)}
+.pdf-font-trigger[hidden]{display:none}
+.pdf-page .pdf-legal-line{font-weight:700!important}
