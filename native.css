@@ -1,0 +1,82 @@
+/* Android edge-to-edge insets and native shell adjustments. */
+html.android-app {
+  --android-inset-top: 0px;
+  --android-inset-bottom: 0px;
+  --android-inset-left: 0px;
+  --android-inset-right: 0px;
+}
+html.android-app body {
+  padding-top: var(--android-inset-top);
+  padding-left: var(--android-inset-left);
+  padding-right: var(--android-inset-right);
+}
+html.android-app body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--android-inset-top);
+  background: var(--surface);
+  z-index: 60;
+  pointer-events: none;
+}
+html.android-app header {
+  top: var(--android-inset-top);
+}
+html.android-app .mobile-nav {
+  bottom: var(--android-inset-bottom);
+}
+@media (max-width: 760px) {
+  html.android-app body {
+    padding-bottom: calc(62px + var(--android-inset-bottom) + 14px);
+  }
+  html.android-app .top {
+    padding-top: 7px;
+  }
+  html.android-app .mobile-nav {
+    padding-bottom: 5px;
+  }
+}
+@media (min-width: 761px) {
+  html.android-app body {
+    padding-bottom: var(--android-inset-bottom);
+  }
+}
+html.android-app .share-root {
+  padding-top: var(--android-inset-top);
+  padding-bottom: var(--android-inset-bottom);
+}
+html.android-app .share-sheet {
+  height: calc(93dvh - var(--android-inset-top) - var(--android-inset-bottom));
+  max-height: calc(93dvh - var(--android-inset-top) - var(--android-inset-bottom));
+}
+html.android-app .crop-panel,
+html.android-app .ann-panel {
+  height: calc(100dvh - var(--android-inset-top) - var(--android-inset-bottom));
+  max-height: calc(100dvh - var(--android-inset-top) - var(--android-inset-bottom));
+}
+@media (max-width: 760px) {
+  html.android-app .field .date-seg {
+    height: 44px;
+    padding: 0 10px;
+    font-size: 16px;
+    border-radius: 7px;
+  }
+  html.android-app .field .date-seg input {
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 16px;
+    text-align: center;
+  }
+  html.android-app .field .date-seg input:focus {
+    background: var(--tint);
+    border-radius: 3px;
+  }
+  html.android-app .field .date-seg .date-day,
+  html.android-app .field .date-seg .date-month {
+    width: 34px;
+  }
+}

@@ -407,8 +407,6 @@ html[dir=rtl] #header .desktop-nav{direction:rtl;justify-content:flex-start}
 .pdf-meta{margin-bottom:0}
 .pdf-meta-item,.pdf-page .pdf-summary-grid .pdf-sitem{border-bottom:1px solid #d2dcd5}
 .pdf-meta-item{padding:4px 0 8px}
-.pdf-page .pdf-brandline,.pdf-page .pdf-summary,.pdf-page .pdf-meta,.pdf-page .pdf-table,.pdf-page .pdf-sectionhead{font-family:Arial,sans-serif}
-.pdf-page{--pdf-font-title:Arial,sans-serif!important;--pdf-font-body:Arial,sans-serif!important;--pdf-font-sub:Arial,sans-serif!important}
 .pv-dialog{width:min(1120px,94vw);height:min(1040px,94dvh);border-radius:10px}
 .pv-layer .pv-scroll{inset:0;padding:14px;overflow-anchor:none;scrollbar-gutter:stable}
 .pv-layer .pv-tools{bottom:12px}

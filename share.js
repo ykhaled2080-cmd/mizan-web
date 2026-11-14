@@ -10,7 +10,9 @@
   const A=window.MizanApp;
   const $=s=>document.querySelector(s);
   const esc=A.esc;
-  const isNative=()=>!!(window.chrome&&window.chrome.webview&&window.chrome.webview.postMessage);
+  const isWindowsNative=()=>!!(window.chrome&&window.chrome.webview&&window.chrome.webview.postMessage);
+  const isAndroidNative=()=>!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform()&&window.Capacitor.getPlatform&&window.Capacitor.getPlatform()==='android');
+  const isNative=()=>isWindowsNative()||isAndroidNative();
   const isMobile=()=>matchMedia('(max-width:760px)').matches;
   const icon=(name,size=18)=>{
     const paths={
@@ -170,6 +172,7 @@
 
   /* ---------- native bridge ---------- */
   async function postNative(payload){
+    if(window.MizanAndroidBridge)return window.MizanAndroidBridge.handle(payload);
     const res=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},cache:'no-store',body:JSON.stringify(payload)});
     const raw=await res.text();
     let data={};
@@ -517,7 +520,7 @@
     try{if(document.fonts&&document.fonts.ready)await document.fonts.ready}catch{}
     await Promise.all([...printRoot.querySelectorAll('img')].map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=img.onerror=res})));
     let res=null;
-    if(isNative()){
+    if(isWindowsNative()){
       try{res=await postNative({action:'print_pdf'})}catch(err){console.warn('batch print_pdf',err)}
     }
     printRoot.innerHTML='';
@@ -573,6 +576,7 @@
         built.pages.forEach(p=>{const oi=p.offerIndex||0;if(!seen.has(oi)){seen.add(oi);S.pdfOffers.add(oi)}});
       }
       if(S.open)renderAll();
+      if(S.open&&isMobile()&&S.zoomMode==='actual'&&S.zoom===1)scheduleMobileFit();
       return built;
     }).catch(err=>{
       if(token!==S.buildToken)return null;
@@ -597,7 +601,7 @@
   }
   async function vectorPdfBlob(){
     if(!S.built)return null;
-    if(!isNative())return rasterPdfBlob();
+    if(!isWindowsNative())return rasterPdfBlob();
     const key=String(S.built.htmlVersion||0);
     if(S.built.vectorPdf&&S.built.vectorKey===key)return S.built.vectorPdf;
     const root=$('#printRoot');
@@ -621,7 +625,7 @@
   }
   async function pdfBlobForPages(pages){
     if(!pages||!pages.length)return null;
-    if(isNative()){
+    if(isWindowsNative()){
       const root=$('#printRoot');
       root.innerHTML=pages.map(p=>p.html||'').join('');
       await new Promise(resolve=>{
@@ -958,6 +962,7 @@
     S.tab=tab;S.result=null;S.error=null;
     renderAll();
     if(tab!=='text')ensureBuilt();
+    scheduleMobileFit();
   }
   function updateZoomLabel(){
     const btn=document.querySelector('[data-share-act="zoom-toggle"]');
@@ -971,9 +976,15 @@
   function fitZoom(){
     const view=$('.share-doc');if(!view)return;
     const width=Math.max(220,view.clientWidth-28),height=Math.max(220,view.clientHeight-28);
-    S.zoom=Math.max(.3,Math.min(2.5,Math.min(width/794,height/1123)));S.zoomMode='fit';
+    const fit=Math.min(width/794,height/1123);
+    const widthFit=Math.min(1,width/794);
+    S.zoom=Math.max(.2,Math.min(2.5,fit<.4?widthFit:fit));S.zoomMode='fit';
     view.style.setProperty('--zoom',String(S.zoom));
     updateZoomLabel();
+  }
+  function scheduleMobileFit(){
+    if(!isMobile())return;
+    setTimeout(()=>{if(S.open&&S.tab!=='text')fitZoom()},140);
   }
   function zoomAt(value,clientY){
     const view=$('.share-doc');if(!view)return;
@@ -1001,6 +1012,7 @@
     S.signature=buildSignature();
     renderAll();
     if(S.tab!=='text')ensureBuilt();
+    scheduleMobileFit();
   }
   function setTextScope(scope){
     scope=scope==='summary'?'summary':'full';
@@ -1081,6 +1093,7 @@
     document.body.classList.add('share-open');
     renderAll();
     if(S.tab!=='text')ensureBuilt();
+    scheduleMobileFit();
     setTimeout(()=>{const sheet=root.querySelector('.share-sheet');if(sheet)sheet.focus({preventScroll:true})},60);
   }
   function openOffers(offers,tab){
@@ -1105,6 +1118,7 @@
     document.body.classList.add('share-open');
     renderAll();
     if(S.tab!=='text')ensureBuilt();
+    scheduleMobileFit();
     setTimeout(()=>{const sheet=root.querySelector('.share-sheet');if(sheet)sheet.focus({preventScroll:true})},60);
   }
   function close(silent){
@@ -1216,6 +1230,7 @@
         const action=files.length>1?'save_many':'save';
         const r=await postNative({action,text:offersCaption(),kind:'files',files:await filesPayload(files)});
         if(r&&r.canceled)return false;
+        if(r&&r.method==='shareui'){A.note(tt('اختر Files أو أي تطبيق مناسب من نافذة المشاركة لحفظ الملف.','Choose Files or another app in the share window to save the file.'));return true}
         if(files.length>1)A.note(tt('تم حفظ الملفات','Files saved')+(r&&r.folder?' · '+r.folder:''));
         else A.note(r&&r.path?tt('تم حفظ الملف','File saved')+' · '+r.path:tt('تم حفظ الملف','File saved'));
         return true;
@@ -2163,6 +2178,7 @@
     }
   });
 
+  window.addEventListener('resize',()=>{if(S.open&&S.zoomMode==='fit'&&S.tab!=='text')setTimeout(fitZoom,120)});
   window.MizanShare={open,close,shareOffers,
     get built(){return S.built},
     build:()=>ensureBuilt(),

@@ -898,4 +898,14 @@ window.MizanApp={
  schedule, normalizeOffer, names, frequency, dateLabel, dateNum, offerTitle, itemName, fmt, curr, money, feeLabel, legalLines, clientText, directedText, paymentColumns, note, esc, t, icon, brandMark,
  isMobile:()=>matchMedia('(max-width:760px)').matches
 };
+window.MizanNativeBack=()=>{
+ const shareSheet=document.querySelector('.share-sheet');
+ if(shareSheet&&window.MizanShare&&typeof window.MizanShare.close==='function'){window.MizanShare.close();return true}
+ const openPop=document.querySelector('details.pop[open]');
+ if(openPop){openPop.open=false;return true}
+ const openDetails=[...document.querySelectorAll('details[open]:not(.pop)')];
+ if(openDetails.length){openDetails[openDetails.length-1].open=false;return true}
+ if(page!=='calc'){page='calc';render();return true}
+ return false;
+};
 render();
