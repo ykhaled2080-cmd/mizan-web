@@ -92,7 +92,8 @@
     S.offers.forEach((o,i)=>{
       const s=A.schedule(o);
       const hidden=S.showTotalOverride!==null?!S.showTotalOverride:o.showTotal===false;
-      lines.push((i+1)+'. '+(o.unit||dt('عرض عقاري','Property offer'))+(o.client?' · '+o.client:'')+' · '+A.fmt(hidden?o.price:s.total/100)+' '+dt('ج.م','EGP'));
+      const shown=hidden?(+o.price||0)*100:(s.cash?s.price:s.total);
+      lines.push((i+1)+'. '+(o.unit||dt('عرض عقاري','Property offer'))+(o.client?' · '+o.client:'')+' · '+A.fmt(shown/100)+' '+dt('ج.م','EGP'));
     });
     return lines.join('\n');
   }
@@ -144,14 +145,15 @@
     const o=S.offers[S.activeOffer]||S.offers[0]||{};
     const s=A.schedule(o);
     const hidden=S.showTotalOverride!==null?!S.showTotalOverride:o.showTotal===false;
+    const shown=hidden?(+o.price||0)*100:(s.cash?s.price:s.total);
     const label=hidden?dt('سعر الوحدة','Unit price'):dt('إجمالي العرض','Offer total');
-    return [offerTitleFor(o),o.unit||'',label+' · '+money(hidden?(+o.price||0)*100:s.total)].filter(Boolean).join('\n');
+    return [offerTitleFor(o),o.unit||'',label+' · '+money(shown)].filter(Boolean).join('\n');
   }
   function caption(){
     const s=activeSchedule();
     const src=A.p;
     const hidden=S.showTotalOverride!==null?!S.showTotalOverride:A.p.showTotal===false;
-    const total=s.selectedOnly?s.selectedTotal:s.total;
+    const total=s.selectedOnly?s.selectedTotal:(s.cash?s.price:s.total);
     const label=hidden?dt('سعر الوحدة','Unit price'):(s.selectedOnly?dt('إجمالي الدفعات المحددة','Selected payments total'):dt('إجمالي العرض','Offer total'));
     return [offerTitleFor(src),src.unit||'',label+' · '+money(hidden?s.price:total)].filter(Boolean).join('\n');
   }
@@ -318,22 +320,44 @@
     const extrasHtml=charges.length?sectionTitle(t('المستحقات الإضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const depositLine='<div class="pdf-support-line pdf-deposit-line"><b>'+names.maintenance()+(p.maintenance>0?pct(s.maintenancePct):'')+(maintenanceLabel?' · '+maintenanceLabel:'')+':</b> '+amount(s.maintenance)+' <span class="pdf-not-counted">'+t('لا تُحسب في الإجمالي','not included in the total')+'</span></div>';
     const depositHtml=s.maintenance?sectionTitle(t('مبالغ إضافية','Additional amounts'),'pdf-deposit-title')+'<div class="pdf-deposit-block">'+depositLine+'</div>':'';
-    const support=[];
-    if(s.includes.length)support.push('<div class="pdf-support-line"><b>'+t('السعر يشمل:','Price includes:')+'</b> '+esc(s.includes.map(k=>names[k]?names[k]():k).join('، ')+'.')+'</div>');
- const legalFinancial=p.legal&&p.legal.noDues?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):'';
+    const identity='<div class="pdf-identity"><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div></div>';
+    const includedText=(s.includedItems||[]).map(x=>esc(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+amount(x.amount):'')).join(' · ');
+    const legalFinancial=p.legal&&p.legal.noDues?(s.cash&&!(s.extras.length||(s.commission&&p.payer==='buyer'))?t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.'):t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.')):'';
     const legalItems=[];
     if(p.legal&&p.legal.poa)legalItems.push(t('يوجد توكيل.','A power of attorney exists.'));
     if(p.legal&&p.legal.contract)legalItems.push(t('يوجد عقد نهائي.','A final contract exists.'));
+    let legalHtml='';
     if(legalFinancial||legalItems.length){
-      let legalHtml=sectionTitle(t('الحالة المالية والقانونية','Financial & legal status'),'pdf-legal-head');
+      legalHtml=sectionTitle(t('الحالة المالية والقانونية','Financial & legal status'),'pdf-legal-head');
       if(legalFinancial)legalHtml+='<div class="pdf-legal-line"><span>'+t('الحالة المالية:','Financial status:')+'</span> '+esc(legalFinancial)+'</div>';
       if(legalItems.length)legalHtml+='<div class="pdf-legal-line"><span>'+t('الحالة القانونية:','Legal status:')+'</span> '+esc(legalItems.join(' '))+'</div>';
-      support.push(legalHtml);
     }
+    if(s.cash){
+      const cashTotalLabel=p.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total');
+      const cashCharges=[];
+      for(const e of s.extras){
+        const label=(names[e.label]?names[e.label]():e.label)+(e.label==='maintenance'&&p.maintenance>0?pct(s.maintenancePct):'');
+        const due=e.label==='maintenance'
+          ? (p.maintenanceDateMode==='none'?'':(p.maintenanceDateMode==='split'?t('خلال أول سنتين','Over first two years'):(p.maintenanceDateMode==='date'&&p.maintenanceDate?t('بتاريخ','on')+' '+data.f.date(fullDate(p.maintenanceDate,p.maintenanceDay)):t('عند الاستلام','at handover'))))
+          : extraDateCond(e);
+        cashCharges.push({label,due,amount:e.amount});
+      }
+      if(s.commission&&p.payer==='buyer'){
+        const feeMeta=[p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'',t('المشتري','Buyer')].filter(Boolean).join(' · ');
+        cashCharges.push({label:names.fee()+(feeMeta?' ('+feeMeta+')':''),due:t('عند التعاقد','at contract'),amount:s.commission});
+      }
+      const dueBdi=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
+      const cashChargesHtml=cashCharges.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+c.label+(c.due?' · '+dueBdi(c.due):'')+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
+      const cashTotal='<div class="pdf-price-block pdf-cash-total"><span class="lbl">'+cashTotalLabel+'</span><b class="amt">'+amount(s.price)+'</b></div>';
+      const cashIncluded=s.includes.length?sectionTitle(t('السعر يشمل','Price includes'),'pdf-cash-included-title')+'<div class="pdf-cash-included-list">'+includedText+'</div>':'';
+      return heading+identity+cashTotal+cashIncluded+cashChargesHtml+legalHtml+scheduleHeading;
+    }
+    const support=[];
+    if(s.includes.length)support.push('<div class="pdf-support-line"><b>'+t('السعر يشمل:','Price includes:')+'</b> '+includedText+'</div>');
+    if(legalHtml)support.push(legalHtml);
     if(s.gap&&!s.selectedOnly)support.push('<div class="pdf-support-line"><b>'+t('غير مجدول:','Unscheduled:')+'</b> '+amount(s.gap)+'</div>');
     const label=s.selectedOnly?t('إجمالي الدفعات المحددة','Selected payments total'):t('إجمالي العرض','Offer total');
     const totalHtml=p.showTotal===false?'':'<div class="pdf-total'+(charges.length?' with-extras':'')+'"><span>'+label+'</span><span class="amt"><bdi dir="ltr">'+cash(s.selectedOnly?s.selectedTotal:s.total)+'</bdi> '+data.curr+'</span></div>';
-    const identity='<div class="pdf-identity"><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div></div>';
     return heading+identity+priceBlock+payGrid+extrasHtml+totalHtml+depositHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
   }
   function pdfTableShell(lang,layout){

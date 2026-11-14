@@ -64,7 +64,9 @@ const dateLabel=m=>dateNum(m);
 const B=(act,label,ic='',cls='')=>'<button type="button" class="btn '+cls+'" data-act="'+act+'">'+(ic?icon(ic):'')+label+'</button>';
 const textField=(key,label,value=p[key],type='text',wide=false)=>'<label class="field '+(wide?'wide':'')+'"><span>'+label+'</span><input data-key="'+key+'" type="'+type+'" '+(type==='text'?'':'dir="ltr"')+' value="'+esc(value)+'"></label>';
 const numberField=(key,label,value=p[key],wide=false)=>textField(key,label,value,'text',wide).replace('class="field ','class="field has-grip ').replace('type="text"','type="text" dir="ltr" inputmode="decimal"').replace('</label>','<span class="grip" data-grip="'+key+'" aria-hidden="true">↔</span></label>');
-const monthDayField=(key,label,month=p[key],day=p[key+'Day'],dayKey=key+'Day')=>'<label class="field"><span>'+label+'</span><input type="text" inputmode="numeric" dir="ltr" data-key="'+key+'" data-day-key="'+dayKey+'" data-date-text="1" value="'+esc(dateNum(fullDate(month,day)))+'" placeholder="'+t('MM/YYYY أو DD/MM/YYYY','MM/YYYY or DD/MM/YYYY')+'"></label>';
+const monthParts=value=>{const m=/^(\d{4})-(\d{2})$/.exec(String(value||''));return m?{year:m[1],month:m[2]}:{year:'',month:''}};
+const dateSeg=(attrs,month,day,label)=>{const mp=monthParts(month);return '<span class="date-seg" dir="ltr" data-date-seg="1" '+attrs+'><input class="date-part date-day" data-date-part="day" type="text" inputmode="numeric" maxlength="2" value="'+esc(day||'')+'" placeholder="DD" aria-label="'+esc(label)+' · '+t('اليوم','Day')+'"><span class="date-sep" aria-hidden="true">/</span><input class="date-part date-month" data-date-part="month" type="text" inputmode="numeric" maxlength="2" value="'+esc(mp.month)+'" placeholder="MM" aria-label="'+esc(label)+' · '+t('الشهر','Month')+'"><span class="date-sep" aria-hidden="true">/</span><input class="date-part date-year" data-date-part="year" type="text" inputmode="numeric" maxlength="4" value="'+esc(mp.year)+'" placeholder="YYYY" aria-label="'+esc(label)+' · '+t('السنة','Year')+'"></span>';};
+const monthDayField=(key,label,month=p[key],day=p[key+'Day'],dayKey=key+'Day')=>'<label class="field"><span>'+label+'</span>'+dateSeg('data-date-key="'+key+'" data-date-day-key="'+dayKey+'"',month,day,label)+'</label>';
 const options=(key,label,items,val=p[key])=>'<label class="field"><span>'+label+'</span><select data-key="'+key+'">'+items.map(([v,l])=>'<option value="'+v+'" '+(String(val)===String(v)?'selected':'')+'>'+l+'</option>').join('')+'</select></label>';
 const noteField=(key,label)=>{
  const value=p[key]||'';
@@ -105,8 +107,8 @@ function pinLogoPicker(){
 const logoMarkup=(skin=logoSkin,cls='')=>'<div class="hero-brand '+cls+'" data-skin="'+skin+'" role="img" aria-label="Mizan"><i class="hb-layer hb-base" aria-hidden="true"></i><i class="hb-layer hb-outline" aria-hidden="true"></i><i class="hb-layer hb-letters" aria-hidden="true"></i><i class="hb-layer hb-left" aria-hidden="true"></i><i class="hb-layer hb-i" aria-hidden="true"></i><i class="hb-layer hb-z" aria-hidden="true"></i><i class="hb-layer hb-corner" aria-hidden="true"></i><i class="hb-layer hb-interiors" aria-hidden="true"></i></div>';
 function hero(s){
  if(s.cash){
-  const total=p.showTotal===false?s.price:s.total;
-  return '<section class="hero"><div class="herogrid"><div><div class="kicker">'+(p.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total'))+' · '+t('عرض كاش','Cash offer')+'</div><div class="big">'+money(total)+' <small>'+curr()+'</small></div><div class="kicker">'+t('سعر بيع كاش','Cash selling price')+'</div></div><div class="metrics">'+[[t('سعر الوحدة','Unit price'),s.price],[t('المستحقات الإضافية','Additional charges'),s.extrasTotal],[names.fee(),s.commission]].map(([k,v])=>'<div><span>'+k+'</span>'+money(v)+'</div>').join('')+'</div>'+logoMarkup()+'</div></section>';
+  const label=p.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total');
+  return '<section class="cash-total"><div class="cash-total-title">'+label+'</div><div class="cash-total-value">'+money(s.price)+' <small>'+curr()+'</small></div></section>';
  }
  const k=t('قيمة القسط','Installment amount'),vk=t('قيمة الأقساط','Installment values');
  const instRows=s.rows.filter(r=>r.type==='installment'&&r.value>0);
@@ -137,12 +139,13 @@ function itemEditor(){
   '<div class="item-grid">'+ITEM_KEYS.map(key=>{
   const item=p.items[key]||{state:'unspecified',amount:0,due:'',day:''};
   const extra=item.state==='extra';
-  const reveal=extra&&itemFocusAfterRender&&itemFocusAfterRender.key===key&&itemFocusAfterRender.prop==='amount';
-  return '<div class="item-row'+(extra?' is-extra':'')+(reveal?' just-opened':'')+'" data-item-row="'+key+'">'+
+  const included=item.state==='included';
+  const reveal=itemFocusAfterRender&&itemFocusAfterRender.key===key&&itemFocusAfterRender.prop==='amount';
+  return '<div class="item-row'+(extra?' is-extra':'')+(included?' is-included':'')+(reveal?' just-opened':'')+'" data-item-row="'+key+'">'+
    '<div class="item-head"><b>'+itemName(key)+'</b><select class="item-state" data-item="'+key+'" data-item-prop="state" aria-label="'+itemName(key)+' · '+t('الحالة','Status')+'">'+
     [['unspecified',t('غير محدد','Not specified')],['included',t('شامل السعر','Included in price')],['extra',t('تكلفة إضافية','Additional charge')]].map(([v,l])=>'<option value="'+v+'" '+(item.state===v?'selected':'')+'>'+l+'</option>').join('')+
    '</select></div>'+
-   (extra?'<div class="item-extra"><label class="mini-field"><span>'+t('المبلغ','Amount')+'</span><input type="text" inputmode="decimal" dir="ltr" data-item="'+key+'" data-item-prop="amount" value="'+esc(item.amount||'')+'" aria-label="'+t('المبلغ','Amount')+' · '+itemName(key)+'" aria-required="true"></label><label class="mini-field"><span>'+t('تاريخ الاستحقاق','Due date')+'</span><input type="text" inputmode="numeric" dir="ltr" data-item="'+key+'" data-item-prop="date" data-date-text="1" value="'+esc(dateNum(fullDate(item.due,item.day)))+'" placeholder="'+t('MM/YYYY','MM/YYYY')+'" aria-label="'+t('تاريخ الاستحقاق','Due date')+' · '+itemName(key)+'"></label></div>':'')+
+   ((extra||included)?'<div class="item-extra'+(included?' item-amount-only':'')+'"><label class="mini-field item-amount-field"><span>'+t('المبلغ','Amount')+'</span><input type="text" inputmode="decimal" dir="ltr" data-item="'+key+'" data-item-prop="amount" value="'+esc(item.amount||'')+'" aria-label="'+t('المبلغ','Amount')+' · '+itemName(key)+'" aria-required="'+(extra?'true':'false')+'"></label>'+(extra?'<label class="mini-field item-date-field"><span>'+t('تاريخ الاستحقاق','Due date')+'</span>'+dateSeg('data-date-item="'+key+'"',item.due,item.day,t('تاريخ الاستحقاق','Due date')+' · '+itemName(key))+'</label>':'')+'</div>':'')+
   '</div>';
  }).join('')+'</div>';
 }
@@ -243,29 +246,27 @@ function extraMeta(src,e){
 }
 function cashPanel(s){
  const src=normalizeOffer(p);
- const metric=(label,value,cls)=>'<div class="cash-metric'+(cls?' '+cls:'')+'"><span>'+label+'</span><b>'+value+'</b></div>';
- const cards=[metric(t('سعر الوحدة','Unit price'),money(s.price)+' <small>'+curr()+'</small>'),metric(t('المستحقات الإضافية','Additional charges'),money(s.extrasTotal)+' <small>'+curr()+'</small>')];
- if(src.showTotal!==false)cards.push(metric(t('إجمالي العرض','Offer total'),money(s.total)+' <small>'+curr()+'</small>','cash-total'));
- const details=[];
- if(s.includes.length)details.push('<div class="cash-detail"><span class="name">'+t('السعر يشمل','Price includes')+':</span><span class="val">'+esc(s.includes.map(itemName).join('، '))+'</span></div>');
- for(const e of s.extras){
-  const meta=extraMeta(src,e);
+ const charges=[];
+ for(const e of (Array.isArray(s.extras)?s.extras:[])){
   const pctMeta=e.label==='maintenance'&&p.maintenance>0?' ('+fmtPct(p.maintenance)+'%)':'';
-  const label=itemName(e.label)+pctMeta+(meta?' · '+esc(meta):'')+(e.label==='maintenance'?' · '+t('لا تُحسب في الإجمالي','not counted in total'):'');
-  details.push('<div class="cash-detail"><span class="name">'+label+':</span><span class="val"><b>'+fmtMoney(e.amount/100)+' '+curr()+'</b></span></div>');
+  const due=e.label==='maintenance'
+   ? (src.maintenanceDateMode==='none'?'':(src.maintenanceDateMode==='split'?t('خلال أول سنتين','over first two years'):(src.maintenanceDateMode==='date'&&e.due?t('بتاريخ','on')+' '+dateNum(e.due):t('عند الاستلام','at handover'))))
+   : extraMeta(src,e);
+  charges.push({name:itemName(e.label)+pctMeta,due,amount:e.amount});
  }
- if(s.commission){
-  const feeMeta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
-  details.push('<div class="cash-detail"><span class="name">'+names.fee()+(feeMeta?' ('+feeMeta+')':'')+':</span><span class="val"><b>'+fmtMoney(s.commission/100)+' '+curr()+'</b></span></div>');
+ if(s.commission&&p.payer==='buyer'){
+  const feeMeta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',t('المشتري','Buyer')].filter(Boolean).join(' · ');
+  charges.push({name:names.fee()+(feeMeta?' ('+feeMeta+')':''),due:t('عند التعاقد','at contract'),amount:s.commission});
  }
- if(s.gap)details.push('<div class="cash-detail"><span class="name">'+t('غير مجدول','Unscheduled')+':</span><span class="val"><b>'+fmtMoney(s.gap/100)+' '+curr()+'</b></span></div>');
- const financial=src.legal.noDues?(s.extrasTotal>0?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.')):'';
+ const dueHtml=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
+ const included=s.includes.length?'<section class="cash-section cash-included"><h3>'+t('السعر يشمل','Price includes')+'</h3><div class="cash-included-list">'+s.includedItems.map(x=>'<div class="cash-included-row"><span class="cash-included-name">'+esc(itemName(x.key))+'</span>'+(x.amount>0?'<b class="cash-included-amount">'+fmtMoney(x.amount/100)+' <small>'+curr()+'</small></b>':'')+'</div>').join('')+'</div></section>':'';
+ const chargesHtml=charges.length?'<section class="cash-section cash-charges"><h3>'+t('السعر لا يشمل','Price does not include')+'</h3><div class="cash-charge-list">'+charges.map(c=>'<div class="cash-charge-row"><div class="cash-charge-desc"><span class="cash-charge-name">'+esc(c.name)+'</span>'+(c.due?'<span class="cash-charge-due">'+dueHtml(c.due)+'</span>':'')+'</div><b class="cash-charge-amount">'+fmtMoney(c.amount/100)+' <small>'+curr()+'</small></b></div>').join('')+'</div></section>':'';
+ const financial=src.legal.noDues?(charges.length>0?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.')):'';
  const legalStatus=[src.legal.poa?t('يوجد توكيل.','A power of attorney exists.'):'',src.legal.contract?t('يوجد عقد نهائي.','A final contract exists.'):''].filter(Boolean).join(' ');
- const legalHtml=(financial||legalStatus)?'<section class="cash-section"><h3>'+t('الحالة المالية والقانونية','Financial & legal status')+'</h3>'+
+ const legalHtml=(financial||legalStatus)?'<section class="cash-section cash-legal"><h3>'+t('الحالة المالية والقانونية','Financial & legal status')+'</h3>'+
   (financial?'<div class="cash-legal-line"><b>'+t('الحالة المالية:','Financial status:')+'</b> '+esc(financial)+'</div>':'')+
   (legalStatus?'<div class="cash-legal-line"><b>'+t('الحالة القانونية:','Legal status:')+'</b> '+esc(legalStatus)+'</div>':'')+'</section>':'';
- const detailsHtml=details.length?'<section class="cash-section"><h3>'+t('تفاصيل السعر','Pricing details')+'</h3>'+details.join('')+'</section>':'';
- return '<div class="cash-panel"><div class="cash-metrics">'+cards.join('')+'</div>'+detailsHtml+legalHtml+'</div>';
+ return '<div class="cash-panel">'+included+chargesHtml+legalHtml+'</div>';
 }
 function tableSummary(s){
  const src=normalizeOffer(p);
@@ -280,16 +281,16 @@ function tableSummary(s){
 }
 function calculator(){
  const s=schedule(p), good=s.valid;
- const title='<div class="titleline"><h1>'+t('خطة السداد','Payment plan')+'</h1><div class="actions">'+B('terms',t('الشروط','Terms'),'list','mobile-only')+shareButton()+B('save',t('حفظ العرض','Save offer'),'save','primary')+'</div></div>';
+ const title='<div class="titleline"><h1>'+(s.cash?t('عرض الكاش','Cash offer'):t('خطة السداد','Payment plan'))+'</h1><div class="actions">'+B('terms',t('الشروط','Terms'),'list','mobile-only')+shareButton()+B('save',t('حفظ العرض','Save offer'),'save','primary')+'</div></div>';
  if(s.cash){
-  return title+hero(s)+'<div class="workspace">'+editor(s)+'<section><div class="sectionhead"><div><h2>'+t('ملخص عرض الكاش','Cash offer summary')+'</h2></div></div>'+(!good?'<p class="error">'+t('أدخل سعر الوحدة.','Enter the unit price.')+'</p>':cashPanel(s))+'</section></div>';
+  return title+'<div class="workspace cash-workspace">'+editor(s)+'<section class="cash-summary">'+hero(s)+(!good?'<p class="error">'+t('أدخل سعر الوحدة.','Enter the unit price.')+'</p>':cashPanel(s))+'</section></div>';
  }
  const selRows=selected.size?s.rows.filter(r=>selected.has(r.id)):[];
  const selValue=selRows.reduce((sum,r)=>sum+r.value,0);
  const selBalance=selRows.reduce((sum,r)=>sum+r.balance,0);
  const selSummary=selRows.length?'<div class="selected-summary"><span class="selected-label">'+selRows.length+' '+t('محدد','selected')+'</span><span class="metric">'+t('إجمالي القيمة المحددة','Selected amount')+' <b>'+money(selValue)+' '+curr()+'</b></span><span class="metric">'+t('إجمالي الرصيد المحدد','Selected balance')+' <b>'+money(selBalance)+' '+curr()+'</b></span></div>':'';
  const infoLines=[];
- if(s.includes.length)infoLines.push('<p class="summary-note">'+t('السعر يشمل','Price includes')+' · '+s.includes.map(itemName).join('، ')+'</p>');
+ if(s.includes.length)infoLines.push('<p class="summary-note">'+t('السعر يشمل','Price includes')+' · '+(s.includedItems||[]).map(x=>itemName(x.key)+(x.amount>0?' '+fmtMoney(x.amount/100)+' '+curr():'')).join(' · ')+'</p>');
  const boldDate=text=>esc(text).replace(/(\d{2}\/\d{2}\/\d{4}|\d{2}\/\d{4})/g,'<b>$1</b>');
  const metaHtml=e=>{const meta=extraMeta(normalizeOffer(p),e);return meta?boldDate(meta):''};
  if(s.gap)infoLines.push('<p class="summary-note">'+t('غير مجدول','Unscheduled')+' · <b>'+money(s.gap)+' '+curr()+'</b></p>');
@@ -450,43 +451,72 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
  const fixedPlan=inst.length>0&&(instValues.length===1||roundingAdjusted);
  const fixedValue=fixedPlan?(instValues.length===1?inst[0].value:baseValues[0]):lastValue;
  const minValue=instValues.length?instValues[0]:0,maxValue=instValues.length?instValues[instValues.length-1]:0;
- const summary=[t('سعر الوحدة','Unit price')+': '+value(s.price)];
- if(!s.cash&&s.down)summary.push(names.down()+(src.mode==='rate'?pct(s.downPct):'')+': '+value(s.down));
- if(!s.cash&&inst.length){
-  summary.push('');
-  summary.push(t('خطة التقسيط','Payment plan')+': '+planText);
-  if(fixedPlan){
-   let line=t('قيمة القسط','Installment amount')+': '+value(fixedValue);
-   const customPlan=Array.isArray(src.allocations)&&src.allocations.length>0;
-   if(roundingAdjusted&&customPlan)line+=' · '+t('الأخير','Final')+' '+value(lastValue);
-   summary.push(line);
-  }else{
-   summary.push(t('قيمة الأقساط','Installment values')+': '+t('متغيرة حسب الفترة','Variable by period'));
-   if(minValue!==maxValue)summary.push(t('نطاق القسط','Installment range')+': '+value(minValue)+' – '+value(maxValue));
-  }
- }
- if(!s.cash&&s.delivery){
-  summary.push('');
-  summary.push(names.delivery()+(src.delivery>0?pct(s.deliveryPct):'')+': '+value(s.delivery)+(deliveryDue()?' · '+deliveryDue():''));
- }
+ const summary=[];
  const includes=Array.isArray(s.includes)?s.includes:[];
- const extras=(Array.isArray(s.extras)?s.extras:[]).filter(e=>e.label!=='maintenance');
- if(includes.length||extras.length){
-  summary.push('');
-  if(includes.length)summary.push(t('السعر يشمل','Price includes')+': '+includes.map(k=>names[k]?names[k]():k).join(sep));
-  if(extras.length)summary.push(t('المستحقات الإضافية','Additional charges')+': '+extras.map(e=>{
-   const due=e.label==='maintenance'?maintenanceDue():(e.dueMode==='date'&&e.due?num(e.due):t('عند الاستلام','at handover'));
-   return (names[e.label]?names[e.label]():e.label)+' '+value(e.amount)+(due?' · '+due:'');
-  }).join(sep));
- }
- if(src.showTotal!==false)summary.push('',(s.selectedOnly?t('إجمالي الدفعات المحددة','Selected payments total'):t('إجمالي العرض','Offer total'))+': '+value(s.selectedOnly?s.selectedTotal:s.total));
- if(s.maintenance){
-  const maintenanceMeta=[names.maintenance()+(src.maintenance>0?pct(s.maintenancePct):''),maintenanceDue()].filter(Boolean).join(' · ');
-  summary.push('',t('مبالغ إضافية','Additional amounts'),maintenanceMeta+': '+value(s.maintenance)+' '+t('لا تُحسب في الإجمالي','not counted in the total'));
- }
- if(s.commission){
-  const feeMeta=[src.feeMode==='rate'?fmtPct(s.commissionPct)+'%':'',src.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
-  summary.push('',names.fee()+(feeMeta?' ('+feeMeta+')':'')+': '+value(s.commission));
+ if(s.cash){
+  const totalLabel=src.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total');
+  summary.push(totalLabel+': '+value(s.price));
+  const cashCharges=[];
+  for(const e of (Array.isArray(s.extras)?s.extras:[])){
+   const pctMeta=e.label==='maintenance'&&src.maintenance>0?pct(s.maintenancePct):'';
+   const due=e.label==='maintenance'
+    ? (src.maintenanceDateMode==='none'?'':(src.maintenanceDateMode==='split'?t('خلال أول سنتين','over first two years'):(src.maintenanceDateMode==='date'&&e.due?t('بتاريخ','on')+' '+num(e.due):t('عند الاستلام','at handover'))))
+    : (e.dueMode==='date'&&e.due?t('بتاريخ','on')+' '+num(e.due):t('عند الاستلام','at handover'));
+   cashCharges.push({name:(names[e.label]?names[e.label]():e.label)+pctMeta,amount:e.amount,due});
+  }
+  if(s.commission&&src.payer==='buyer'){
+   const feeMeta=[src.feeMode==='rate'?fmtPct(s.commissionPct)+'%':'',t('المشتري','Buyer')].filter(Boolean).join(' · ');
+   cashCharges.push({name:names.fee()+(feeMeta?' ('+feeMeta+')':''),amount:s.commission,due:t('عند التعاقد','at contract')});
+  }
+  if(includes.length){
+   const includedValues=(s.includedItems||includes.map(k=>({key:k,amount:0}))).map(x=>(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+value(x.amount):''));
+   summary.push('');
+   summary.push(t('السعر يشمل','Price includes'));
+   summary.push(includedValues.join(sep));
+  }
+  if(cashCharges.length){
+   summary.push('');
+   summary.push(t('السعر لا يشمل','Price does not include'));
+   for(const c of cashCharges)summary.push('- '+c.name+': '+value(c.amount)+(c.due?' · '+c.due:''));
+  }
+ }else{
+  summary.push(t('سعر الوحدة','Unit price')+': '+value(s.price));
+  if(s.down)summary.push(names.down()+(src.mode==='rate'?pct(s.downPct):'')+': '+value(s.down));
+  if(inst.length){
+   summary.push('');
+   summary.push(t('خطة التقسيط','Payment plan')+': '+planText);
+   if(fixedPlan){
+    let line=t('قيمة القسط','Installment amount')+': '+value(fixedValue);
+    const customPlan=Array.isArray(src.allocations)&&src.allocations.length>0;
+    if(roundingAdjusted&&customPlan)line+=' · '+t('الأخير','Final')+' '+value(lastValue);
+    summary.push(line);
+   }else{
+    summary.push(t('قيمة الأقساط','Installment values')+': '+t('متغيرة حسب الفترة','Variable by period'));
+    if(minValue!==maxValue)summary.push(t('نطاق القسط','Installment range')+': '+value(minValue)+' – '+value(maxValue));
+   }
+  }
+  if(s.delivery){
+   summary.push('');
+   summary.push(names.delivery()+(src.delivery>0?pct(s.deliveryPct):'')+': '+value(s.delivery)+(deliveryDue()?' · '+deliveryDue():''));
+  }
+  const extras=(Array.isArray(s.extras)?s.extras:[]).filter(e=>e.label!=='maintenance');
+  if(includes.length||extras.length){
+   summary.push('');
+   if(includes.length)summary.push(t('السعر يشمل','Price includes')+': '+includes.map(k=>names[k]?names[k]():k).join(sep));
+   if(extras.length)summary.push(t('المستحقات الإضافية','Additional charges')+': '+extras.map(e=>{
+    const due=e.label==='maintenance'?maintenanceDue():(e.dueMode==='date'&&e.due?num(e.due):t('عند الاستلام','at handover'));
+    return (names[e.label]?names[e.label]():e.label)+' '+value(e.amount)+(due?' · '+due:'');
+   }).join(sep));
+  }
+  if(src.showTotal!==false)summary.push('',(s.selectedOnly?t('إجمالي الدفعات المحددة','Selected payments total'):t('إجمالي العرض','Offer total'))+': '+value(s.selectedOnly?s.selectedTotal:s.total));
+  if(s.maintenance){
+   const maintenanceMeta=[names.maintenance()+(src.maintenance>0?pct(s.maintenancePct):''),maintenanceDue()].filter(Boolean).join(' · ');
+   summary.push('',t('مبالغ إضافية','Additional amounts'),maintenanceMeta+': '+value(s.maintenance)+' '+t('لا تُحسب في الإجمالي','not counted in the total'));
+  }
+  if(s.commission){
+   const feeMeta=[src.feeMode==='rate'?fmtPct(s.commissionPct)+'%':'',src.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
+   summary.push('',names.fee()+(feeMeta?' ('+feeMeta+')':'')+': '+value(s.commission));
+  }
  }
  const legal=legalLines(src,language);
  if(legal.length){summary.push('');summary.push(t('الحالة المالية والقانونية','Financial & legal status'));summary.push(legal.join(sep));}
@@ -597,18 +627,19 @@ document.addEventListener('change',e=>{
  if(itemEl){const key=itemEl.dataset.item,prop=itemEl.dataset.itemProp;if(!p.items[key])return;
   if(prop==='state'&&['unspecified','included','extra'].includes(itemEl.value)){
    p.items[key].state=itemEl.value;
-   itemFocusAfterRender={key,prop:itemEl.value==='extra'?'amount':'state'};
+   itemFocusAfterRender={key,prop:(itemEl.value==='extra'||itemEl.value==='included')?'amount':'state'};
   }
   else if(prop==='amount'){const v=num(itemEl.value);if(!Number.isFinite(v)||v<0){invalid();render();return}p.items[key].amount=Math.round(v)}
   else if(prop==='date'){if(itemEl.value.trim()){const parsed=parseDateInput(itemEl.value);if(!parsed){invalid();render();return}p.items[key].due=parsed.month;p.items[key].day=parsed.day}else{p.items[key].due='';p.items[key].day=''}}
   else if(prop==='due'){if(itemEl.value&&!isMonth(itemEl.value)){invalid();render();return}p.items[key].due=itemEl.value}
   else if(prop==='day'){const v=itemEl.value===''?'':num(itemEl.value);if(v!==''&&(!Number.isInteger(v)||v<1||v>31)){invalid();render();return}p.items[key].day=v}
-  persist();render();return;
+  persist();if(prop==='state')render();else refreshTerms();return;
  }
  if(el.dataset.legal){p.legal[el.dataset.legal]=el.checked;persist();refreshTerms();return}
  if(el.dataset.showTotal!==undefined){p.showTotal=el.checked;persist();refreshTerms();return}
  if(el.dataset.id){el.checked?selected.add(el.dataset.id):selected.delete(el.dataset.id);render();return}
  if(el.dataset.plan!==undefined){const obj=plans[+el.dataset.plan],key=el.dataset.prop;const v=key==='name'?el.value:num(el.value);if(key!=='name'&&(!Number.isFinite(v)||v<0||(key==='years'&&(!Number.isInteger(v)||v<1||v>60))||(key==='down'&&v>100))){invalid();render();return}obj[key]=v;write('plans',plans);render();return}
+ if(el.dataset.datePart){applyDateSeg(el.closest('[data-date-seg]'));return}
  if(!k)return;
  if(el.dataset.dayKey){
   const parsed=parseDateInput(el.value);
@@ -644,6 +675,7 @@ document.addEventListener('change',e=>{
  beforeDelete=null;selected.clear();persist();refreshTerms();
 });
 document.addEventListener('input',e=>{const field=e.target, key=field.dataset.key;
+ if(field.dataset.datePart){field.value=field.value.replace(/\D/g,'').slice(0,field.maxLength);const inputs=[...field.parentElement.querySelectorAll('input')];const i=inputs.indexOf(field);if(field.value.length>=field.maxLength&&i>=0&&inputs[i+1])inputs[i+1].focus();return}
  const allocAmountEl=e.target.closest('[data-alloc="amount"]');
  if(allocAmountEl){allocAmount=allocAmountEl.value;return}
  if(field.matches('textarea[data-key="intro"],textarea[data-key="outro"]')){
@@ -658,6 +690,57 @@ document.addEventListener('input',e=>{const field=e.target, key=field.dataset.ke
   const sa=$('[data-saved-all]');
   if(sa){const matches=filteredSaved(),every=matches.length>0&&matches.every(o=>savedSel.has(o.id));sa.checked=every;sa.indeterminate=!every&&matches.some(o=>savedSel.has(o.id))}
  }});
+function applyDateSeg(group){
+ if(!group)return;
+ const part=name=>{const input=group.querySelector('[data-date-part="'+name+'"]');return input?input.value.trim():''};
+ const dayRaw=part('day'),monthRaw=part('month'),yearRaw=part('year');
+ const day=dayRaw===''?null:num(dayRaw),month=monthRaw===''?null:num(monthRaw),year=yearRaw===''?null:num(yearRaw);
+ if(!Number.isInteger(month)||month<1||month>12||!Number.isInteger(year)||year<1900||year>2200||(day!==null&&(!Number.isInteger(day)||day<1||day>31))){invalid();render();return}
+ const due=year+'-'+String(month).padStart(2,'0');
+ if(group.dataset.dateKey){
+  p[group.dataset.dateKey]=due;
+  p[group.dataset.dateDayKey]=day===null?'':day;
+  if(['start','handover'].includes(group.dataset.dateKey)){p.edits={};editing=null}
+ }else if(group.dataset.dateItem){
+  const item=p.items[group.dataset.dateItem];
+  if(!item)return;
+  item.due=due;item.day=day===null?'':day;
+ }
+ beforeDelete=null;selected.clear();persist();refreshTerms();
+}
+function stepDateInput(input,delta){
+ const part=input.dataset.datePart;
+ if(part==='year'){
+  let year=parseInt(input.value,10);
+  if(!Number.isFinite(year))year=new Date().getFullYear();
+  year=Math.max(1900,Math.min(2200,year+delta));
+  input.value=String(year);
+ }else{
+  const max=part==='month'?12:31;
+  let value=parseInt(input.value,10);
+  if(!Number.isFinite(value))value=1;else value+=delta;
+  value=Math.max(1,Math.min(max,value));
+  input.value=String(value).padStart(2,'0');
+ }
+ input.dispatchEvent(new Event('change',{bubbles:true}));
+ return true;
+}
+document.addEventListener('wheel',e=>{
+ const input=e.target.closest('.date-seg input');
+ if(!input)return;
+ e.preventDefault();
+ stepDateInput(input,e.deltaY<0?1:-1);
+},{passive:false});
+document.addEventListener('keydown',e=>{
+ const input=e.target.closest('.date-seg input');
+ if(!input||(e.key!=='ArrowUp'&&e.key!=='ArrowDown'))return;
+ e.preventDefault();
+ stepDateInput(input,e.key==='ArrowUp'?1:-1);
+});
+document.addEventListener('focusin',e=>{
+ const input=e.target.closest('.date-seg input');
+ if(input)input.select();
+});
 document.addEventListener('click',async e=>{
  const skinBtn=e.target.closest('[data-logo-skin]');
  if(skinBtn){selectLogoSkin(skinBtn.dataset.logoSkin);return}

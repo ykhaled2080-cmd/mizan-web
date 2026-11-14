@@ -290,6 +290,7 @@ function schedule(input) {
   const includes = [];
   if (p.maintenanceState === 'included') includes.push('maintenance');
   for (const key of ITEM_KEYS) if (p.items[key].state === 'included') includes.push(key);
+  const includedItems = includes.map(key => ({ key, amount: key === 'maintenance' ? 0 : itemAmountCents(p.items[key]) }));
 
   const extrasTotal = extras.reduce((sum, item) => sum + (item.excluded ? 0 : item.amount), 0);
   const total = price + extrasTotal + (p.payer === 'buyer' ? commission : 0);
@@ -308,7 +309,7 @@ function schedule(input) {
     maintenanceDate,
     deliveryDate,
     commission, financed, count, planCount, rows: active, total, gap,
-    extras, includes, extrasTotal, remainingUnit,
+    extras, includes, includedItems, extrasTotal, remainingUnit,
     customPrincipal, installmentBudget, overAllocated,
     downPct: price ? down / price * 100 : 0,
     deliveryPct: price ? delivery / price * 100 : 0,

@@ -610,6 +610,10 @@ html[data-dark] .pv-toast{background:#9ed4bc;color:#0f1a17}
 .pdf-price-block{padding:1px 0 4px;margin-bottom:0}
 .pdf-price-block .lbl{font-size:11px;margin-bottom:1px}
 .pdf-price-block .amt{font-size:18px}
+.pdf-cash-total{padding:2px 0 7px;border-bottom:1px solid #d2dcd5;margin-bottom:0}
+.pdf-cash-total .amt{font-size:24px}
+.pdf-cash-included-list{font-size:11px;line-height:1.55;color:#334b43;margin:0 0 6px;padding-inline-start:1px}
+.pdf-cash-charges-title{margin-top:12px}
 .pdf-pay-grid{gap:0 24px;margin:0 0 7px}
 .pdf-pay-item{padding:4px 0 3px}
 .pdf-pay-item .lbl{font-size:10.5px;line-height:1.45;min-height:1.45em}

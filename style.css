@@ -79,6 +79,7 @@ html.drag-number.drag-vertical,html.drag-number.drag-vertical *{cursor:ns-resize
 html[dir=rtl] .item-state{background-position:left 7px center}
 .item-state:focus-visible{outline:2px solid var(--green);outline-offset:1px}
 .item-extra{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:min(100%,238px);margin-top:7px}
+.item-extra.item-amount-only{grid-template-columns:1fr}
 .item-extra .mini-field input{height:30px;border-radius:6px}
 .item-extra input[aria-invalid="true"]{border-color:#a84630;outline-color:#a84630}
 .mini-field{display:flex;flex-direction:column;gap:3px;min-width:0;color:var(--sub);font-size:10.5px}
@@ -87,9 +88,16 @@ html[dir=rtl] .item-state{background-position:left 7px center}
 .mini-field select{appearance:none;padding-inline-end:25px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23566b64' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
 html[dir=rtl] .mini-field select{background-position:left 7px center}
 [data-dark] .mini-field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23c2d6c8' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
-.date-pair{display:flex;align-items:center;gap:6px;min-width:0}
-.date-pair input[type=month]{flex:1 1 auto;min-width:0}
-.date-pair input[inputmode=decimal]{width:58px;flex:none;text-align:center;padding-inline:4px}
+.date-seg{display:flex;align-items:center;gap:2px;direction:ltr;min-width:0;width:100%;height:34px;padding:0 8px;border:1px solid var(--rule);border-radius:5px;background:var(--field);font-size:14px;color:var(--text)}
+.date-seg:focus-within{outline:2px solid var(--green);outline-offset:-1px}
+.date-seg input{width:auto;border:0;background:transparent;height:100%;padding:0;text-align:center;min-width:0;color:var(--text);font:inherit;font-variant-numeric:tabular-nums}
+.date-seg input:focus{outline:none;background:var(--tint);border-radius:3px}
+.date-seg .date-day{width:30px}
+.date-seg .date-month{width:30px}
+.date-seg .date-year{flex:1 1 52px;min-width:52px}
+.date-sep{color:var(--sub);font-size:11px;flex:none;line-height:1}
+.item-extra .item-date-field{grid-column:1/-1}
+.mini-field .date-seg{height:31px;font-size:12px;padding:0 7px}
 .alloc-form{display:grid;grid-template-columns:90px minmax(120px,1fr) auto;gap:8px;align-items:end}
 .alloc-form .assign-btn{min-height:31px;height:31px;padding:4px 12px;white-space:nowrap;font-size:11.5px;justify-self:end}
 .alloc-months{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;margin-top:1px}
@@ -101,27 +109,33 @@ html[dir=rtl] .mini-field select{background-position:left 7px center}
 .alloc-chip b{font-weight:600;color:var(--green)}
 .alloc-x{display:grid;place-items:center;width:18px;height:18px;padding:0;border:0;border-radius:50%;background:var(--tint);color:var(--sub);font-size:14px;line-height:1}
 .alloc-x:hover{background:var(--rule);color:var(--text)}
-.cash-panel{display:grid;gap:9px;max-width:720px;border:0;border-radius:0;background:transparent;overflow:visible}
-.cash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}
-.cash-metric{display:flex;flex-direction:column;gap:2px;padding:9px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--surface)}
-.cash-metric span{color:var(--sub);font-size:11px}
-.cash-metric b{color:var(--text);font-size:16px;font-variant-numeric:tabular-nums}
-.cash-metric.cash-total{background:var(--tint);border-color:transparent}
-.cash-metric.cash-total span{color:var(--text);font-weight:700}
-.cash-notes{display:grid;gap:6px;padding:9px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);font-size:12.5px;line-height:1.55;color:var(--sub)}
-.cash-notes p{margin:0}
-.cash-notes b{color:var(--text);font-weight:700}
+.cash-panel{display:grid;gap:14px;max-width:720px;border:0;border-radius:0;background:transparent;overflow:visible}
+.cash-total{padding:0 2px;text-align:start;margin-bottom:18px}
+.cash-total-title{font-size:12.5px;font-weight:600;color:var(--sub);letter-spacing:.1px;margin-bottom:2px}
+.cash-total-value{font:700 clamp(30px,3.2vw,40px)/1.08 "Segoe UI",Arial,sans-serif;letter-spacing:-1.2px;color:var(--green);font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;justify-content:flex-start}
+.cash-total-value small{font-size:15px;font-weight:400;color:var(--sub);letter-spacing:0}
+.cash-included-list{display:grid;gap:0;max-width:460px}
+.cash-included-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:14px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12.5px}
+.cash-included-row:last-child{border-bottom:0}
+.cash-included-name{color:var(--text);font-weight:600}
+.cash-included-amount{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:end}
+.cash-included-amount small{font-size:10px;font-weight:400;color:var(--sub);margin-inline-start:2px}
 .cash-section{display:grid;gap:3px;margin-top:2px}
-.cash-section h3{font-size:11.5px;font-weight:700;color:var(--green);margin:0 0 2px}
-.cash-detail{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--rule);font-size:12px;line-height:1.5}
-.cash-detail:last-child{border-bottom:0}
-.cash-detail .name{color:var(--sub);min-width:0}
-.cash-detail .val{color:var(--text);font-weight:600;text-align:end;display:flex;align-items:baseline;justify-content:flex-end;gap:6px;flex-wrap:wrap;min-width:0;overflow-wrap:anywhere}
-.cash-detail .val b{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cash-detail .val small{font-weight:400;color:var(--sub);font-size:10.5px;white-space:nowrap}
+.cash-section h3{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--green);margin:0 0 2px;line-height:1.5}
+.cash-section h3:before{content:'';width:2px;height:13px;background:var(--green);border-radius:1px;flex:none}
+.cash-section h3:after{content:'';flex:1 1 auto;height:1px;background:var(--rule);min-width:16px}
+.cash-charge-list{display:grid;gap:0;max-width:460px}
+.cash-charge-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:14px;padding:7px 0;border-bottom:1px solid var(--rule)}
+.cash-charge-row:last-child{border-bottom:0}
+.cash-charge-desc{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0}
+.cash-charge-name{font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
+.cash-charge-due{font-size:11.5px;color:var(--sub);white-space:nowrap}
+.cash-charge-due bdi{unicode-bidi:isolate}
+.cash-charge-amount{font-size:14px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:end}
+.cash-charge-amount small{font-size:10px;font-weight:400;color:var(--sub);margin-inline-start:2px}
+.cash-legal{margin-top:4px}
 .cash-legal-line{font-size:12px;line-height:1.65;color:var(--sub)}
 .cash-legal-line b{color:var(--text);font-weight:600}
-.cash-metric b small{font-size:10px;font-weight:400;color:var(--sub);margin-inline-start:3px}
 .cash-row{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:9px 13px;border-bottom:1px solid var(--rule);font-size:13px}
 .cash-row span{color:var(--sub)}
 .cash-row b{color:var(--text);font-variant-numeric:tabular-nums;text-align:end}
@@ -143,7 +157,8 @@ html[dir=rtl] .mini-field select{background-position:left 7px center}
 .row-type{max-width:100%;height:27px;padding:2px 20px 2px 6px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:11.5px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23566b64' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center}
 html[dir=rtl] .row-type{background-position:left 5px center}
 .row-number{display:inline-grid;place-items:center;min-width:20px;height:20px;padding-inline:4px;border-radius:50%;background:var(--tint);color:var(--green);font-size:10.5px;font-weight:700}
-@media(max-width:760px){.terms-head{grid-template-columns:1fr auto;row-gap:6px}.terms-center{grid-column:1/-1;grid-row:2;justify-self:center}.terms-new{justify-self:end}.offer-type button{min-height:34px;font-size:14px;padding-inline:9px}.item-state{width:148px;font-size:12px}.checkline{font-size:14px;padding:7px 0}.checkline input{width:18px;height:18px}.cash-metrics{grid-template-columns:1fr 1fr}.cash-row{font-size:14px}.alloc-form{grid-template-columns:1fr 1fr}.alloc-form .btn{grid-column:1/-1}.date-pair input[inputmode=decimal]{width:64px}}
+@media(max-width:760px){.terms-head{grid-template-columns:1fr auto;row-gap:6px}.terms-center{grid-column:1/-1;grid-row:2;justify-self:center}.terms-new{justify-self:end}.offer-type button{min-height:34px;font-size:14px;padding-inline:9px}.item-state{width:148px;font-size:12px}.checkline{font-size:14px;padding:7px 0}.checkline input{width:18px;height:18px}.cash-panel{max-width:none}.cash-total-value{font-size:34px}.cash-charge-list{max-width:none}.cash-charge-row{gap:10px}.cash-charge-due{white-space:normal}.alloc-form{grid-template-columns:1fr 1fr}.alloc-form .btn{grid-column:1/-1}.date-seg .date-day,.date-seg .date-month{width:34px}}
+@media(max-width:480px){.cash-total-value{font-size:30px}.cash-charge-row{gap:8px}.cash-charge-name{font-size:12.5px}.cash-charge-amount{font-size:13px}}
 
 /* item rows: compact stacked rows with contextual extra fields */
 @media (prefers-reduced-motion: no-preference){
