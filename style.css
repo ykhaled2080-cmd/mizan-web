@@ -329,3 +329,130 @@ html[data-font-custom] #app{font-size:var(--ui-base-size)}
 /* Keep the app font panel below the header even when the page is scrolled. */
 .font-picker{position:fixed;top:70px;inset-inline-end:clamp(20px,4vw,76px)}
 @media(max-width:760px){.font-picker{top:64px}}
+
+/* 1.0.15 schedule table: balanced columns, fixed hover actions, calmer ink. */
+@media(min-width:761px){
+.schedule-grid{
+ --table-ink:#263B36;
+ --table-muted:#40534F;
+ border-collapse:collapse;
+ table-layout:fixed;
+ width:100%;
+ min-width:520px;
+}
+[data-dark] .schedule-grid{--table-ink:#ecf1e9;--table-muted:#b7c8c0}
+.schedule-grid th,.schedule-grid td{
+ padding:7px 8px;
+ vertical-align:middle;
+ line-height:1.35;
+ border:0;
+}
+.schedule-grid thead th{
+ height:36px;
+ padding-top:0;
+ padding-bottom:0;
+ color:var(--table-muted);
+ font-size:11.5px;
+ font-weight:600;
+ letter-spacing:.1px;
+ text-align:center;
+ white-space:nowrap;
+ border-bottom:0;
+ box-shadow:inset 0 -1px 0 var(--rule)!important;
+}
+.schedule-grid tbody tr:not(.row-edit-line) td{
+ height:40px;
+ padding-top:0;
+ padding-bottom:0;
+ color:var(--table-ink);
+ font-size:12.5px;
+ white-space:nowrap;
+ overflow-wrap:normal;
+ border-bottom:1px solid rgba(219,226,218,.55);
+}
+[data-dark] .schedule-grid tbody tr:not(.row-edit-line) td{border-bottom-color:rgba(65,81,74,.55)}
+.schedule-grid tbody tr:last-child td{border-bottom:0}
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{
+ text-align:start;
+ padding-inline-start:12px;
+ padding-inline-end:6px;
+}
+.schedule-grid td.cell-type{font-weight:500}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:36px;padding-inline:4px;text-align:center}
+.schedule-grid th.cell-edit,.schedule-grid td.cell-edit{
+ width:50px;
+ padding:0;
+ text-align:center;
+ vertical-align:middle;
+ display:table-cell!important;
+}
+.schedule-grid td.cell-value,.schedule-grid td.cell-balance{
+ text-align:center;
+ direction:ltr;
+ font-variant-numeric:tabular-nums;
+ font-size:12.5px;
+ font-weight:600;
+}
+.schedule-grid th.cell-date,.schedule-grid td.cell-date{
+ text-align:center;
+ padding-inline:10px;
+ white-space:nowrap;
+}
+.schedule-grid .row-actions{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:4px;
+ transform:none!important;
+ visibility:visible;
+}
+.schedule-grid .row-add-btn,.schedule-grid .row-edit-btn{
+ display:inline-grid;
+ place-items:center;
+ width:24px;
+ height:26px;
+ min-width:24px;
+ padding:0;
+ border:1px solid transparent;
+ border-radius:6px;
+ background:transparent;
+ line-height:1;
+}
+.schedule-grid .row-add-btn{color:var(--green);font-size:17px;font-weight:600}
+.schedule-grid .row-edit-btn{color:var(--table-muted)}
+.schedule-grid .row-add-btn:hover,.schedule-grid .row-add-btn:focus-visible,
+.schedule-grid .row-edit-btn:hover,.schedule-grid .row-edit-btn:focus-visible{
+ background:var(--tint);
+ border-color:var(--rule);
+ color:var(--green);
+ outline:none;
+}
+@media(hover:hover) and (pointer:fine){
+ .schedule-grid tbody tr .cell-edit .row-actions{opacity:0;visibility:hidden;transition:opacity .12s ease}
+ .schedule-grid tbody tr:hover .cell-edit .row-actions,
+ .schedule-grid tbody tr:focus-within .cell-edit .row-actions,
+ .schedule-grid tbody tr:has(input[data-id]:checked) .cell-edit .row-actions{opacity:1;visibility:visible}
+}
+.schedule-grid tbody tr:not(.row-edit-line):hover td{background:rgba(232,242,235,.35)}
+[data-dark] .schedule-grid tbody tr:not(.row-edit-line):hover td{background:rgba(49,66,59,.35)}
+.schedule-grid tbody tr:has(input[data-id]:checked) td{background:var(--tint)}
+.schedule-grid .row-edit-line td{
+ height:auto;
+ padding:0!important;
+ white-space:normal;
+ border-bottom:1px solid var(--rule);
+ background:var(--field)!important;
+}
+}
+
+/* Sidebar ink: darker, readable charcoal with a green cast. */
+.schedule-side{--side-ink:#263B36;--side-muted:#40534F;color:var(--side-ink)}
+[data-dark] .schedule-side{--side-ink:#ecf1e9;--side-muted:#b7c8c0}
+.schedule-side .side-line{color:var(--side-muted);font-size:11.5px;line-height:1.6}
+.schedule-side .side-line b{color:var(--side-ink);font-weight:600}
+.schedule-side .side-total-main span{color:var(--side-ink);font-weight:700}
+.schedule-side .side-total-main b{color:var(--green)}
+.schedule-side .side-lines .extra-line{color:var(--side-muted)}
+.schedule-side .side-lines .extra-name{color:var(--side-ink);font-weight:600}
+.schedule-side .side-lines .extra-due,.schedule-side .side-lines .extra-dash{color:var(--side-muted)}
+.schedule-side .side-info .summary-note{color:var(--side-muted)}

@@ -308,16 +308,21 @@ function table(s,printed=false){
  const headCols=printed
   ?[[t('تاريخ الدفعة','Payment date'),'date'],[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']]
   :[[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance'],[t('تاريخ الدفعة','Payment date'),'date']];
- const cols=printed?'':'<colgroup><col style="width:34px"><col style="width:70px"><col style="width:20%"><col style="width:24%"><col><col style="width:16%"></colgroup>';
- const head=(!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(s.rows.length&&selected.size===s.rows.length?'checked':'')+'></th><th class="cell-edit"></th>':'')+headCols.map(([h,c])=>'<th class="cell-'+c+'">'+h+'</th>').join('');
+ const cols=printed?'':'<colgroup><col style="width:36px"><col style="width:21%"><col style="width:50px"><col style="width:24%"><col><col style="width:16%"></colgroup>';
+ const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
+ const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(s.rows.length&&selected.size===s.rows.length?'checked':'')+'></th>':'';
+ const editHead=!printed?'<th class="cell-edit" aria-label="'+t('إجراءات الدفعة','Payment actions')+'"></th>':'';
+ const head=printed
+  ?headCols.map(([h,c])=>headTh(h,c)).join('')
+  :checkHead+headTh(headCols[0][0],headCols[0][1])+editHead+headCols.slice(1).map(([h,c])=>headTh(h,c)).join('');
  const body=s.rows.map(r=>{
   const check=!printed?'<td class="cell-check"><input type="checkbox" data-id="'+r.id+'" aria-label="'+esc(names[r.type]()+' '+dateNum(r.date))+'" '+(selected.has(r.id)?'checked':'')+'></td>':'';
-  const actions=!printed?'<td class="cell-edit"><span class="row-actions"><button type="button" class="row-add-btn" data-add-row="'+r.id+'" aria-label="'+t('إضافة صف هنا','Add a row here')+'" title="'+t('إضافة صف هنا','Add a row here')+'">'+icon('plus',14)+'</button><button type="button" class="row-edit-btn" data-edit-row="'+r.id+'" aria-label="'+t('تعديل الصف','Edit row')+'" title="'+t('تعديل الصف','Edit row')+'">'+icon('pen',14)+'</button></span></td>':'';
+  const actions=!printed?'<td class="cell-edit"><span class="row-actions"><button type="button" class="row-add-btn" data-add-row="'+r.id+'" aria-label="'+t('إضافة دفعة جديدة','Add a new payment')+'" title="'+t('إضافة دفعة جديدة','Add a new payment')+'">'+icon('plus',14)+'</button><button type="button" class="row-edit-btn" data-edit-row="'+r.id+'" aria-label="'+t('تعديل الدفعة','Edit payment')+'" title="'+t('تعديل الدفعة','Edit payment')+'">'+icon('pen',14)+'</button></span></td>':'';
   const type='<td class="cell-type" data-label="'+t('النوع','Type')+'">'+rowTypeCell(r)+'</td>';
   const value='<td class="cell-value" data-label="'+t('القيمة','Amount')+'">'+money(r.value)+'</td>';
   const balance='<td class="cell-balance" data-label="'+t('الرصيد','Balance')+'">'+money(r.balance)+'</td>';
   const date='<td class="cell-date" data-label="'+t('التاريخ','Date')+'">'+dateNum(r.date)+'</td>';
-  const cells=printed?(date+type+value+balance):(check+actions+type+value+balance+date);
+  const cells=printed?(date+type+value+balance):(check+type+actions+value+balance+date);
   return '<tr>'+cells+'</tr>'+(!printed&&editing===r.id?rowEditHtml(r):'');
  }).join('');
  return '<table class="'+(printed?'':'schedule-grid')+'">'+cols+'<thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>';
