@@ -52,7 +52,7 @@
     offers:null,includeIntro:!!A.includeIntro,includeOutro:!!A.includeOutro,showTotalOverride:null,
     zoom:1,zoomMode:'actual',activeOffer:0,introText:'',outroText:'',introDirty:false,outroDirty:false,introPreset:'',outroPreset:'',notesOpen:false,scopePrompt:null
   };
-  const FIXED_PDF_STYLE={title:'IBM Plex Sans Arabic',sub:'IBM Plex Sans Arabic',body:'IBM Plex Sans Arabic',brandScale:100,headingScale:100};
+  const FIXED_PDF_STYLE={title:'Arial',sub:'Arial',body:'Arial',brandScale:100,headingScale:100};
 
   function tt(ar,en){return A.lang==='ar'?ar:en}
   function docLang(){return S.docLang||A.lang}
@@ -124,14 +124,14 @@
   function offersSummary(){
     const lang=docLang();
     return S.offers.map(o=>{
-      const body=A.clientText(A.schedule(o),false,lang,S.textMode,false,false,effectiveOffer(o));
+      const body=A.clientText(A.schedule(o),false,lang,S.textMode,S.includeIntro,S.includeOutro,effectiveOffer(o));
       const heading=[offerTitleFor(o),o.unit||'',o.client||''].filter(Boolean).join(' · ');
       return (heading?heading+'\n':'')+body;
     }).join('\n\n————————————————\n\n');
   }
   function summaryText(){
     if(offersMode())return offersSummary();
-    return A.clientText(activeSchedule(),false,docLang(),S.textMode,false,false,effectiveOffer(A.p));
+    return A.clientText(activeSchedule(),false,docLang(),S.textMode,S.includeIntro,S.includeOutro,effectiveOffer(A.p));
   }
   function buildShareText(){
     if(S.textScope==='summary')return summaryText();
@@ -237,7 +237,7 @@
     return JSON.stringify({lang:docLang(),fileScope:S.fileScope,pdfLayout:S.pdfLayout,p:A.p,rows:S.rowFilter?[...S.rowFilter].sort():null,showTotal:S.showTotalOverride});
   }
   function fontStack(name){
-    return '"'+name+'","IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif';
+    return '"'+name+'","Helvetica Neue",Arial,Helvetica,sans-serif';
   }
   function applyPdfStyle(page){
     page.style.setProperty('--pdf-font-title',fontStack(FIXED_PDF_STYLE.title));

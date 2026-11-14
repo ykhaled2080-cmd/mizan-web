@@ -473,3 +473,27 @@ html[data-font-custom] #app{font-size:var(--ui-base-size)}
 .schedule-scroll-btn:disabled{opacity:.3;cursor:default}
 @media(max-width:760px){.schedule-scroll{display:none}}
 .item-name{flex-basis:82px;width:82px;font-size:13.5px;line-height:31px}
+
+/* 1.0.17: actions live outside the table on the right, side by side. */
+@media(min-width:761px){
+.schedule-table-col{position:relative;padding-right:40px}
+.schedule-grid{min-width:480px}
+.schedule-table-col th.cell-edit,.schedule-table-col td.cell-edit{display:none!important;width:0!important;padding:0!important;border:0!important}
+.schedule-grid th.cell-edit{display:none!important}
+}
+.schedule-row-tools{position:absolute;right:4px;z-index:7;display:inline-flex;flex-direction:row;align-items:center;gap:2px;padding:2px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);box-shadow:0 6px 18px #11322922;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s ease}
+.schedule-row-tools.on{opacity:1;visibility:visible;pointer-events:auto}
+.schedule-float-btn{display:inline-grid;place-items:center;width:16px;height:18px;min-width:16px;padding:0;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--green);line-height:1}
+.schedule-float-btn[data-float-edit]{color:#40534F}
+.schedule-float-btn:hover{background:var(--tint);border-color:var(--rule);color:var(--green)}
+@media(max-width:760px){.schedule-row-tools{display:none!important}}
+
+/* 1.0.17: Arial becomes the single UI font. */
+html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#app h1,#app h2,#app h3,#app .hero .big{font-family:Arial,Helvetica,sans-serif!important}
+
+@media(min-width:761px){
+.schedule-table-col{padding-right:44px}
+.schedule-grid{min-width:470px}
+.schedule-row-tools{right:2px}
+}
+.pdf-page .pdf-table td.num{font-weight:700!important}

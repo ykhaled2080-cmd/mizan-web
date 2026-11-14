@@ -297,7 +297,7 @@ function rowEditHtml(r){
  if(!src)return '';
  const current=src.kind==='item'?src.key:(src.kind==='maintenanceSplit'?'maintenance':r.type);
  const choices=rowTypeChoices(r,src);
- return '<tr class="row-edit-line"><td colspan="6"><div class="row-edit-inline">'+
+ return '<tr class="row-edit-line"><td colspan="5"><div class="row-edit-inline">'+
   '<label class="mini-field"><span>'+t('نوع الدفعة','Payment type')+'</span><select id="rowType">'+choices.map(([v,l])=>'<option value="'+v+'" '+(v===current?'selected':'')+'>'+l+'</option>').join('')+'</select></label>'+
   '<label class="mini-field"><span>'+t('التاريخ','Date')+'</span>'+dateSeg('data-row-date="1"',String(r.date||'').slice(0,7),(String(r.date||'').length>=10?String(r.date).slice(8,10):''),t('التاريخ','Date'))+'</label>'+
   '<label class="mini-field"><span>'+t('القيمة','Value')+' · '+curr()+'</span><input id="rowValue" inputmode="decimal" dir="ltr" value="'+Math.round(r.value/100)+'"></label>'+
@@ -311,7 +311,7 @@ function table(s,printed=false){
  const headCols=printed
   ?[[t('تاريخ الدفعة','Payment date'),'date'],[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']]
   :[[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance'],[t('تاريخ الدفعة','Payment date'),'date']];
- const cols=printed?'':'<colgroup><col style="width:36px"><col style="width:26px"><col style="width:25%"><col style="width:25%"><col><col style="width:16%"></colgroup>';
+ const cols=printed?'':'<colgroup><col style="width:36px"><col style="width:25%"><col style="width:25%"><col><col style="width:16%"></colgroup>';
  const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
  const allChecked=rows.length&&rows.every(r=>selected.has(r.id));
  const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(allChecked?'checked':'')+'></th>':'';
@@ -412,7 +412,7 @@ function calculator(){
  const scrollCtl='<div class="schedule-scroll" role="group" aria-label="'+t('تحريك جدول الدفعات','Scroll payment schedule')+'"><button type="button" class="schedule-scroll-btn" data-scroll-schedule="up" aria-label="'+t('لأعلى','Up')+'" title="'+t('لأعلى','Up')+'">'+icon('up',14)+'</button><button type="button" class="schedule-scroll-btn" data-scroll-schedule="down" aria-label="'+t('لأسفل','Down')+'" title="'+t('لأسفل','Down')+'">'+icon('down',14)+'</button></div>';
  const scheduleActions=scrollCtl+'<details class="pop"><summary class="btn">'+icon('list')+t('خيارات الجدول','Schedule options')+'</summary><div class="menu">'+B('addRow',t('إضافة','Add'),'plus')+B('selectInst',t('تحديد الأقساط فقط','Select installments'))+B('clear',t('مسح الجدول','Clear schedule'))+B('restore',t('استعادة جميع الدفعات','Restore all payments'))+B('redistribute',t('توزيع رصيد الوحدة على الأقساط','Distribute property balance'))+'</div></details>'+(selected.size?B('delete',t('حذف المحدد','Delete selected')+' ('+selected.size+')','trash'):'')+(beforeDelete?B('undo',t('تراجع','Undo'),'undo'):'');
  const scheduleHead='<div class="sectionhead schedule-head"><div class="schedule-title"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2><span class="muted">'+t('من','From')+' '+dateNum(fullDate(p.start,p.startDay))+'</span></div><div class="section-actions">'+scheduleActions+'</div></div>';
- const scheduleBody='<div class="schedule-layout"><div class="schedule-table-col"><div class="tablewrap">'+table(s)+(paymentRows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div></div>'+sideHtml+'</div>';
+ const scheduleBody='<div class="schedule-layout"><div class="schedule-table-col"><div class="tablewrap">'+table(s)+(paymentRows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div><div class="schedule-row-tools" id="scheduleRowTools" aria-hidden="true"><button type="button" class="schedule-float-btn" data-float-add aria-label="'+t('إضافة دفعة جديدة','Add a new payment')+'" title="'+t('إضافة دفعة جديدة','Add a new payment')+'">'+icon('plus',12)+'</button><button type="button" class="schedule-float-btn" data-float-edit aria-label="'+t('تعديل الدفعة','Edit payment')+'" title="'+t('تعديل الدفعة','Edit payment')+'">'+icon('pen',11)+'</button></div></div>'+sideHtml+'</div>';
  return title+hero(s)+'<div class="workspace">'+editor(s)+'<section>'+scheduleHead+(!good?'<p class="error">'+error+'</p>':scheduleBody)+'</section></div>';
 }
 function feeLabel(s){const meta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');return names.fee()+(meta?' ('+meta+')':'')+' · '+fmtMoney(s.commission/100)+' '+curr()}
@@ -453,6 +453,7 @@ function offerKey(o){
 function render(){
  const open=[...document.querySelectorAll('[data-section][open]')].map(e=>e.dataset.section);
  const scroll=$('.tablewrap')?.scrollTop||0;
+ hideScheduleRowTools();
  drawHeader(); A.innerHTML=page==='calc'?calculator():page==='compare'?compare():'<div class="titleline"><h1>'+titles().saved+'</h1></div><div id="records">'+savedRows()+'</div>';
  open.forEach(id=>{const e=document.querySelector('[data-section="'+id+'"]');if(e)e.open=true});
  if($('.tablewrap'))$('.tablewrap').scrollTop=scroll;
@@ -494,6 +495,39 @@ function scrollSchedule(dir){
  const step=Math.max(120,Math.round(wrap.clientHeight*.72));
  wrap.scrollTop=Math.max(0,Math.min(wrap.scrollHeight-wrap.clientHeight,wrap.scrollTop+(dir==='up'?-step:step)));
  updateScheduleScrollButtons();
+ hideScheduleRowTools();
+}
+let rowToolsRow=null,rowToolsTimer=null;
+function scheduleRowTools(){return document.getElementById('scheduleRowTools')}
+function hideScheduleRowTools(){
+ clearTimeout(rowToolsTimer);
+ const tools=scheduleRowTools();
+ if(tools){tools.classList.remove('on');tools.setAttribute('aria-hidden','true')}
+ rowToolsRow=null;
+}
+function showScheduleRowTools(row){
+ if(!row||row.classList.contains('row-edit-line')||matchMedia('(max-width:760px)').matches)return;
+ const tools=scheduleRowTools(),wrap=scheduleTableWrap(),col=document.querySelector('.schedule-table-col');
+ if(!tools||!wrap||!col)return;
+ const id=row.querySelector('input[data-id]')?.dataset.id;
+ if(!id)return;
+ clearTimeout(rowToolsTimer);
+ rowToolsRow=row;
+ const add=tools.querySelector('[data-float-add]'),edit=tools.querySelector('[data-float-edit]');
+ if(add)add.dataset.addRow=id;
+ if(edit)edit.dataset.editRow=id;
+ const wr=wrap.getBoundingClientRect(),rr=row.getBoundingClientRect(),cr=col.getBoundingClientRect();
+ if(rr.bottom<wr.top+36||rr.top>wr.bottom){hideScheduleRowTools();return}
+ const top=rr.top-cr.top+(rr.height-tools.offsetHeight)/2;
+ tools.style.top=Math.max(36,Math.min(cr.height-tools.offsetHeight,top))+'px';
+ tools.classList.add('on');tools.setAttribute('aria-hidden','false');
+}
+function refreshScheduleRowTools(){
+ if(!rowToolsRow)return;
+ if(!rowToolsRow.isConnected){hideScheduleRowTools();return}
+ const wrap=scheduleTableWrap(),rr=rowToolsRow.getBoundingClientRect(),wr=wrap&&wrap.getBoundingClientRect();
+ if(!wrap||!wr||rr.bottom<wr.top+36||rr.top>wr.bottom){hideScheduleRowTools();return}
+ showScheduleRowTools(rowToolsRow);
 }
 function refreshTerms(){
  // Keep the active form controls mounted when tabbing or clicking another field.
@@ -983,9 +1017,29 @@ document.addEventListener('wheel',e=>{
 },{passive:false});
 document.addEventListener('scroll',e=>{
  const target=e.target;
- if(target&&target.classList&&target.classList.contains('tablewrap'))updateScheduleScrollButtons();
+ if(target&&target.classList&&target.classList.contains('tablewrap')){updateScheduleScrollButtons();refreshScheduleRowTools()}
 },true);
-window.addEventListener('resize',()=>requestAnimationFrame(updateScheduleScrollButtons));
+window.addEventListener('resize',()=>requestAnimationFrame(()=>{updateScheduleScrollButtons();refreshScheduleRowTools()}));
+document.addEventListener('pointerover',e=>{
+ if(e.target.closest('#scheduleRowTools')){clearTimeout(rowToolsTimer);return}
+ const row=e.target.closest('.schedule-grid tbody tr');
+ if(row)showScheduleRowTools(row);
+});
+document.addEventListener('pointerout',e=>{
+ const tools=e.target.closest('#scheduleRowTools');
+ if(tools){
+  const to=e.relatedTarget;
+  if(!to||!to.closest||!to.closest('.schedule-grid tbody tr'))rowToolsTimer=setTimeout(hideScheduleRowTools,120);
+  return;
+ }
+ const row=e.target.closest('.schedule-grid tbody tr');
+ if(!row)return;
+ const to=e.relatedTarget;
+ if(to&&to.closest&&to.closest('#scheduleRowTools')){clearTimeout(rowToolsTimer);return}
+ rowToolsTimer=setTimeout(hideScheduleRowTools,120);
+});
+document.addEventListener('focusin',e=>{const row=e.target.closest('.schedule-grid tbody tr');if(row)showScheduleRowTools(row)});
+document.addEventListener('focusout',e=>{if(!e.relatedTarget||!e.relatedTarget.closest||!e.relatedTarget.closest('#scheduleRowTools'))rowToolsTimer=setTimeout(hideScheduleRowTools,120)});
 let dateDrag=null;
 document.addEventListener('pointerdown',e=>{
  if(e.button!==0)return;
