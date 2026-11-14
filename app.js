@@ -22,6 +22,43 @@ const logoSkins=[
 ];
 let logoSkin='roof-edges-soft';
 let logoPickerHidden=true;
+const UI_FONTS=[
+ ['IBM Plex Sans Arabic','"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif','IBM Plex Sans Arabic'],
+ ['Segoe UI','"Segoe UI",Tahoma,Arial,sans-serif','Segoe UI'],
+ ['Tahoma','Tahoma,Arial,sans-serif','Tahoma'],
+ ['Calibri','Calibri,"Segoe UI",Tahoma,sans-serif','Calibri'],
+ ['Arial','Arial,Helvetica,sans-serif','Arial'],
+ ['Times New Roman','"Times New Roman",Times,serif','Times New Roman']
+];
+const UI_FONT_DEFAULT={body:'"Segoe UI",Tahoma,Arial,sans-serif',heading:'"Segoe UI",Tahoma,Arial,sans-serif',table:'"Segoe UI",Tahoma,Arial,sans-serif',size:14};
+let uiFonts=read('uiFonts',{});
+const uiFontCss=name=>{const f=UI_FONTS.find(x=>x[0]===name);return f?f[1]:UI_FONT_DEFAULT.body};
+function applyUiFonts(){
+ const root=document.documentElement;
+ const body=uiFonts.body||'';
+ const heading=uiFonts.heading||body;
+ const table=uiFonts.table||body;
+ root.style.setProperty('--ui-font',body?uiFontCss(body):UI_FONT_DEFAULT.body);
+ root.style.setProperty('--ui-heading-font',heading?uiFontCss(heading):UI_FONT_DEFAULT.heading);
+ root.style.setProperty('--ui-table-font',table?uiFontCss(table):UI_FONT_DEFAULT.table);
+ root.style.setProperty('--ui-base-size',(uiFonts.size||UI_FONT_DEFAULT.size)+'px');
+ root.toggleAttribute('data-font-custom',!!(uiFonts.body||uiFonts.heading||uiFonts.table||uiFonts.size));
+}
+function fontPickerHtml(){
+ const options=(selected)=>UI_FONTS.map(([name,,label])=>'<option value="'+name+'" '+(selected===name?'selected':'')+'>'+label+'</option>').join('');
+ const size=uiFonts.size||UI_FONT_DEFAULT.size;
+ return '<div class="font-picker" id="fontPicker" hidden>'+
+  '<div class="font-picker-head"><b>تخصيص خطوط البرنامج</b><small>تُثبت حتى تعيدها للافتراضي</small></div>'+
+  '<div class="font-picker-quick"><span>خطوط المستندات الرسمية</span><div>'+UI_FONTS.map(([name,,label])=>'<button type="button" data-ui-font-all="'+name+'">'+label+'</button>').join('')+'</div></div>'+
+  '<div class="font-picker-grid">'+
+   '<label><span>خط العناوين</span><select data-ui-font-key="heading">'+options(uiFonts.heading)+'</select></label>'+
+   '<label><span>خط النصوص والأزرار</span><select data-ui-font-key="body">'+options(uiFonts.body)+'</select></label>'+
+   '<label><span>خط الجداول</span><select data-ui-font-key="table">'+options(uiFonts.table)+'</select></label>'+
+   '<label><span>حجم النص الأساسي · '+size+'px</span><input type="range" min="12" max="18" step="1" value="'+size+'" data-ui-font-size="1"></label>'+
+  '</div>'+
+  '<div class="font-picker-actions"><button type="button" class="btn" data-act="font-reset">استعادة الافتراضي</button></div>'+
+ '</div>';
+}
 let lang=read('lang','ar'), theme=read('theme','system'), page='calc';
 let includeIntro=read('includeIntro',false), includeOutro=read('includeOutro',false);
 const t=(ar,en)=>lang==='ar'?ar:en;
@@ -92,6 +129,7 @@ const noteField=(key,label)=>{
 const frequency=()=>({1:t('شهري','Monthly'),3:t('ربع سنوي','Quarterly'),6:t('نصف سنوي','Semiannual'),12:t('سنوي','Annual')});
 const titles=()=>({calc:t('خطة السداد','Payment plan'),compare:t('مقارنة العروض','Compare offers'),saved:t('العروض المحفوظة','Saved offers')});
 function drawHeader(){
+ applyUiFonts();
  const dark=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
  document.documentElement.toggleAttribute('data-native',!!window.chrome?.webview);
  document.documentElement.lang=lang; document.documentElement.dir=lang==='ar'?'rtl':'ltr';
@@ -99,7 +137,7 @@ function drawHeader(){
  document.title=t('ميزان | إعداد العروض العقارية','Mizan | Real Estate Offer Builder');
  try{if(window.chrome&&window.chrome.webview)window.chrome.webview.postMessage({type:'mizan-ui',dark,lang})}catch{}
  const themeLabel=dark?t('الوضع الفاتح','Light mode'):t('الوضع الداكن','Dark mode');
- $('#header').innerHTML='<div class="top"><nav class="desktop-nav">'+Object.entries(titles()).map(([k,v])=>'<button class="nav '+(k===page?'on':'')+'" data-act="'+k+'">'+icon(k)+v+'</button>').join('')+'</nav><div class="tools">'+B('lang',t('EN','عربي'),'','tools-btn')+'<button type="button" class="btn iconbtn tools-btn" data-act="theme-toggle" aria-label="'+themeLabel+'" title="'+themeLabel+'">'+icon(dark?'sun':'moon')+'</button>'+(logoPickerHidden?'':'<span class="tools-sep" aria-hidden="true"></span><button type="button" class="btn iconbtn tools-btn" data-act="logo-picker" aria-label="'+t('تخصيص شكل الشعار','Customize logo')+'" title="'+t('تخصيص شكل الشعار','Customize logo')+'" aria-expanded="false">'+icon('palette')+'</button>')+'</div></div>'+(logoPickerHidden?'':logoPickerHtml());
+ $('#header').innerHTML='<div class="top"><nav class="desktop-nav">'+Object.entries(titles()).map(([k,v])=>'<button class="nav '+(k===page?'on':'')+'" data-act="'+k+'">'+icon(k)+v+'</button>').join('')+'</nav><div class="tools">'+B('lang',t('EN','عربي'),'','tools-btn')+'<button type="button" class="btn iconbtn tools-btn font-tools-btn" data-act="font-picker" aria-label="'+t('تخصيص الخطوط','Font settings')+'" title="'+t('تخصيص الخطوط','Font settings')+'">Aa</button><button type="button" class="btn iconbtn tools-btn" data-act="theme-toggle" aria-label="'+themeLabel+'" title="'+themeLabel+'">'+icon(dark?'sun':'moon')+'</button>'+(logoPickerHidden?'':'<span class="tools-sep" aria-hidden="true"></span><button type="button" class="btn iconbtn tools-btn" data-act="logo-picker" aria-label="'+t('تخصيص شكل الشعار','Customize logo')+'" title="'+t('تخصيص شكل الشعار','Customize logo')+'" aria-expanded="false">'+icon('palette')+'</button>')+'</div></div>'+(logoPickerHidden?'':logoPickerHtml())+fontPickerHtml();
  const mobile=[['calc',t('الخطة','Plan'),'calc'],['terms',t('الشروط','Terms'),'list'],['compare',t('المقارنة','Compare'),'compare'],['saved',t('المحفوظة','Saved'),'saved'],['wa-share',t('مشاركة','Share'),'share']];
  $('#mobilenav').innerHTML='<nav class="mobile-nav" aria-label="'+t('التنقل','Navigation')+'">'+mobile.map(([k,label,ic])=>'<button type="button" class="mobile-tab '+(k===page?'on':'')+(k==='wa-share'?' accent':'')+'" data-act="'+k+'" '+(k===page?'aria-current="page"':'')+'>'+icon(ic,20)+'<span>'+label+'</span></button>').join('')+'</nav>';
 }
@@ -267,9 +305,22 @@ function rowEditHtml(r){
   '</div>'+(src.kind==='maintenanceSplit'?'<p class="row-edit-note">'+t('دفعة صيانة موزعة على أول سنتين؛ تعديل القيمة يعدّل إجمالي وديعة الصيانة.','A maintenance payment split over the first two years; changing the value adjusts the total maintenance deposit.')+'</p>':'')+'</td></tr>';
 }
 function table(s,printed=false){
- const header=[[t('تاريخ الدفعة','Payment date'),'date'],[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']];
- const cols=printed?'':'<colgroup><col style="width:34px"><col style="width:21%"><col style="width:21%"><col style="width:25%"><col><col style="width:170px"></colgroup>';
- return '<table class="'+(printed?'':'schedule-grid')+'">'+cols+'<thead><tr>'+(!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(s.rows.length&&selected.size===s.rows.length?'checked':'')+'></th>':'')+header.map(([h,c])=>'<th class="cell-'+c+'">'+h+'</th>').join('')+(!printed?'<th class="cell-edit">'+t('إجراءات','Actions')+'</th>':'')+'</tr></thead><tbody>'+s.rows.map(r=>'<tr>'+(!printed?'<td class="cell-check"><input type="checkbox" data-id="'+r.id+'" aria-label="'+esc(names[r.type]()+' '+dateNum(r.date))+'" '+(selected.has(r.id)?'checked':'')+'></td>':'')+'<td class="cell-date" data-label="'+t('التاريخ','Date')+'">'+dateNum(r.date)+'</td><td class="cell-type" data-label="'+t('النوع','Type')+'">'+rowTypeCell(r)+'</td><td class="cell-value" data-label="'+t('القيمة','Amount')+'">'+money(r.value)+'</td><td class="cell-balance" data-label="'+t('الرصيد','Balance')+'">'+money(r.balance)+'</td>'+(!printed?'<td class="cell-edit"><span class="row-actions"><button type="button" class="row-add-btn" data-add-row="'+r.id+'" aria-label="'+t('إضافة صف هنا','Add a row here')+'" title="'+t('إضافة صف هنا','Add a row here')+'">'+icon('plus',14)+'</button><button type="button" class="row-edit-btn" data-edit-row="'+r.id+'" aria-label="'+t('تعديل الصف','Edit row')+'" title="'+t('تعديل الصف','Edit row')+'">'+icon('pen',14)+'</button></span></td>':'')+'</tr>'+(!printed&&editing===r.id?rowEditHtml(r):'')).join('')+'</tbody></table>';
+ const headCols=printed
+  ?[[t('تاريخ الدفعة','Payment date'),'date'],[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']]
+  :[[t('نوع الدفعة','Payment type'),'type'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance'],[t('تاريخ الدفعة','Payment date'),'date']];
+ const cols=printed?'':'<colgroup><col style="width:34px"><col style="width:70px"><col style="width:20%"><col style="width:24%"><col><col style="width:16%"></colgroup>';
+ const head=(!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(s.rows.length&&selected.size===s.rows.length?'checked':'')+'></th><th class="cell-edit"></th>':'')+headCols.map(([h,c])=>'<th class="cell-'+c+'">'+h+'</th>').join('');
+ const body=s.rows.map(r=>{
+  const check=!printed?'<td class="cell-check"><input type="checkbox" data-id="'+r.id+'" aria-label="'+esc(names[r.type]()+' '+dateNum(r.date))+'" '+(selected.has(r.id)?'checked':'')+'></td>':'';
+  const actions=!printed?'<td class="cell-edit"><span class="row-actions"><button type="button" class="row-add-btn" data-add-row="'+r.id+'" aria-label="'+t('إضافة صف هنا','Add a row here')+'" title="'+t('إضافة صف هنا','Add a row here')+'">'+icon('plus',14)+'</button><button type="button" class="row-edit-btn" data-edit-row="'+r.id+'" aria-label="'+t('تعديل الصف','Edit row')+'" title="'+t('تعديل الصف','Edit row')+'">'+icon('pen',14)+'</button></span></td>':'';
+  const type='<td class="cell-type" data-label="'+t('النوع','Type')+'">'+rowTypeCell(r)+'</td>';
+  const value='<td class="cell-value" data-label="'+t('القيمة','Amount')+'">'+money(r.value)+'</td>';
+  const balance='<td class="cell-balance" data-label="'+t('الرصيد','Balance')+'">'+money(r.balance)+'</td>';
+  const date='<td class="cell-date" data-label="'+t('التاريخ','Date')+'">'+dateNum(r.date)+'</td>';
+  const cells=printed?(date+type+value+balance):(check+actions+type+value+balance+date);
+  return '<tr>'+cells+'</tr>'+(!printed&&editing===r.id?rowEditHtml(r):'');
+ }).join('');
+ return '<table class="'+(printed?'':'schedule-grid')+'">'+cols+'<thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>';
 }
 const shareButton=()=>B('wa-share',t('مشاركة','Share'),'share');
 function legalLines(src,language=lang){
@@ -344,16 +395,16 @@ function calculator(){
  const bottomLines=[];
  if(s.maintenance)bottomLines.push('<div class="extra-line"><b class="extra-name">'+names.maintenance()+(p.maintenance>0?' ('+fmtPct(p.maintenance)+'%)':'')+(maintenanceMeta?' · '+esc(maintenanceMeta):'')+':</b><b class="extra-amount">'+fmtMoney(s.maintenance/100)+' '+curr()+'</b></div>');
  if(s.commission)bottomLines.push('<div class="extra-line"><b class="extra-name">'+names.fee()+(feeMeta?' ('+feeMeta+')':'')+':</b><b class="extra-amount">'+fmtMoney(s.commission/100)+' '+curr()+'</b></div>');
- const extrasCol=hasAdditional
-  ?'<div class="summary-extras-col"><span class="schedule-extras-title">'+t('المستحقات الإضافية','Additional charges')+'</span><div class="extras-grid">'+extrasRows+'</div></div>'
-  :(bottomLines.length?'<div class="summary-extras-col"><span class="schedule-extras-title">'+t('مبالغ إضافية','Additional amounts')+'</span><div class="extras-grid">'+bottomLines.join('')+'</div></div>':'<div class="summary-extras-col"></div>');
- const summaryLine='<div class="schedule-summary-line">'+extrasCol+'<div class="schedule-count-wrap"><span class="schedule-count">'+paymentCountText(s.rows.length)+'</span><span class="selected-under-count'+(selRows.length?'':' is-empty')+'">'+(selRows.length?selRows.length+' '+t('محدد','selected'):'&nbsp;')+'</span></div>'+(p.showTotal===false?'':'<div class="summary-total"><span>'+t('إجمالي المطلوب من العميل','Total payable by buyer')+'</span><b>'+money(s.total)+' '+curr()+'</b><span class="selected-under-total'+(selRows.length?'':' is-empty')+'">'+(selRows.length?selAmountLabel+' '+money(selValue)+' '+curr():'&nbsp;')+'</span></div>')+'</div>';
- const underTable=infoLines.length?'<div class="under-table"><div class="under-info">'+infoLines.join('')+'</div></div>':'';
- const depositSection=(hasAdditional&&bottomLines.length)?'<section class="extras-block"><h3>'+t('مبالغ إضافية','Additional amounts')+'</h3><div class="extras-grid">'+bottomLines.join('')+'</div></section>':'';
+ const extrasBlock=hasAdditional?'<div class="side-block"><h3 class="side-title">'+t('المستحقات الإضافية','Additional charges')+'</h3><div class="side-lines">'+extrasRows+'</div></div>':'';
+ const depositBlock=bottomLines.length?'<div class="side-block"><h3 class="side-title">'+t('مبالغ إضافية','Additional amounts')+'</h3><div class="side-lines">'+bottomLines.join('')+'</div></div>':'';
+ const countBlock='<div class="side-block side-counts"><div class="side-line"><span>'+t('عدد الدفعات','Payments')+'</span><b>'+paymentCountText(s.rows.length)+'</b></div><div class="side-line side-selected'+(selRows.length?'':' is-empty')+'"><span>'+t('المحدد','Selected')+'</span><b>'+(selRows.length?selRows.length:'&nbsp;')+'</b></div></div>';
+ const totalBlock=p.showTotal===false?'':'<div class="side-block side-total"><div class="side-line side-total-main"><span>'+t('إجمالي المطلوب من العميل','Total payable by buyer')+':</span><b>'+money(s.total)+' '+curr()+'</b></div><div class="side-line side-selected'+(selRows.length?'':' is-empty')+'"><span>'+selAmountLabel+'</span><b>'+(selRows.length?money(selValue)+' '+curr():'&nbsp;')+'</b></div></div>';
+ const underTable=infoLines.length?'<div class="side-block side-info">'+infoLines.join('')+'</div>':'';
+ const sideHtml='<aside class="schedule-side">'+countBlock+totalBlock+extrasBlock+depositBlock+underTable+'</aside>';
  const error=s.overAllocated?t('المبلغ المخصص للأقساط يتجاوز المتبقي من سعر الوحدة. راجع التوزيع أو الصفوف المضافة.','Custom installment amounts exceed the remaining unit price. Check the allocation or added rows.'):t('راجع سعر الوحدة ومقدم التعاقد ودفعة الاستلام وترتيب التواريخ.','Check price, down payment, handover payment and dates.');
- const scheduleActions='<details class="pop"><summary class="btn">'+icon('list')+t('إجراءات الجدول','Schedule actions')+'</summary><div class="menu">'+B('addRow',t('إضافة','Add'),'plus')+B('selectInst',t('تحديد الأقساط فقط','Select installments'))+B('clear',t('مسح الجدول','Clear schedule'))+B('restore',t('استعادة جميع الدفعات','Restore all payments'))+B('redistribute',t('توزيع رصيد الوحدة على الأقساط','Distribute property balance'))+'</div></details>'+(selected.size?B('delete',t('حذف المحدد','Delete selected')+' ('+selected.size+')','trash'):'')+(beforeDelete?B('undo',t('تراجع','Undo'),'undo'):'');
+ const scheduleActions='<details class="pop"><summary class="btn">'+icon('list')+t('خيارات الجدول','Schedule options')+'</summary><div class="menu">'+B('addRow',t('إضافة','Add'),'plus')+B('selectInst',t('تحديد الأقساط فقط','Select installments'))+B('clear',t('مسح الجدول','Clear schedule'))+B('restore',t('استعادة جميع الدفعات','Restore all payments'))+B('redistribute',t('توزيع رصيد الوحدة على الأقساط','Distribute property balance'))+'</div></details>'+(selected.size?B('delete',t('حذف المحدد','Delete selected')+' ('+selected.size+')','trash'):'')+(beforeDelete?B('undo',t('تراجع','Undo'),'undo'):'');
  const scheduleHead='<div class="sectionhead schedule-head"><div class="schedule-title"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2><span class="muted">'+t('من','From')+' '+dateNum(fullDate(p.start,p.startDay))+'</span></div><div class="section-actions">'+scheduleActions+'</div></div>';
- const scheduleBody='<div class="tablewrap">'+table(s)+(s.rows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div>'+summaryLine+depositSection+underTable;
+ const scheduleBody='<div class="schedule-layout"><div class="schedule-table-col"><div class="tablewrap">'+table(s)+(s.rows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div></div>'+sideHtml+'</div>';
  return title+hero(s)+'<div class="workspace">'+editor(s)+'<section>'+scheduleHead+(!good?'<p class="error">'+error+'</p>':scheduleBody)+'</section></div>';
 }
 function feeLabel(s){const meta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');return names.fee()+(meta?' ('+meta+')':'')+' · '+fmtMoney(s.commission/100)+' '+curr()}
@@ -436,6 +487,14 @@ const invalid=()=>note(t('تحقق من القيمة المدخلة','Check the 
 function directedText(text,language){
  const mark=language==='ar'?'\u200f':'\u200e';
  return text.split('\n').map(line=>line&&!line.startsWith(mark)?mark+line:line).join('\n');
+}
+function fillOfferText(text,src){
+ return String(text||'')
+  .replace(/\(\s*اسم\s+العميل\s*\)/g,src&&src.client?src.client:'')
+  .replace(/\(\s*الوحدة\s*\)/g,src&&src.unit?src.unit:'')
+  .replace(/\(\s*الوحده\s*\)/g,src&&src.unit?src.unit:'')
+  .replace(/\(\s*client\s+name\s*\)/gi,src&&src.client?src.client:'')
+  .replace(/\(\s*unit\s*\)/gi,src&&src.unit?src.unit:'');
 }
 function paymentColumns(rows,language){
  const balanceLabel=language==='ar'?'الرصيد':'Balance';
@@ -571,8 +630,8 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
  }
  const legal=legalLines(src,language);
  if(legal.length){summary.push('');summary.push(t('الحالة المالية والقانونية','Financial & legal status'));summary.push(legal.join(sep));}
- const intro=String(src.intro||'').trim();
- const outro=String(src.outro||'').trim();
+ const intro=fillOfferText(src.intro,src).trim();
+ const outro=fillOfferText(src.outro,src).trim();
  const parts=[];
  if(intro&&showIntro)parts.push(intro);
  parts.push(summary.join('\n'));
@@ -753,6 +812,8 @@ function insertPaymentRow(afterId){
 }
 document.addEventListener('change',e=>{
  const el=e.target,k=el.dataset.key;
+ if(el.dataset.uiFontKey){uiFonts={...uiFonts,[el.dataset.uiFontKey]:el.value};write('uiFonts',uiFonts);applyUiFonts();return}
+ if(el.dataset.uiFontSize){uiFonts={...uiFonts,size:+el.value};write('uiFonts',uiFonts);applyUiFonts();const lab=el.closest('label')?.querySelector('span');if(lab)lab.textContent='حجم النص الأساسي · '+el.value+'px';return}
  const mainPreset=el.closest('[data-main-preset]');
  if(mainPreset){
   const type=mainPreset.dataset.mainPreset;
@@ -827,6 +888,7 @@ document.addEventListener('change',e=>{
  beforeDelete=null;selected.clear();persist();refreshTerms();
 });
 document.addEventListener('input',e=>{const field=e.target, key=field.dataset.key;
+ if(field.dataset.uiFontSize){const v=+field.value;uiFonts={...uiFonts,size:v};write('uiFonts',uiFonts);applyUiFonts();const lab=field.closest('label')?.querySelector('span');if(lab)lab.textContent='حجم النص الأساسي · '+v+'px';return}
  if(field.dataset.datePart){field.value=field.value.replace(/\D/g,'').slice(0,field.maxLength);const inputs=[...field.parentElement.querySelectorAll('input')];const i=inputs.indexOf(field);if(field.value.length>=field.maxLength&&i>=0&&inputs[i+1])inputs[i+1].focus();return}
  const allocAmountEl=e.target.closest('[data-alloc="amount"]');
  if(allocAmountEl){allocAmount=allocAmountEl.value;return}
@@ -951,6 +1013,16 @@ document.addEventListener('click',async e=>{
  }
  const picker=$('#logoPicker');
  if(picker&&!e.target.closest('#logoPicker')&&!e.target.closest('[data-act="logo-picker"]'))picker.hidden=true;
+ const fontPicker=$('#fontPicker');
+ if(fontPicker&&!e.target.closest('#fontPicker')&&!e.target.closest('[data-act="font-picker"]'))fontPicker.hidden=true;
+ const quickFont=e.target.closest('[data-ui-font-all]');
+ if(quickFont){
+  const name=quickFont.dataset.uiFontAll;
+  uiFonts={...uiFonts,body:name,heading:name,table:name};
+  write('uiFonts',uiFonts);applyUiFonts();
+  document.querySelectorAll('[data-ui-font-key]').forEach(s=>{s.value=name});
+  return;
+ }
  const row=e.target.closest('.schedule-grid tbody tr');
  if(row&&!e.target.closest('button,input,select,a,label,textarea')){row.querySelector('input[data-id]')?.click();return}
  const savedRow=e.target.closest('.saved-grid tbody tr');
@@ -991,6 +1063,8 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(a==='logo-picker'){const p=$('#logoPicker');if(p){p.hidden=!p.hidden;btn.setAttribute('aria-expanded',String(!p.hidden))}return}
+ if(a==='font-picker'){const p=$('#fontPicker');if(p){p.hidden=!p.hidden;btn.setAttribute('aria-expanded',String(!p.hidden))}return}
+ if(a==='font-reset'){uiFonts={};write('uiFonts',uiFonts);applyUiFonts();drawHeader();return}
  if(a==='logo-pin'){pinLogoPicker();return}
  if(a==='saved-share'){shareSavedOffers();return}
  if(a==='type-cash'||a==='type-installments'){p.offerType=a==='type-cash'?'cash':'installments';selected.clear();editing=null;beforeDelete=null;persist();render();return}
@@ -1118,7 +1192,7 @@ window.MizanApp={
  get p(){return p}, get lang(){return lang}, get theme(){return theme}, get selected(){return selected},
  get includeIntro(){return includeIntro}, get includeOutro(){return includeOutro},
  setNoteVisibility:(intro,outro)=>{includeIntro=!!intro;includeOutro=!!outro;write('includeIntro',includeIntro);write('includeOutro',includeOutro)},
- schedule, normalizeOffer, names, frequency, dateLabel, dateNum, offerTitle, itemName, fmt, curr, money, feeLabel, legalLines, clientText, directedText, paymentColumns, note, esc, t, icon, brandMark,
+ schedule, normalizeOffer, names, frequency, dateLabel, dateNum, offerTitle, itemName, fmt, curr, money, feeLabel, legalLines, clientText, directedText, fillOfferText, paymentColumns, note, esc, t, icon, brandMark,
  isMobile:()=>matchMedia('(max-width:760px)').matches
 };
 window.MizanNativeBack=()=>{

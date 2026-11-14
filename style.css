@@ -263,3 +263,69 @@ html[dir=rtl] .row-type{background-position:left 5px center}
 .item-amount-field input{text-align:right}
 .cash-total-value{font-size:clamp(28px,3vw,36px)}
 
+
+/* Reordered schedule: actions beside the checkbox, date at the left end. */
+.schedule-grid td.cell-edit{width:70px;padding:4px 5px;display:flex;align-items:center;justify-content:center;gap:2px}
+.schedule-grid th.cell-edit{display:table-cell!important;width:70px;padding:7px 4px;background:var(--tint);border-bottom:1px solid var(--rule);box-shadow:none!important}
+.row-actions{transform:none}
+.schedule-grid .cell-date{text-align:center;padding-inline:12px;white-space:nowrap}
+
+
+/* Narrower schedule panel, closer to the terms. */
+.workspace{grid-template-columns:minmax(330px,1fr) minmax(0,1.42fr);gap:28px}
+
+
+/* Summary sidebar to the left of the schedule. */
+.schedule-layout{display:grid;grid-template-columns:minmax(0,1fr) 232px;gap:16px;align-items:start}
+.schedule-table-col{min-width:0}
+.schedule-side{display:flex;flex-direction:column;gap:14px;min-width:0;padding-top:2px}
+.side-block{display:flex;flex-direction:column;gap:6px;min-width:0}
+.side-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--sub);line-height:1.55}
+.side-line b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.side-total-main span{font-weight:600;color:var(--text)}
+.side-total-main b{font-size:14px;color:var(--green)}
+.side-selected{font-size:10.5px;color:var(--green)}
+.side-selected.is-empty{visibility:hidden}
+.side-title{font-size:11.5px;font-weight:700;color:var(--green);margin:0;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.side-lines{display:grid;gap:2px}
+.side-lines .extra-line{font-size:11.5px;line-height:1.55;padding:1px 0}
+.side-lines .extra-name{font-size:11.5px}
+.side-lines .extra-amount{font-size:12.5px}
+.side-info .summary-note{font-size:11px}
+@media(max-width:760px){.schedule-layout{display:flex;flex-direction:column;gap:12px}.schedule-side{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}.schedule-side .side-block:nth-child(3),.schedule-side .side-block:nth-child(4),.schedule-side .side-block:nth-child(5){grid-column:1/-1}}
+
+
+.titleline .actions .btn[data-act="save"],.titleline .actions .btn[data-act="wa-share"]{border:0!important;box-shadow:none!important}
+
+:root{--ui-font:"Segoe UI",Tahoma,Arial,sans-serif;--ui-heading-font:"Segoe UI",Tahoma,Arial,sans-serif;--ui-table-font:"Segoe UI",Tahoma,Arial,sans-serif;--ui-base-size:14px}
+html[data-font-custom] #app,html[data-font-custom] #header,html[data-font-custom] #mobilenav,html[data-font-custom] #app button,html[data-font-custom] #app input,html[data-font-custom] #app select,html[data-font-custom] #app textarea{font-family:var(--ui-font)!important}
+html[data-font-custom] #app h1,html[data-font-custom] #app h2,html[data-font-custom] #app h3,html[data-font-custom] #app .titleline h1,html[data-font-custom] #app .sectionhead h2{font-family:var(--ui-heading-font)!important}
+html[data-font-custom] #app table,html[data-font-custom] #app .schedule-grid,html[data-font-custom] #app .saved-grid,html[data-font-custom] #app .compare table{font-family:var(--ui-table-font)!important}
+html[data-font-custom] #app{font-size:var(--ui-base-size)}
+.font-tools-btn{font-size:13px;font-weight:700;letter-spacing:-.4px}
+.font-picker{position:absolute;top:calc(100% - 4px);inset-inline-end:clamp(20px,4vw,76px);z-index:90;width:min(560px,92vw);padding:14px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 22px 60px #11322933}
+.font-picker[hidden]{display:none}
+.font-picker-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.font-picker-head b{font-size:13px}.font-picker-head small{color:var(--sub);font-size:10px}
+.font-picker-quick{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.font-picker-quick>span{color:var(--sub);font-size:10.5px}
+.font-picker-quick>div{display:flex;flex-wrap:wrap;gap:4px}
+.font-picker-quick button{min-height:26px;padding:3px 8px;border:1px solid var(--rule);border-radius:999px;background:var(--field);color:var(--text);font-size:10.5px}
+.font-picker-quick button:hover{background:var(--tint);color:var(--green)}
+.font-picker-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.font-picker-grid label{display:flex;flex-direction:column;gap:3px;color:var(--sub);font-size:10.5px}
+.font-picker-grid select{height:31px;padding:3px 7px;border:1px solid var(--rule);border-radius:6px;background:var(--field);color:var(--text);font-size:11.5px}
+.font-picker-grid input[type=range]{width:100%;accent-color:var(--green)}
+.font-picker-actions{display:flex;justify-content:flex-end;margin-top:10px}
+.font-picker-actions .btn{min-height:30px;font-size:11px}
+@media(max-width:760px){.font-picker{inset-inline:10px;width:auto;top:calc(100% + 2px)}.font-picker-grid{grid-template-columns:1fr}}
+
+/* Final schedule header/actions alignment and slightly larger item labels. */
+.schedule-grid td.cell-edit{display:table-cell;text-align:center;vertical-align:middle;width:70px;padding:4px 5px}
+.schedule-grid td.cell-edit .row-actions{display:inline-flex;align-items:center;justify-content:center;gap:2px}
+.schedule-grid thead th{border-bottom:0;box-shadow:inset 0 -1px 0 var(--rule)!important}
+.item-name{flex-basis:82px;width:82px;font-size:14px;line-height:31px}
+
+/* Keep the app font panel below the header even when the page is scrolled. */
+.font-picker{position:fixed;top:70px;inset-inline-end:clamp(20px,4vw,76px)}
+@media(max-width:760px){.font-picker{top:64px}}

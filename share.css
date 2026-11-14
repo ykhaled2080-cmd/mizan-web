@@ -832,3 +832,15 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-table td{border-left:0!important;border-right:0!important}
 .pdf-cash-total .amt{font-size:22px}
 
+
+.pdf-font-bar{position:fixed;z-index:300;width:min(430px,94vw);padding:8px 9px;border:1px solid var(--rule);border-radius:9px;background:var(--surface);color:var(--text);box-shadow:0 16px 44px #11322933;display:flex;flex-direction:column;gap:6px}
+.pdf-font-bar[hidden]{display:none}
+.pdf-font-head{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pdf-font-suggest{color:var(--sub);font-size:10px;line-height:1.4}
+.pdf-font-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.pdf-font-row button{height:27px;min-width:27px;padding:0 6px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:11px}
+.pdf-font-row button:hover{background:var(--tint);color:var(--green)}
+.pdf-font-row select{height:27px;max-width:150px;padding:2px 5px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px}
+.pdf-font-color{display:inline-flex;align-items:center;gap:4px;color:var(--sub);font-size:10px}
+.pdf-font-color input{width:26px;height:26px;padding:0;border:1px solid var(--rule);border-radius:5px;background:var(--field)}
+.pdf-font-hex{width:80px;height:27px;padding:2px 5px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px;direction:ltr}

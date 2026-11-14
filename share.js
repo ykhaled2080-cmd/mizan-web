@@ -323,15 +323,15 @@
     }
     for(const x of (s.includedItems||[])){
       if(x.key==='maintenance'||!(x.amount>0))continue;
-      charges.push('<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+amount(x.amount)+'</b></div>');
+      charges.push('<div class="pdf-charge pdf-charge-included"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+amount(x.amount)+'</b></div>');
     }
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const extrasHtml=charges.length?sectionTitle(t('المستحقات الإضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const depositLine='<div class="pdf-support-line pdf-deposit-line"><b>'+names.maintenance()+(p.maintenance>0?pct(s.maintenancePct):'')+(maintenanceLabel?' · '+maintenanceLabel:'')+':</b> '+amount(s.maintenance)+'</div>';
     const feeMeta=[p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
-    const feeLine=s.commission?'<div class="pdf-support-line pdf-fee-line"><b>'+names.fee()+(feeMeta?' ('+feeMeta+')':'')+':</b> '+amount(s.commission)+'</div>':'';
+    const feeLine=s.commission?'<div class="pdf-support-line pdf-fee-line"><b>'+names.fee()+(feeMeta?' ('+feeMeta+')':'')+':</b> <span class="pdf-fee-amount">'+amount(s.commission)+'</span></div>':'';
     const depositHtml=(s.maintenance||s.commission)?sectionTitle(t('مبالغ إضافية','Additional amounts'),'pdf-deposit-title')+'<div class="pdf-deposit-block">'+(s.maintenance?depositLine:'')+feeLine+'</div>':'';
-    const identity='<div class="pdf-identity"><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div></div>';
+    const identity='<div class="pdf-identity"><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div></div>';
     const includedText=(s.includedItems||[]).map(x=>esc(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+amount(x.amount):'')).join(' · ');
     const legalFinancial=p.legal&&p.legal.noDues?(s.cash&&!(s.extras.length||(s.commission&&p.payer==='buyer'))?t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.'):t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.')):'';
     const legalItems=[];
@@ -582,6 +582,7 @@
     S.buildPromise=buildPdf(sig,token).then(built=>{
       if(token!==S.buildToken)return S.built;
       if(S.signature!==sig){try{URL.revokeObjectURL(built.pdfUrl)}catch{}return S.built}
+      if(!offersMode())applyStoredPageEdits(built);
       S.built=built;
       if(offersMode()){
         S.selectedPages.clear();
@@ -763,7 +764,316 @@
     page.renderPromise=null;
     S.built.htmlVersion=(S.built.htmlVersion||0)+1;
     S.built.vectorPdf=null;
+    savePageEdits();
   }
+  const PAGE_EDITS_KEY='mizan.pdfEdits';
+  function pageEditKey(){return S.signature||buildSignature()}
+  function readPageEdits(){try{return JSON.parse(localStorage.getItem(PAGE_EDITS_KEY)||'{}')||{}}catch{return{}}}
+  function savePageEdits(){
+    if(!S.built||offersMode())return;
+    try{
+      const all=readPageEdits();
+      all[pageEditKey()]=S.built.pages.map(p=>p.html);
+      const keys=Object.keys(all);
+      while(keys.length>6)delete all[keys.shift()];
+      localStorage.setItem(PAGE_EDITS_KEY,JSON.stringify(all));
+    }catch{}
+  }
+  function applyStoredPageEdits(built){
+    try{
+      const pages=readPageEdits()[pageEditKey()];
+      if(!Array.isArray(pages))return;
+      pages.forEach((html,i)=>{
+        if(built.pages[i]&&typeof html==='string'){
+          built.pages[i].html=html;
+          built.pages[i].rasterDirty=true;
+          built.pages[i].renderPromise=null;
+        }
+      });
+      built.htmlVersion=(built.htmlVersion||0)+1;
+      built.vectorPdf=null;
+    }catch{}
+  }
+
+  /* Manual amount edits inside the statement recalculate the offer total when
+     the edited figure is one of the amounts included in that total. */
+  const PDF_AMOUNT_FORMAT=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
+  const pdfAmountBase=new WeakMap();
+  function parsePdfAmount(value){
+    let text=String(value||'').replace(/\u00a0/g,' ');
+    text=text.replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+    text=text.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+    const match=text.match(/-?\d[\d.,]*/);
+    if(!match)return null;
+    const number=Number(match[0].replace(/,/g,''));
+    return Number.isFinite(number)?number:null;
+  }
+  function formatPdfAmount(value){
+    return PDF_AMOUNT_FORMAT.format(Math.round((+value||0)*100)/100);
+  }
+  function pdfTotalElement(page){
+    return page?page.querySelector('.pdf-total .amt, .pdf-cash-total .amt'):null;
+  }
+  function pdfAmountScope(target){
+    const el=target&&(target.nodeType===1?target:target.parentElement);
+    if(!el||!el.closest)return null;
+    const page=el.closest('.pdf-page');
+    if(!page)return null;
+    const totalEl=el.closest('.pdf-total .amt, .pdf-cash-total .amt');
+    if(totalEl)return {page,totalEl,partEl:null};
+    if(page.querySelector('.pdf-cash-total'))return null;
+    const unit=el.closest('.pdf-price-block:not(.pdf-cash-total) .amt');
+    if(unit)return {page,totalEl:pdfTotalElement(page),partEl:unit};
+    const extra=el.closest('.pdf-charge:not(.pdf-charge-included) .val');
+    if(extra)return {page,totalEl:pdfTotalElement(page),partEl:extra};
+    const fee=el.closest('.pdf-fee-amount');
+    if(fee)return {page,totalEl:pdfTotalElement(page),partEl:fee};
+    return null;
+  }
+  function setPdfTotalText(el,value){
+    if(!el)return;
+    const text=formatPdfAmount(value);
+    const bdi=el.querySelector('bdi');
+    if(bdi){bdi.textContent=text;return}
+    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    let node;
+    while((node=walker.nextNode())){
+      if(/\d/.test(node.nodeValue)){
+        node.nodeValue=node.nodeValue.replace(/-?\d[\d.,]*/,text);
+        return;
+      }
+    }
+    el.textContent=text;
+  }
+  function markPdfAmounts(){
+    document.querySelectorAll('.pdf-page').forEach(page=>{
+      const total=pdfTotalElement(page);
+      if(total)pdfAmountBase.set(total,parsePdfAmount(total.textContent));
+      if(page.querySelector('.pdf-cash-total'))return;
+      const unit=page.querySelector('.pdf-price-block .amt');
+      if(unit)pdfAmountBase.set(unit,parsePdfAmount(unit.textContent));
+      page.querySelectorAll('.pdf-charge:not(.pdf-charge-included) .val').forEach(el=>{
+        pdfAmountBase.set(el,parsePdfAmount(el.textContent));
+      });
+      page.querySelectorAll('.pdf-fee-line').forEach(line=>{
+        let amount=line.querySelector('.pdf-fee-amount');
+        if(!amount){
+          const bdi=line.querySelector('bdi');
+          if(bdi){bdi.classList.add('pdf-fee-amount');amount=bdi}
+        }
+        if(!amount){
+          const last=line.lastChild;
+          if(last&&last.nodeType===3&&/\d/.test(last.nodeValue)){
+            amount=document.createElement('span');
+            amount.className='pdf-fee-amount';
+            line.replaceChild(amount,last);
+            amount.appendChild(last);
+          }
+        }
+        if(amount)pdfAmountBase.set(amount,parsePdfAmount(amount.textContent));
+      });
+    });
+  }
+  function syncPdfAmountEdit(target){
+    const scope=pdfAmountScope(target);
+    if(!scope)return;
+    if(!scope.partEl){
+      const value=parsePdfAmount(scope.totalEl.textContent);
+      if(value!==null)pdfAmountBase.set(scope.totalEl,value);
+      return;
+    }
+    const value=parsePdfAmount(scope.partEl.textContent);
+    if(value===null)return;
+    const previous=pdfAmountBase.get(scope.partEl);
+    if(previous===undefined){
+      pdfAmountBase.set(scope.partEl,value);
+      return;
+    }
+    if(Math.abs(value-previous)<0.0001)return;
+    const totalEl=scope.totalEl;
+    if(!totalEl){
+      pdfAmountBase.set(scope.partEl,value);
+      return;
+    }
+    const storedTotal=pdfAmountBase.get(totalEl);
+    const base=storedTotal===undefined?(parsePdfAmount(totalEl.textContent)||0):storedTotal;
+    const next=Math.max(0,base+(value-previous));
+    setPdfTotalText(totalEl,next);
+    pdfAmountBase.set(totalEl,next);
+    pdfAmountBase.set(scope.partEl,value);
+  }
+  const PDF_FONT_FAMILIES=[
+    ['"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif','IBM Plex Sans Arabic'],
+    ['Calibri,"Segoe UI",Tahoma,sans-serif','Calibri'],
+    ['"Segoe UI",Tahoma,Arial,sans-serif','Segoe UI'],
+    ['Tahoma,Arial,sans-serif','Tahoma'],
+    ['Arial,Helvetica,sans-serif','Arial'],
+    ['"Times New Roman",Times,serif','Times New Roman']
+  ];
+  const PDF_FONT_SIZES=[9,10,11,12,13,14,16,18,20,22,24,28,32];
+  function rgbHex(value){
+    const m=String(value||'').match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+    if(!m)return /^#/.test(value||'')?value:'#123d36';
+    return '#'+[1,2,3].map(i=>Number(m[i]).toString(16).padStart(2,'0')).join('');
+  }
+  function pdfFontBarHtml(){
+    const fonts=PDF_FONT_FAMILIES.map(([v,l])=>'<option value="'+esc(v)+'">'+l+'</option>').join('');
+    const sizes=PDF_FONT_SIZES.map(n=>'<option value="'+n+'">'+n+' px</option>').join('');
+    return '<div class="pdf-font-head"><span class="pdf-font-suggest"></span></div>'+
+      '<div class="pdf-font-row"><button type="button" data-fb="bold" title="Bold">B</button><button type="button" data-fb="semi" title="Semi Bold">Semi</button><button type="button" data-fb="size-up" title="Larger">A+</button><button type="button" data-fb="size-down" title="Smaller">A−</button><select data-fb-font aria-label="الخط"><optgroup label="خطوط المستندات الرسمية">'+fonts+'</optgroup></select><select data-fb-size aria-label="الحجم">'+sizes+'</select></div>'+
+      '<div class="pdf-font-row"><label class="pdf-font-color"><input type="color" data-fb-color value="#123d36"><span>لون الخط</span></label><input class="pdf-font-hex" data-fb-hex maxlength="9" value="#123d36" spellcheck="false" aria-label="كود اللون"><select data-fb-reset aria-label="استعادة الافتراضي"><option value="">استعادة…</option><option value="all">الكل</option><option value="color">اللون فقط</option><option value="size">الحجم فقط</option><option value="weight">الوزن فقط</option><option value="family">الخط فقط</option></select></div>';
+  }
+  function hidePdfFontBar(){
+    const bar=document.getElementById('pdfFontBar');
+    if(bar)bar.hidden=true;
+  }
+  function showPdfFontBar(){
+    const sel=window.getSelection();
+    if(!sel||!sel.rangeCount||sel.isCollapsed){hidePdfFontBar();return}
+    const range=sel.getRangeAt(0);
+    const start=range.startContainer.nodeType===1?range.startContainer:range.startContainer.parentElement;
+    const host=start&&start.closest?start.closest('.pdf-page-host[contenteditable]'):null;
+    if(!host){hidePdfFontBar();return}
+    const el=start;
+    const cs=getComputedStyle(el);
+    const isHeader=!!(el.closest('.pdf-title,.pdf-titleblock,.pdf-sectionhead')||el.closest('th'));
+    const isTable=!!el.closest('.pdf-table,.pdf-pay');
+    S.fontHost=host;S.fontRange=range.cloneRange();
+    S.fontDefaults={color:cs.color,fontSize:cs.fontSize,fontFamily:cs.fontFamily,fontWeight:cs.fontWeight};
+    let bar=document.getElementById('pdfFontBar');
+    if(!bar){
+      bar=document.createElement('div');bar.id='pdfFontBar';bar.className='pdf-font-bar';bar.hidden=true;
+      bar.innerHTML=pdfFontBarHtml();document.body.appendChild(bar);
+      bar.addEventListener('mouseenter',()=>{S.fontBarHover=true});
+      bar.addEventListener('mouseleave',()=>{S.fontBarHover=false});
+    }
+    bar.querySelector('.pdf-font-suggest').textContent=isHeader?'مقترح للعناوين: IBM Plex Sans Arabic · 18–28px':isTable?'مقترح للجدول: IBM Plex Sans Arabic · 10–13px':'مقترح للنصوص: Calibri أو IBM Plex Sans Arabic · 11–14px';
+    const fontSel=bar.querySelector('[data-fb-font]');
+    const sizeSel=bar.querySelector('[data-fb-size]');
+    const colorInput=bar.querySelector('[data-fb-color]');
+    const hexInput=bar.querySelector('[data-fb-hex]');
+    const size=parseFloat(cs.fontSize)||12;
+    const nearest=PDF_FONT_SIZES.reduce((a,b)=>Math.abs(b-size)<Math.abs(a-size)?b:a,PDF_FONT_SIZES[0]);
+    sizeSel.value=String(nearest);
+    fontSel.value=PDF_FONT_FAMILIES.find(([v])=>cs.fontFamily.indexOf(v.split(',')[0].replace(/"/g,''))>=0)?.[0]||PDF_FONT_FAMILIES[0][0];
+    const hex=rgbHex(cs.color);colorInput.value=hex;hexInput.value=hex;
+    const rect=range.getBoundingClientRect();
+    bar.hidden=false;
+    const bw=bar.offsetWidth||360,bh=bar.offsetHeight||110;
+    let left=rect.left+rect.width/2-bw/2;
+    left=Math.max(8,Math.min(window.innerWidth-bw-8,left));
+    let top=rect.top-bh-10;
+    if(top<8)top=rect.bottom+10;
+    top=Math.max(8,Math.min(window.innerHeight-bh-8,top));
+    bar.style.left=left+'px';bar.style.top=top+'px';
+  }
+  function applyFontStyle(styles){
+    const host=S.fontHost,range=S.fontRange;
+    if(!host||!range)return;
+    S.fontApplying=true;
+    const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+    const walker=document.createTreeWalker(host,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode()){
+      const node=walker.currentNode;
+      if(!node.nodeValue.trim()||!range.intersectsNode(node))continue;
+      const start=node===range.startContainer?range.startOffset:0;
+      const end=node===range.endContainer?range.endOffset:node.nodeValue.length;
+      if(end>start)nodes.push({node,start,end});
+    }
+    const created=[];
+    for(const {node,start,end} of nodes.reverse()){
+      const parent=node.parentElement;
+      if(parent&&parent.tagName==='SPAN'&&parent.childNodes.length===1&&start===0&&end===node.nodeValue.length){
+        for(const [k,v] of Object.entries(styles))if(v)parent.style[k]=v;
+        created.push(parent);
+        continue;
+      }
+      const span=document.createElement('span');
+      for(const [k,v] of Object.entries(styles))if(v)span.style[k]=v;
+      const r=document.createRange();r.setStart(node,start);r.setEnd(node,end);
+      try{r.surroundContents(span);created.push(span)}catch{}
+    }
+    if(created.length){
+      const first=created[created.length-1],last=created[0];
+      const next=document.createRange();
+      next.setStartBefore(first);next.setEndAfter(last);
+      sel.removeAllRanges();sel.addRange(next);
+      S.fontRange=next.cloneRange();
+    }
+    host.dispatchEvent(new Event('input',{bubbles:true}));
+    saveEditablePage(host);
+    setTimeout(()=>{S.fontApplying=false},180);
+  }
+  function pdfFontAction(action){
+    const d=S.fontDefaults||{};const currentEl=S.fontRange&&S.fontRange.startContainer;
+    const baseEl=currentEl? (currentEl.nodeType===1?currentEl:currentEl.parentElement):null;
+    const cs=baseEl?getComputedStyle(baseEl):null;
+    if(action==='bold')return applyFontStyle({fontWeight:'700'});
+    if(action==='semi')return applyFontStyle({fontWeight:'600'});
+    if(action==='size-up'||action==='size-down'){
+      const size=parseFloat(cs&&cs.fontSize||d.fontSize||'12')||12;
+      const next=Math.max(7,Math.min(48,size+(action==='size-up'?1:-1)));
+      return applyFontStyle({fontSize:next+'px'});
+    }
+  }
+  function resetPdfFont(kind){
+    const host=S.fontHost;
+    if(!host)return;
+    const range=S.fontRange||(window.getSelection()?.rangeCount?window.getSelection().getRangeAt(0):null);
+    if(!range)return;
+    const keys=kind==='all'?['color','size','weight','family']:[kind];
+    const props=keys.map(key=>({color:'color',size:'font-size',weight:'font-weight',family:'font-family'}[key])).filter(Boolean);
+    if(!props.length)return;
+    const spans=[...host.querySelectorAll('span')].filter(span=>{
+      try{return range.intersectsNode(span)}catch{return false}
+    });
+    let touched=false;
+    spans.forEach(span=>props.forEach(prop=>{
+      if(span.style.getPropertyValue(prop)){span.style.removeProperty(prop);touched=true}
+    }));
+    if(!touched)return;
+    host.dispatchEvent(new Event('input',{bubbles:true}));
+    saveEditablePage(host);
+  }
+  document.addEventListener('selectionchange',()=>{
+    if(!S.open||S.fontApplying)return;
+    const bar=document.getElementById('pdfFontBar');
+    if(bar&&!bar.hidden&&(S.fontBarHover||bar.contains(document.activeElement)))return;
+    setTimeout(()=>showPdfFontBar(),20);
+  });
+  document.addEventListener('scroll',()=>hidePdfFontBar(),true);
+  document.addEventListener('wheel',()=>hidePdfFontBar(),{passive:true,capture:true});
+  document.addEventListener('mousedown',e=>{
+    const bar=e.target.closest('#pdfFontBar');
+    if(bar&&e.target.closest('button'))e.preventDefault();
+  },true);
+  document.addEventListener('click',e=>{
+    const fb=e.target.closest('[data-fb]');
+    if(fb){pdfFontAction(fb.dataset.fb);return}
+  });
+  document.addEventListener('change',e=>{
+    const bar=e.target.closest('#pdfFontBar');
+    if(!bar)return;
+    if(e.target.matches('[data-fb-font]'))applyFontStyle({fontFamily:e.target.value});
+    else if(e.target.matches('[data-fb-size]'))applyFontStyle({fontSize:e.target.value+'px'});
+    else if(e.target.matches('[data-fb-reset]')){const kind=e.target.value;e.target.value='';if(kind)resetPdfFont(kind)}
+  });
+  document.addEventListener('input',e=>{
+    const bar=e.target.closest('#pdfFontBar');
+    if(!bar)return;
+    if(e.target.matches('[data-fb-color]')){
+      const hex=e.target.value;
+      const txt=bar.querySelector('[data-fb-hex]');if(txt)txt.value=hex;
+      applyFontStyle({color:hex});
+    }else if(e.target.matches('[data-fb-hex]')){
+      const hex=String(e.target.value||'').trim();
+      if(/^#[0-9a-f]{6}$/i.test(hex)){
+        const color=bar.querySelector('[data-fb-color]');if(color)color.value=hex;
+        applyFontStyle({color:hex});
+      }
+    }
+  });
   function flushEditablePages(){
     document.querySelectorAll('.pdf-page-host[contenteditable]').forEach(saveEditablePage);
   }
@@ -994,6 +1304,7 @@
     if(!S.open)return;
     railMount();notesMount();
     const body=$('#shareBody');if(body)body.innerHTML=bodyHtml();
+    markPdfAmounts();
     const foot=$('#shareFoot');if(foot)foot.innerHTML=footHtml();
     scopeMount();
   }
@@ -1002,6 +1313,7 @@
     const top=body.scrollTop;
     body.innerHTML=bodyHtml();
     body.scrollTop=top;
+    markPdfAmounts();
     railMount();
   }
   function renderFoot(){
@@ -1192,6 +1504,9 @@
   function close(silent){
     if(!S.open)return;
     if(S.pv)closePreview(true);
+    flushEditablePages();
+    hidePdfFontBar();
+    S.fontHost=null;S.fontRange=null;S.fontDefaults=null;S.fontBarHover=false;S.fontApplying=false;
     S.open=false;
     S.offers=null;
     S.scopePrompt=null;
@@ -1726,8 +2041,8 @@
       flushTable();
       const lines=chunks.length?chunks:selection.toString().split('\n');
       const notes=noteSource();
-      const intro=S.includeIntro?String(notes.intro||'').trim():'';
-      const outro=S.includeOutro?String(notes.outro||'').trim():'';
+      const intro=S.includeIntro?String(A.fillOfferText(notes.intro||'',notes)).trim():'';
+      const outro=S.includeOutro?String(A.fillOfferText(notes.outro||'',notes)).trim():'';
       const copied=[intro,lines.join('\n'),outro].filter(Boolean).join('\n\n');
       event.clipboardData.setData('text/plain',A.directedText(copied,docLang()));
       event.preventDefault();
@@ -2237,6 +2552,7 @@
   document.addEventListener('input',e=>{
     const editable=e.target.closest('.pdf-page-host[contenteditable]');
     if(editable){
+      syncPdfAmountEdit(e.target);
       clearTimeout(editable._saveTimer);
       editable._saveTimer=setTimeout(()=>saveEditablePage(editable),250);
       return;
