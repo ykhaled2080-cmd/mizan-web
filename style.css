@@ -241,3 +241,25 @@ html[dir=rtl] .row-type{background-position:left 5px center}
 .summary-extras-col .extras-grid{display:grid;gap:1px;margin:0}
 .summary-extras-col .schedule-extras-title{display:block;margin:0 0 1px}
 
+
+/* Page-scroll first: the schedule grows with the page instead of trapping the wheel. */
+.workspace .tablewrap{max-height:none;overflow-x:auto;overflow-y:visible}
+.workspace > section > .tablewrap{margin-top:10px}
+.schedule-grid th{position:static}
+.schedule-grid thead th{background:var(--tint);border-bottom:1px solid var(--rule)}
+/* Row actions appear on hover only on fine-pointer devices. */
+.schedule-grid .cell-edit{width:170px;padding:4px 6px;display:flex;align-items:center;justify-content:center;gap:2px}
+.row-actions{display:inline-flex;align-items:center;gap:2px;transform:translateX(30px)}
+@media (hover:hover) and (pointer:fine){
+  .schedule-grid tbody tr .cell-edit .row-actions{opacity:0;visibility:hidden;transition:opacity .12s}
+  .schedule-grid tbody tr:hover .cell-edit .row-actions,
+  .schedule-grid tbody tr:focus-within .cell-edit .row-actions,
+  .schedule-grid tbody tr:has(input[data-id]:checked) .cell-edit .row-actions{opacity:1;visibility:visible}
+}
+/* Item editor refinements. */
+.item-head{gap:3px}
+.item-name{flex-basis:80px;width:80px;font-size:13px}
+.item-state-field>span{visibility:visible;color:var(--sub);font-size:9.5px;line-height:1.2}
+.item-amount-field input{text-align:right}
+.cash-total-value{font-size:clamp(28px,3vw,36px)}
+

@@ -94,7 +94,8 @@ function normalizeOffer(input) {
     id: String(row.id),
     date: String(row.date),
     type: row.type === 'payment' ? 'payment' : 'installment',
-    value: Number.isFinite(+row.value) ? Math.max(0, +row.value) : 0
+    value: Number.isFinite(+row.value) ? Math.max(0, +row.value) : 0,
+    before: !!row.before
   }));
 
   if (!Array.isArray(o.allocations)) o.allocations = [];
@@ -199,7 +200,7 @@ function schedule(input) {
   if ((valid || installmentBudget < 0) && p.customRows.length) {
     for (const custom of p.customRows) {
       const value = inputPounds(custom.value);
-      rows.push({ id: custom.id, date: custom.date, type: custom.type === 'payment' ? 'payment' : 'installment', value, custom: true });
+      rows.push({ id: custom.id, date: custom.date, type: custom.type === 'payment' ? 'payment' : 'installment', value, custom: true, before: !!custom.before });
     }
   }
 
@@ -258,6 +259,7 @@ function schedule(input) {
 
   const active = rows.filter(row => !p.hidden.includes(row.id)).sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (!!a.before !== !!b.before) return a.before ? -1 : 1;
     const order = { down: 0, fee: 1, delivery: 2, payment: 3, installment: 4 };
     return (order[a.type] ?? 6) - (order[b.type] ?? 6);
   });

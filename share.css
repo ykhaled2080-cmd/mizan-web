@@ -824,3 +824,11 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-price-block .amt{font-size:15px;font-weight:600;letter-spacing:0;transform:translateY(-1px)}
 .pdf-price-block .amt .pdf-curr{font-size:8.5px;font-weight:400;color:#5c6f66;margin-inline-start:2px}
 
+
+/* PDF table: center numeric columns and remove header separators. */
+.pdf-table{border-collapse:collapse}
+.pdf-table td.num{text-align:center;direction:ltr;padding-inline-start:0}
+.pdf-table th{border-left:0!important;border-right:0!important;box-shadow:none!important}
+.pdf-table td{border-left:0!important;border-right:0!important}
+.pdf-cash-total .amt{font-size:22px}
+

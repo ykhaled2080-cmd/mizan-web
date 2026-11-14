@@ -261,7 +261,7 @@
   function pdfHeader(lang,data,cont,summaryOnly){
     const t=(ar,en)=>lang==='ar'?ar:en;
     const title=data.s.cash?t('عرض كاش','Cash offer'):t('عرض سداد تقديري','Estimated payment offer');
-    const heading='<div class="pdf-brandline"><h1 class="pdf-title">'+title+'</h1><img src="assets/logo-watermark.png" alt="Mizan"></div>';
+    const heading='<div class="pdf-brandline"><h1 class="pdf-title">'+title+'</h1><img src="assets/logo-approved.png" alt="Mizan"></div>';
     const scheduleHeading=(data.s.cash||summaryOnly)?'':'<div class="pdf-sectionhead"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2></div>';
     if(cont)return heading+scheduleHeading;
     const {s,p,names}=data;
@@ -269,8 +269,9 @@
     const pct=n=>n>0?' ('+data.f.pct.format(n)+'%)':'';
     const non=t('غير محدد','Not specified');
     const amount=cents=>'<bdi dir="ltr">'+cash(cents)+'</bdi> '+data.curr;
-    const deliveryLabel=p.deliveryDateMode==='none'?'':(p.deliveryDateMode==='date'&&p.deliveryDate?t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(fullDate(p.deliveryDate,p.deliveryDay)):t('عند الاستلام','at handover'));
     const handoverDate=p.handover?fullDate(p.handover,p.handoverDay):'';
+    const deliveryShown=p.deliveryDateMode==='date'&&p.deliveryDate?fullDate(p.deliveryDate,p.deliveryDay):handoverDate;
+    const deliveryLabel=p.deliveryDateMode==='none'?'':(deliveryShown?t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(deliveryShown):'');
     const maintenanceDate=p.maintenanceDate?fullDate(p.maintenanceDate,p.maintenanceDay):'';
     const maintenanceShown=p.maintenanceDateMode==='date'&&p.maintenanceDate?maintenanceDate:handoverDate;
     const maintenanceLabel=p.maintenanceDateMode==='none'?'':(p.maintenanceDateMode==='split'?t('خلال أول سنتين','Over first two years'):(maintenanceShown?(maintenanceDate&&p.maintenanceDateMode==='date'&&String(maintenanceShown).slice(0,7)!==String(handoverDate).slice(0,7)?t('بتاريخ','on')+' '+data.f.date(maintenanceShown):t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(maintenanceShown)):''));
@@ -886,8 +887,8 @@
     const rtl=docLang()==='ar';
     const full=S.textScope!=='summary';
     return '<div class="text-share"><div class="text-scope" role="group" aria-label="'+tt('نطاق النص','Text scope')+'">'+
-      '<button type="button" data-share-act="scope-full" class="'+(full?'on':'')+'" aria-pressed="'+full+'">'+tt('العرض كاملًا مع الملخص المالي','Full offer with summary')+'</button>'+
-      '<button type="button" data-share-act="scope-summary" class="'+(!full?'on':'')+'" aria-pressed="'+(!full)+'">'+tt('الملخص المالي فقط','Financial summary only')+'</button>'+
+      '<button type="button" data-share-act="scope-full" class="'+(full?'on':'')+'" aria-pressed="'+full+'">'+tt('الملخص وجدول الدفعات','Summary and payment schedule')+'</button>'+
+      '<button type="button" data-share-act="scope-summary" class="'+(!full?'on':'')+'" aria-pressed="'+(!full)+'">'+tt('الملخص','Summary')+'</button>'+
       '</div><textarea id="shareText" dir="'+(rtl?'rtl':'ltr')+'" spellcheck="false" aria-label="'+tt('نص العرض','Offer text')+'">'+esc(S.text)+'</textarea><div class="text-meta"><span>'+len+' '+tt('حرفًا','characters')+'</span><span>'+tt('الأسعار بالجنيه المصري','Amounts in Egyptian pounds')+'</span></div></div>';
   }
   function resultHtml(){
@@ -940,8 +941,8 @@
     return '<div class="share-wa share-copy">'+
       '<button type="button" class="share-icon" data-share-act="copy-menu" title="'+label+'" aria-haspopup="menu" aria-expanded="false" aria-label="'+label+'">'+icon('copy',19)+'</button>'+
       '<div class="share-wa-menu" role="menu" aria-label="'+label+'">'+
-        '<button type="button" role="menuitem" data-share-act="copy-full">'+tt('نسخ العرض كاملًا','Copy full offer')+'</button>'+
-        '<button type="button" role="menuitem" data-share-act="copy-summary">'+tt('نسخ الملخص المالي فقط','Copy financial summary only')+'</button>'+
+        '<button type="button" role="menuitem" data-share-act="copy-full">'+tt('نسخ الملخص وجدول الدفعات','Copy summary and payment schedule')+'</button>'+
+        '<button type="button" role="menuitem" data-share-act="copy-summary">'+tt('نسخ الملخص','Copy summary')+'</button>'+
       '</div></div>';
   }
   function controlsHtml(){
@@ -962,10 +963,9 @@
   function scopePromptHtml(){
     if(!S.scopePrompt)return '';
     const kind=S.scopePrompt.kind;
-    const title=kind==='text'?tt('ماذا تريد أن ترسل؟','What do you want to send?'):tt('ماذا يتضمن الملف؟','What should the file include?');
-    const full=kind==='text'?tt('العرض كاملًا مع جدول الدفعات','Full offer with payment schedule'):tt('الملف كاملًا مع جدول الدفعات','Full file with payment schedule');
-    const summary=kind==='text'?tt('الملخص المالي فقط','Financial summary only'):tt('الملخص فقط بدون جدول الدفعات','Summary only, without the payment schedule');
-    return '<div class="scope-backdrop" data-scope-cancel="1"></div><div class="scope-card" role="dialog" aria-modal="true"><h3>'+esc(title)+'</h3><p>'+tt('اختر ما سيتم إرساله. الشعار يبقى في المنتصف.','Choose what will be sent. The watermark stays centered.')+'</p><div class="scope-actions"><button type="button" class="scope-btn primary" data-scope="full">'+esc(full)+'</button><button type="button" class="scope-btn" data-scope="summary">'+esc(summary)+'</button><button type="button" class="scope-cancel" data-scope-cancel="1">'+tt('إلغاء','Cancel')+'</button></div></div>';
+    const full=tt('الملخص وجدول الدفعات','Summary and payment schedule');
+    const summary=tt('الملخص','Summary');
+    return '<div class="scope-backdrop" data-scope-cancel="1"></div><div class="scope-card" role="dialog" aria-modal="true"><div class="scope-actions"><button type="button" class="scope-btn primary" data-scope="full">'+esc(full)+'</button><button type="button" class="scope-btn" data-scope="summary">'+esc(summary)+'</button><button type="button" class="scope-cancel" data-scope-cancel="1">'+tt('إلغاء','Cancel')+'</button></div></div>';
   }
   function scopeMount(){const el=$('#shareScopePrompt');if(el)el.innerHTML=scopePromptHtml()}
   function openScopePrompt(kind){
@@ -1218,6 +1218,7 @@
   async function nativeWhatsApp(files,text,kind){
     const payload={action:'whatsapp',text:text||'',phone:normalizedPhone(),kind:kind||'',files:files&&files.length?await filesPayload(files):[]};
     const r=await postNative(payload);
+    if(r&&r.canceled){S.busy=false;renderAll();return}
     S.lastFiles=files||[];S.lastText=text||'';S.lastKind=kind||'';
     setResult({method:r.method||'clipboard',whatsapp:r.whatsapp,folder:r.folder||'',kind:kind||'',count:files?files.length:0,message:''});
   }
@@ -1329,13 +1330,14 @@
     S.lastText=msg;S.lastFiles=[];S.lastKind='text';
     if(isNative()){
       try{
-        const r=await postNative({action:'whatsapp',text:msg,phone:normalizedPhone(),kind:'text',files:[]});
-        setResult({method:r.method||'text',kind:'text',count:0,folder:'',whatsapp:r.whatsapp||'',message:''});
+        await postNative({action:'whatsapp',text:msg,phone:normalizedPhone(),kind:'text',files:[]});
+        S.result=null;S.busy=false;renderAll();
       }catch(err){
         console.warn(err);
         try{await copyTextValue(msg)}catch{}
         window.open(waOpenUrl(msg.length>7000?'':msg),'_blank','noopener');
-        setResult({method:'text-web',kind:'text',count:0,folder:'',whatsapp:''});
+        S.result=null;S.busy=false;renderAll();
+        A.note(tt('تم نسخ النص وفتح واتساب. الصقه في المحادثة.','The text was copied and WhatsApp opened. Paste it in the chat.'));
       }
       return;
     }
@@ -1344,7 +1346,7 @@
     const win=window.open(waOpenUrl(long?'':msg),'_blank','noopener');
     try{await navigator.clipboard.writeText(msg)}catch{await copyTextValue(msg)}
     if(!win)A.note(tt('منع المتصفح فتح واتساب. النص منسوخ، افتحه يدويًا.','The browser blocked WhatsApp. The text is copied; open it manually.'));
-    setResult({method:'text-web',kind:'text',count:0,folder:'',whatsapp:'',message:long?tt('تم نسخ النص وفتح واتساب. الصقه في المحادثة.','The text was copied and WhatsApp opened. Paste it in the chat.'):''});
+    S.result=null;S.busy=false;renderAll();
   }
   async function copyTextValue(text){
     try{await navigator.clipboard.writeText(text);return true}catch{}
@@ -1477,9 +1479,10 @@
     if(!files.length){S.busy=false;renderAll();A.note(S.tab==='pdf'?tt('حدد ملف PDF واحدًا على الأقل.','Select at least one PDF file.'):tt('حدد صفحة أو جزءًا أولًا.','Select a page or part first.'));return}
     const text=S.tab==='text'?S.text:offersCaption();
     try{
-      await postNative({action:'shareui',text,kind:S.tab==='pdf'?'pdf':'images',files:await filesPayload(files)});
+      const r=await postNative({action:'shareui',text,kind:S.tab==='pdf'?'pdf':'images',files:await filesPayload(files)});
+      if(r&&r.canceled){S.busy=false;renderAll();return}
       S.lastFiles=files;S.lastText=text;S.lastKind=S.tab==='pdf'?'pdf':'images';
-      setResult({method:'shareui',kind:S.tab==='pdf'?'pdf':'images',count:files.length,folder:'',whatsapp:''});
+      setResult({method:'shareui',kind:S.tab==='pdf'?'pdf':'images',count:files.length,folder:r&&r.folder?r.folder:'',whatsapp:''});
     }catch(err){S.busy=false;renderAll();A.note(err.message)}
   }
   function downloadFile(file){

@@ -223,3 +223,10 @@ button,summary,a{-webkit-tap-highlight-color:transparent}
   input[inputmode=decimal],.compare input[type=number]{touch-action:pan-y}
   .grip{touch-action:none}
 }
+
+@media(max-width:760px){
+  .tablewrap{max-height:none;overflow-y:visible}
+  .schedule-grid td.cell-edit{width:auto;padding:0!important;justify-content:center}
+  .row-actions{transform:none}
+}
+
