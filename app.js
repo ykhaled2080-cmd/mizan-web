@@ -467,7 +467,7 @@ function calculator(){
  const workspaceHead='<div class="schedule-workspace-head"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2><div class="schedule-head-meta">'+scheduleActions+'<span class="schedule-count">'+paymentCountText(paymentRows.length)+'</span></div></div>';
  const summaryHtml='<div class="schedule-summary" role="group" aria-label="'+t('ملخص خطة السداد','Payment plan summary')+'">'+classificationHtml+summaryNote+'</div>';
  const error=s.overAllocated?t('المبلغ المخصص للأقساط يتجاوز المتبقي من سعر الوحدة. راجع التوزيع أو الصفوف المضافة.','Custom installment amounts exceed the remaining unit price. Check the allocation or added rows.'):t('راجع سعر الوحدة ومقدم التعاقد ودفعة الاستلام وترتيب التواريخ.','Check price, down payment, handover payment and dates.');
- const tableCol='<div class="schedule-table-col"><div class="tablewrap" tabindex="0" role="region" aria-label="'+t('جدول الدفعات','Payment schedule')+'">'+table(s)+(paymentRows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div><div class="schedule-vscroll" id="scheduleVScroll" aria-hidden="true"><div class="schedule-vscroll-thumb"></div></div><div class="schedule-row-tools" id="scheduleRowTools" aria-hidden="true"><button type="button" class="schedule-float-btn" data-float-add aria-label="'+t('إضافة دفعة جديدة','Add a new payment')+'" title="'+t('إضافة دفعة جديدة','Add a new payment')+'">'+icon('plus',12)+'</button><button type="button" class="schedule-float-btn" data-float-edit aria-label="'+t('تعديل الدفعة','Edit payment')+'" title="'+t('تعديل الدفعة','Edit payment')+'">'+icon('pen',11)+'</button></div></div>';
+ const tableCol='<div class="schedule-table-col"><div class="schedule-table-viewport" id="scheduleTableViewport"><div class="tablewrap" tabindex="0" role="region" aria-label="'+t('جدول الدفعات','Payment schedule')+'">'+table(s)+(paymentRows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div><div class="schedule-vscroll" id="scheduleVScroll" aria-hidden="true" hidden><div class="schedule-vscroll-thumb"></div></div></div><div class="schedule-row-tools" id="scheduleRowTools" aria-hidden="true"><button type="button" class="schedule-float-btn" data-float-add aria-label="'+t('إضافة دفعة جديدة','Add a new payment')+'" title="'+t('إضافة دفعة جديدة','Add a new payment')+'">'+icon('plus',12)+'</button><button type="button" class="schedule-float-btn" data-float-edit aria-label="'+t('تعديل الدفعة','Edit payment')+'" title="'+t('تعديل الدفعة','Edit payment')+'">'+icon('pen',11)+'</button></div></div>';
  const moduleHtml='<div class="schedule-module">'+summaryHtml+tableCol+'</div>';
  const selectionHtml=selRows.length?'<div class="schedule-selection"><span class="sel-item"><span class="sel-label">'+t('الدفعات المحددة','Selected payments')+':</span><b>'+paymentCountText(selRows.length)+'</b></span><span class="sel-item"><span class="sel-label">'+t('إجمالي المحدد','Selected total')+':</span><b>'+money(selValue)+' '+curr()+'</b></span></div>':'';
  return title+hero(s)+'<div class="workspace">'+editor(s)+'<section>'+workspaceHead+(good?moduleHtml+selectionHtml:'<p class="error">'+error+'</p>')+'</section></div>';
@@ -545,19 +545,17 @@ function scheduleVScroll(){return document.getElementById('scheduleVScroll')}
 function updateScheduleVScroll(){
  const wrap=scheduleTableWrap(),track=scheduleVScroll(),thumb=track&&track.querySelector('.schedule-vscroll-thumb');
  if(!wrap||!track||!thumb)return;
- const col=wrap.closest('.schedule-table-col');
- const setOverflowing=on=>{wrap.classList.toggle('has-vscroll',on);if(col)col.classList.toggle('has-vscroll',on)};
- if(matchMedia('(max-width:760px)').matches){track.hidden=true;setOverflowing(false);return}
+ if(matchMedia('(max-width:760px)').matches){track.hidden=true;return}
+ const viewport=wrap.closest('.schedule-table-viewport')||wrap.parentElement;
  const head=wrap.querySelector('.schedule-grid thead th');
- track.style.top=(wrap.offsetTop+(head?head.getBoundingClientRect().height:36))+'px';
+ const headH=head?Math.ceil(head.getBoundingClientRect().height):36;
+ if(viewport)viewport.style.setProperty('--schedule-head-h',headH+'px');
  const max=wrap.scrollHeight-wrap.clientHeight;
- if(max<=1){track.hidden=true;setOverflowing(false);return}
+ if(max<=1){track.hidden=true;return}
  track.hidden=false;
  const th=track.clientHeight;
- if(th<=0){track.hidden=true;setOverflowing(false);return}
- setOverflowing(true);
- if(col&&head)col.style.setProperty('--schedule-head-h',Math.round(head.getBoundingClientRect().height)+'px');
- const h=Math.max(26,Math.min(th,th*wrap.clientHeight/wrap.scrollHeight));
+ if(th<=0){track.hidden=true;return}
+ const h=Math.max(28,Math.min(th,th*wrap.clientHeight/wrap.scrollHeight));
  thumb.style.height=h+'px';
  const travel=Math.max(0,th-h);
  thumb.style.top=(wrap.scrollTop/max*travel)+'px';
@@ -1190,21 +1188,15 @@ document.addEventListener('wheel',e=>{
  e.preventDefault();
  stepDateInput(input,e.deltaY<0?1:-1);
 },{passive:false});
-let wheelGestureAt=0,wheelGestureInside=false;
 document.addEventListener('wheel',e=>{
  if(e.defaultPrevented)return;
  if(matchMedia('(max-width:760px)').matches)return;
  const wrap=e.target.closest&&e.target.closest('.schedule-table-col .tablewrap');
- const bar=e.target.closest&&e.target.closest('#scheduleVScroll');
- const now=Date.now();
- if(now-wheelGestureAt>180)wheelGestureInside=!!(wrap||bar);
- wheelGestureAt=now;
- if(bar)return;
- if(wrap){
-  if(wheelGestureInside)return;
-  e.preventDefault();
-  window.scrollBy(0,e.deltaY);
- }
+ if(!wrap)return;
+ if(e.target.closest('#scheduleVScroll'))return;
+ // Ordinary table content keeps scrolling the page; the dedicated rail scrolls the table.
+ e.preventDefault();
+ window.scrollBy(0,e.deltaY);
 },{passive:false});
 document.addEventListener('scroll',e=>{
  const target=e.target;

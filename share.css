@@ -940,12 +940,21 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-page .pdf-price-block,.pdf-page .pdf-pay-item{position:relative;border-bottom:0!important}
 .pdf-page .pdf-price-block,.pdf-page .pdf-pay-grid,.pdf-page .pdf-pay-item{z-index:auto}
 .pdf-page .pdf-pay-grid{margin-bottom:4px}
-.pdf-page .pdf-divider{position:absolute;left:0;right:0;bottom:0;height:calc(22px / var(--zoom,1));display:none;z-index:8;cursor:ns-resize;touch-action:none;user-select:none}
-.pdf-page .pdf-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);background:var(--div-color,#D8E2DB);opacity:var(--div-opacity,1);border-radius:1px}
-.pdf-page .pdf-divider::after{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);border-radius:2px;pointer-events:none;box-shadow:0 0 0 0 transparent}
-.pdf-page .pdf-divider:hover::after{box-shadow:0 0 0 3px rgba(25,75,61,.12)}
-.pdf-page .pdf-divider.selected::after{box-shadow:0 0 0 1px rgba(25,75,61,.55),0 0 0 4px rgba(25,75,61,.1)}
-.pdf-page .pdf-divider.selected{outline:0}
+.pdf-page .pdf-schedule{overflow:visible}
+.pdf-page .pdf-edit-layer{position:absolute!important;inset:0;z-index:12!important;pointer-events:none;overflow:visible;direction:ltr}
+.pdf-page .pdf-edit-layer .pdf-divider{position:absolute;left:auto;right:auto;bottom:auto;height:calc(22px / var(--zoom,1));display:block;transform:translateY(-50%);z-index:1;cursor:ns-resize;touch-action:none;user-select:none;pointer-events:auto;background:none;border:0}
+.pdf-page .pdf-edit-layer .pdf-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);background:var(--div-color,#D8E2DB);opacity:var(--div-opacity,1);border-radius:1px}
+.pdf-page .pdf-edit-layer .pdf-divider::after{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);border-radius:2px;pointer-events:none;box-shadow:0 0 0 0 transparent}
+.pdf-page .pdf-edit-layer .pdf-divider:hover::after{box-shadow:0 0 0 3px rgba(25,75,61,.12)}
+.pdf-page .pdf-edit-layer .pdf-divider.selected::after{box-shadow:0 0 0 1px rgba(25,75,61,.55),0 0 0 4px rgba(25,75,61,.1)}
+.pdf-page .pdf-edit-layer .pdf-divider.selected{outline:0}
+.pdf-page.pdf-dividers-ready .pdf-brandline{border-bottom-color:transparent!important}
+.pdf-page.pdf-dividers-ready .pdf-identity{border-bottom-color:transparent!important}
+.pdf-page.pdf-dividers-ready .pdf-section-title .rule{background:transparent!important}
+.pdf-page.pdf-dividers-ready .pdf-charge-commission.has-rule .lbl{border-top-color:transparent!important}
+.pdf-page.pdf-dividers-ready .pdf-folio{border-top-color:transparent!important}
+.pdf-page .pdf-table td.pdf-has-moved-text,.pdf-page .pdf-table th.pdf-has-moved-text{overflow:visible!important}
+body.pdf-ctrl .pdf-page .pdf-edit-layer .pdf-divider{pointer-events:none}
 body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-select:none!important}
 .pdf-page .pdf-title{font-family:var(--doc-title-font);font-size:var(--doc-title-size);font-weight:var(--doc-title-weight);color:var(--doc-title-color)}
 .pdf-page .pdf-sectionhead h2{font-family:var(--doc-main-font);font-size:var(--doc-main-size);font-weight:var(--doc-main-weight);color:var(--doc-main-color)}

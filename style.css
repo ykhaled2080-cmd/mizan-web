@@ -552,16 +552,28 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-grid td.cell-value .money,.schedule-grid td.cell-balance .money{font-weight:400!important}
 
 
-/* 1.0.22: right-side transparent custom scrollbar and drag-to-scroll. */
+/* 1.0.38: dedicated external scroll rail on the physical right of the table viewport. */
+.schedule-table-viewport{position:relative;min-width:0;padding-right:16px}
+.schedule-table-viewport::before{content:'';position:absolute;top:0;right:0;width:16px;height:var(--schedule-head-h,36px);background:var(--tint);box-shadow:inset 0 -1px 0 var(--rule);pointer-events:none;z-index:4}
 @media(min-width:761px){
-.schedule-table-col .tablewrap{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
-.schedule-table-col .tablewrap::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+.schedule-table-viewport>.tablewrap{width:100%;max-height:556px;padding:0;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+.schedule-table-viewport>.tablewrap::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 }
-.schedule-vscroll{position:absolute;top:36px;right:3px;bottom:2px;width:10px;z-index:6;background:transparent;touch-action:none}
+.schedule-vscroll{position:absolute;top:var(--schedule-head-h,36px);right:0;bottom:0;width:16px;z-index:6;background:transparent;touch-action:none;user-select:none;-webkit-user-select:none}
+.schedule-vscroll::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:6px;transform:translateX(-50%);border-radius:999px;background:rgba(20,97,79,.045);pointer-events:none}
+.schedule-vscroll:hover::before,.schedule-vscroll.dragging::before{background:rgba(20,97,79,.075)}
 .schedule-vscroll[hidden]{display:none}
-.schedule-vscroll-thumb{position:absolute;left:2px;right:2px;min-height:26px;border-radius:999px;background:rgba(20,97,79,.28);transition:background .15s}
-.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{background:rgba(20,97,79,.52)}
-@media(max-width:760px){.schedule-vscroll{display:none}}
+.schedule-vscroll-thumb{position:absolute;left:50%;top:0;width:5px;min-height:28px;border-radius:999px;background:rgba(20,97,79,.30);transform:translateX(-50%);transition:width .14s ease,background .14s ease;will-change:top,height}
+.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{width:6px;background:rgba(20,97,79,.52)}
+[data-dark] .schedule-vscroll::before{background:rgba(158,212,188,.06)}
+[data-dark] .schedule-vscroll:hover::before,[data-dark] .schedule-vscroll.dragging::before{background:rgba(158,212,188,.1)}
+[data-dark] .schedule-vscroll-thumb{background:rgba(158,212,188,.30)}
+[data-dark] .schedule-vscroll:hover .schedule-vscroll-thumb,[data-dark] .schedule-vscroll.dragging .schedule-vscroll-thumb{background:rgba(158,212,188,.52)}
+@media(max-width:760px){
+.schedule-table-viewport{padding-right:0}
+.schedule-table-viewport::before{display:none}
+.schedule-vscroll{display:none}
+}
 .schedule-table-col .tablewrap.drag-scroll{cursor:grabbing}
 .schedule-table-col .tablewrap.drag-scroll *{cursor:grabbing!important;user-select:none!important}
 
@@ -658,8 +670,6 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 /* 1.0.32: balanced RTL payment columns: checkbox | type | date | value | balance. */
 @media(min-width:761px){
 .schedule-grid{min-width:0}
-.schedule-table-col .tablewrap.has-vscroll{padding-right:16px}
-.schedule-table-col.has-vscroll::before{content:'';position:absolute;top:0;right:0;width:16px;height:var(--schedule-head-h,36px);background:var(--tint);pointer-events:none;z-index:4}
 .schedule-grid col.col-check{width:42px}
 .schedule-grid col.col-type{width:23%}
 .schedule-grid col.col-date{width:23%}
