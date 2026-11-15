@@ -269,6 +269,7 @@
     const pct=n=>n>0?' ('+data.f.pct.format(n)+'%)':'';
     const non=t('غير محدد','Not specified');
     const amount=cents=>'<bdi dir="ltr">'+cash(cents)+'</bdi> '+data.curr;
+    const dueJoin=(base,due)=>due?base+(/^(عند|خلال)/.test(due)||/^(at|over)\b/i.test(due)?' ':' – ')+due:base;
     const handoverDate=p.handover?fullDate(p.handover,p.handoverDay):'';
     const deliveryShown=p.deliveryDateMode==='date'&&p.deliveryDate?fullDate(p.deliveryDate,p.deliveryDay):handoverDate;
     const deliveryLabel=p.deliveryDateMode==='none'?'':(deliveryShown?t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(deliveryShown):'');
@@ -307,7 +308,7 @@
     if(!s.cash&&s.down)payItems.push('<div class="pdf-pay-item"><span class="lbl">'+names.down()+(p.mode==='rate'?pct(s.downPct):'')+'</span><b class="val">'+amount(s.down)+'</b></div>');
     if(!s.cash&&inst.length)payItems.push('<div class="pdf-pay-item"><span class="lbl">'+t('خطة التقسيط','Payment plan')+'</span><b class="val">'+esc(planText)+'</b></div>');
     if(!s.cash&&s.delivery){
-      payItems.push('<div class="pdf-pay-item"><span class="lbl">'+names.delivery()+(p.delivery>0?pct(s.deliveryPct):'')+(deliveryLabel?' · '+deliveryLabel:'')+'</span><b class="val">'+amount(s.delivery)+'</b></div>');
+      payItems.push('<div class="pdf-pay-item"><span class="lbl">'+dueJoin(names.delivery()+(p.delivery>0?pct(s.deliveryPct):''),deliveryLabel)+'</span><b class="val">'+amount(s.delivery)+'</b></div>');
     }
     if(!s.cash&&inst.length){
       const instValue=fixedPlan?amount(fixedValue):t('متغيرة حسب الفترة','Variable by period');
@@ -318,13 +319,13 @@
     for(const e of s.extras){
       const label=(names[e.label]?names[e.label]():e.label)+(e.label==='maintenance'&&p.maintenance>0?pct(s.maintenancePct):'');
       const due=e.label==='maintenance'?maintenanceLabel:extraDateCond(e);
-      charges.push('<div class="pdf-charge"><span class="lbl">'+label+(due?' · '+due:'')+'</span><b class="val">'+amount(e.amount)+'</b></div>');
+      charges.push('<div class="pdf-charge"><span class="lbl">'+dueJoin(label,due)+'</span><b class="val">'+amount(e.amount)+'</b></div>');
     }
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const includedRows=(s.includedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
     const excludedRows=(s.excludedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount,due:x.due&&x.dueMode==='date'?t('بتاريخ','on')+' '+data.f.date(x.due):''}));
-    const includedHtml=includedRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+includedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-    const excludedHtml=excludedRows.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-excluded-title')+'<div class="pdf-charges">'+excludedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+    const includedHtml=includedRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+includedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+    const excludedHtml=excludedRows.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-excluded-title')+'<div class="pdf-charges">'+excludedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
     const extrasHtml=charges.length?sectionTitle(t('مستحقات إضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const feeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
     const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
@@ -353,7 +354,7 @@
         cashCharges.push({label,due,amount:e.amount});
       }
       const dueBdi=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
-      const cashChargesHtml=cashCharges.length?sectionTitle(t('مستحقات إضافية','Additional charges'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+c.label+(c.due?' · '+dueBdi(c.due):'')+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
+      const cashChargesHtml=cashCharges.length?sectionTitle(t('مستحقات إضافية','Additional charges'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(c.label,dueBdi(c.due))+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
       const cashFeeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
       const cashFeePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
       const cashFeeMeta=[cashFeePayer,cashFeeRate?'('+cashFeeRate+')':''].filter(Boolean).join(' ');
