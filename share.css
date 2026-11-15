@@ -320,7 +320,7 @@ html[data-dark] .pv-done{background:#9ed4bc;color:#0f1a17}
 .pdf-meta-item span{display:block;font-family:var(--pdf-font-sub);font-size:8.5px;color:#6a7e75;line-height:1.4}
 .pdf-meta-item b{display:block;font-family:var(--pdf-font-body);font-size:11.5px;font-weight:600;color:#19302a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .pdf-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-variant-numeric:tabular-nums}
-.pdf-table th{background:#123d35;color:#f7faf5;font-family:var(--pdf-font-sub);font-size:10px;font-weight:600;text-align:center;padding:9px 8px;border-top:1px solid #123d35;border-bottom:1px solid #123d35;white-space:nowrap}
+.pdf-table th{background:#123d35;color:#f7faf5;font-family:var(--pdf-font-sub);font-size:10px;font-weight:600;text-align:center;padding:9px 8px;border-top:1px solid #194B3D;border-bottom:1px solid #194B3D;white-space:nowrap}
 .pdf-table td{font-family:var(--pdf-font-body);font-size:10.2px;text-align:center;padding:8px 10px;border-bottom:1px solid #D8E2DB;color:#173F33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pdf-table tbody tr:nth-child(even) td{background:transparent}
 .pdf-table td.num{font-weight:600;text-align:left;direction:ltr;padding-inline-start:12px}
@@ -380,7 +380,7 @@ html[dir=rtl] #header .desktop-nav{direction:rtl;justify-content:flex-start}
 .pdf-table td.type-cell .type{font:inherit}
 .pdf-table .dot{display:none}
 .pdf-table td.num{font-weight:400}
-.pdf-page>.pdf-folio{position:absolute;bottom:23px;left:46px;right:46px;display:flex;justify-content:space-between;gap:14px;padding-top:8px;border-top:1px solid #cbd6cf;font-size:11px;color:#586c62}
+.pdf-page>.pdf-folio{position:absolute;bottom:23px;left:46px;right:46px;display:flex;justify-content:space-between;gap:14px;padding-top:8px;border-top:1px solid #D8E2DB;font-size:11px;color:#52665C}
 .pdf-folio span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pdf-folio span:last-child{flex:none}
 
