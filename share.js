@@ -1007,11 +1007,42 @@ let DOC_STYLE=readDocStyle();
       localStorage.setItem(PAGE_EDITS_KEY,JSON.stringify(all));
     }catch{}
   }
+  function upgradePdfTableOrder(page){
+    const table=page.querySelector('.pdf-table');
+    if(table){
+      const bodyRow=table.querySelector('tbody tr');
+      const oldBody=bodyRow&&bodyRow.children.length>=4&&bodyRow.children[1].classList.contains('num')&&bodyRow.children[3].classList.contains('date');
+      if(oldBody){
+        const reorder=row=>{const cells=[...row.children];if(cells.length<4)return;row.append(cells[0],cells[3],cells[1],cells[2])};
+        const head=table.querySelector('thead tr');if(head)reorder(head);
+        table.querySelectorAll('tbody tr').forEach(reorder);
+      }
+      const total=table.querySelector('tfoot .total-amount');
+      const totalOld=!!total&&total.cellIndex!==2;
+      if(totalOld){
+        const row=total.parentElement,label=row.querySelector('.total-label');
+        if(label){
+          const blank=document.createElement('td');blank.className='date';
+          const blank2=document.createElement('td');
+          row.replaceChildren(label,blank,total,blank2);
+        }
+      }
+      if(oldBody||totalOld){
+        const cg=table.querySelector('colgroup');
+        if(cg)cg.innerHTML='<col style="width:24%"><col style="width:24%"><col style="width:23%"><col style="width:29%">';
+      }
+    }
+    page.querySelectorAll('.pdf-pay-head').forEach(head=>{
+      const type=head.querySelector('.type'),date=head.querySelector('.date');
+      if(type&&date&&head.firstElementChild===date)head.insertBefore(type,date);
+    });
+  }
   function upgradeStoredPageHtml(html){
     try{
       const wrap=document.createElement('div');wrap.innerHTML=html;
       const page=wrap.querySelector('.pdf-page');
       if(!page)return html;
+      upgradePdfTableOrder(page);
       const price=page.querySelector('.pdf-price-block');
       if(price){
         price.dataset.dividerHost='price';
