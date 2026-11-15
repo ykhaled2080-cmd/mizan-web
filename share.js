@@ -165,7 +165,7 @@ function mergeDocStyle(saved){
  return style;
 }
 function readDocStyle(){try{return mergeDocStyle(JSON.parse(localStorage.getItem(DOC_STYLE_KEY)||'null'))}catch{return docDefaultStyle()}}
-function writeDocStyle(style){try{localStorage.setItem(DOC_STYLE_KEY,JSON.stringify(mergeDocStyle(style)));return true}catch{return false}}
+function writeDocStyle(style){try{localStorage.setItem(DOC_STYLE_KEY,JSON.stringify(mergeDocStyle(style)));DOC_STYLE_VERSION++;return true}catch{return false}}
 function sanitizeCustomDocPresets(list){
  const seen=new Set();
  return (Array.isArray(list)?list:[]).filter(p=>p&&p.id&&p.name&&p.style).map(p=>{
@@ -183,6 +183,7 @@ function newDocPresetId(){return 'custom-'+Date.now().toString(36)+'-'+Math.rand
 function docStyleSnapshot(){const style=mergeDocStyle(DOC_STYLE);style.activePreset='';return style}
 let DOC_STYLE=readDocStyle();
 let DOC_STYLE_COMMITTED=JSON.stringify(mergeDocStyle(DOC_STYLE));
+let DOC_STYLE_VERSION=0;
 
   function tt(ar,en){return A.lang==='ar'?ar:en}
   function docLang(){return S.docLang||A.lang}
@@ -857,10 +858,16 @@ let DOC_STYLE_COMMITTED=JSON.stringify(mergeDocStyle(DOC_STYLE));
     if(S.built&&S.built.signature===sig)return Promise.resolve(S.built);
     if(S.buildPromise)return S.buildPromise;
     const token=++S.buildToken;
+    const styleVersion=DOC_STYLE_VERSION;
     S.error=null;
     S.buildPromise=buildPdf(sig,token).then(built=>{
       if(token!==S.buildToken)return S.built;
       if(S.signature!==sig){try{URL.revokeObjectURL(built.pdfUrl)}catch{}return S.built}
+      if(styleVersion!==DOC_STYLE_VERSION){
+        try{URL.revokeObjectURL(built.pdfUrl)}catch{}
+        S.buildPromise=null;
+        return ensureBuilt();
+      }
       if(!offersMode())applyStoredPageEdits(built);
       S.built=built;
       if(offersMode()){
