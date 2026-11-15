@@ -320,15 +320,18 @@
       const due=e.label==='maintenance'?maintenanceLabel:extraDateCond(e);
       charges.push('<div class="pdf-charge"><span class="lbl">'+label+(due?' · '+due:'')+'</span><b class="val">'+amount(e.amount)+'</b></div>');
     }
-    for(const x of (s.includedItems||[])){
-      if(x.key==='maintenance'||!(x.amount>0))continue;
-      charges.push('<div class="pdf-charge pdf-charge-included"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+amount(x.amount)+'</b></div>');
-    }
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
-    const extrasHtml=charges.length?sectionTitle(t('المستحقات الإضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
-    const feeMeta=[p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');
-    const feeLine=s.commission?'<div class="pdf-support-line pdf-fee-line"><b>'+names.fee()+(feeMeta?' ('+feeMeta+')':'')+':</b> <span class="pdf-fee-amount">'+amount(s.commission)+'</span></div>':'';
-    const depositHtml=s.commission?sectionTitle(t('مبالغ إضافية','Additional amounts'),'pdf-deposit-title')+'<div class="pdf-deposit-block">'+feeLine+'</div>':'';
+    const includedRows=(s.includedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
+    const excludedRows=(s.excludedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount,due:x.due&&x.dueMode==='date'?t('بتاريخ','on')+' '+data.f.date(x.due):''}));
+    const priceRows=[...includedRows,...excludedRows];
+    const includedHtml=priceRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+priceRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+    const excludedHtml='';
+    const extrasHtml=charges.length?sectionTitle(t('مستحقات إضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
+    const feeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
+    const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
+    const feeMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
+    const feeLine=s.commission?'<div class="pdf-support-line pdf-fee-line"><b>'+feeMeta+':</b> <span class="pdf-fee-amount">'+amount(s.commission)+'</span></div>':'';
+    const depositHtml=s.commission?sectionTitle(t('عمولة الوساطة','Brokerage commission'),'pdf-deposit-title')+'<div class="pdf-deposit-block">'+feeLine+'</div>':'';
     const identity='<div class="pdf-identity"><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div></div>';
     const includedText=(s.includedItems||[]).map(x=>esc(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+amount(x.amount):'')).join(' · ');
     const legalFinancial=p.legal&&p.legal.noDues?(s.cash&&!(s.extras.length||(s.commission&&p.payer==='buyer'))?t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.'):t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.')):'';
@@ -357,12 +360,13 @@
       const cashChargesHtml=cashCharges.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+c.label+(c.due?' · '+dueBdi(c.due):'')+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
       const cashTotal='<div class="pdf-price-block pdf-cash-total"><span class="lbl">'+cashTotalLabel+'</span><b class="amt">'+amount(s.price)+'</b></div>';
       const cashIncluded=s.includes.length?sectionTitle(t('السعر يشمل','Price includes'),'pdf-cash-included-title')+'<div class="pdf-cash-included-list">'+includedText+'</div>':'';
-      return heading+identity+cashTotal+cashIncluded+cashChargesHtml+legalHtml+scheduleHeading;
+      const cashExcluded=(s.excludedItems||[]).length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-cash-excluded-title')+'<div class="pdf-charges">'+s.excludedItems.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+      return heading+identity+cashTotal+cashIncluded+cashExcluded+cashChargesHtml+legalHtml+scheduleHeading;
     }
     const support=[];
     if(legalHtml)support.push(legalHtml);
     if(s.gap&&!s.selectedOnly)support.push('<div class="pdf-support-line"><b>'+t('غير مجدول:','Unscheduled:')+'</b> '+amount(s.gap)+'</div>');
-    return heading+identity+priceBlock+payGrid+extrasHtml+depositHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
+    return heading+identity+priceBlock+payGrid+includedHtml+excludedHtml+extrasHtml+depositHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
   }
   function pdfTableShell(lang,layout){
     const t=(ar,en)=>lang==='ar'?ar:en;
@@ -450,10 +454,20 @@
       const last=pages[pages.length-1];
       const schedule=last.querySelector('.pdf-schedule');
       if(schedule){
-        const total=document.createElement('div');
-        total.className='pdf-schedule-total';
-        total.innerHTML='<span>'+(lang==='ar'?'الإجمالي':'Total')+'</span><b><bdi dir="ltr">'+f.intl.format(s.price/100)+'</bdi> '+data.curr+'</b>';
-        schedule.appendChild(total);
+        const table=schedule.querySelector('.pdf-table');
+        if(table){
+          let tfoot=table.querySelector('tfoot');
+          if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
+          const tr=document.createElement('tr');
+          tr.className='pdf-total-row';
+          tr.innerHTML='<td class="type-cell total-label">'+(lang==='ar'?'الإجمالي':'Total')+'</td><td class="num total-amount"><bdi dir="ltr">'+f.intl.format(s.price/100)+'</bdi> '+data.curr+'</td><td></td><td></td>';
+          tfoot.appendChild(tr);
+        }else{
+          const total=document.createElement('div');
+          total.className='pdf-schedule-total';
+          total.innerHTML='<span>'+(lang==='ar'?'الإجمالي':'Total')+'</span><b><bdi dir="ltr">'+f.intl.format(s.price/100)+'</bdi> '+data.curr+'</b>';
+          schedule.appendChild(total);
+        }
       }
     }
     // A hidden/background tab pauses requestAnimationFrame; never let that stall pagination.
@@ -908,6 +922,30 @@
     pdfAmountBase.set(totalEl,next);
     pdfAmountBase.set(scope.partEl,value);
   }
+  const COLOR_PRESETS_KEY='mizan.colorPresets';
+  function readColorPresets(){
+    try{const v=JSON.parse(localStorage.getItem(COLOR_PRESETS_KEY)||'[]');return Array.isArray(v)?v.filter(x=>/^#[0-9a-f]{6}$/i.test(String(x))).slice(0,12):[]}catch{return[]}
+  }
+  function writeColorPresets(list){
+    try{localStorage.setItem(COLOR_PRESETS_KEY,JSON.stringify([...new Set(list)].slice(0,12)))}catch{}
+  }
+  function hidePdfColorPresets(){
+    const el=document.getElementById('pdfColorPresets');
+    if(el)el.hidden=true;
+  }
+  function pdfColorPresetsHtml(){
+    const colors=readColorPresets();
+    return '<div class="pdf-color-presets-head"><b>'+tt('الألوان المحفوظة','Saved colors')+'</b><button type="button" class="pdf-fb-close" data-fb-colors-close aria-label="'+tt('إغلاق','Close')+'">×</button></div><div class="pdf-color-swatches">'+(colors.length?colors.map(c=>'<span class="pdf-color-preset"><button type="button" data-fb-saved-color="'+c+'" style="background:'+c+'" aria-label="'+c+'" title="'+c+'"></button><button type="button" class="pdf-color-del" data-fb-del-color="'+c+'" aria-label="'+tt('حذف اللون','Remove color')+'" title="'+tt('حذف اللون','Remove color')+'">×</button></span>').join(''):'<span class="pdf-color-empty">'+tt('لا توجد ألوان محفوظة بعد.','No saved colors yet.')+'</span>')+'</div><button type="button" class="pdf-color-save" data-fb-save-color>'+tt('+ حفظ اللون الحالي','+ Save current color')+'</button>';
+  }
+  function showPdfColorPresets(){
+    let el=document.getElementById('pdfColorPresets');
+    if(!el){el=document.createElement('div');el.id='pdfColorPresets';el.className='pdf-color-presets';document.body.appendChild(el)}
+    el.innerHTML=pdfColorPresetsHtml();el.hidden=false;
+    const bar=document.getElementById('pdfFontBar');
+    const r=bar?bar.getBoundingClientRect():null;
+    el.style.left=Math.max(8,Math.min(window.innerWidth-260,(r?r.left:8)))+'px';
+    el.style.top=((r?r.bottom:74)+6)+'px';
+  }
   const PDF_FONT_FAMILIES=[
     ['"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif','IBM Plex Sans Arabic'],
     ['Calibri,"Segoe UI",Tahoma,sans-serif','Calibri'],
@@ -935,12 +973,14 @@
       '<button type="button" class="pdf-fb-btn pdf-fb-preset" data-fb="preset" title="'+tt('تنسيق المستند الافتراضي','Default document formatting')+'">'+tt('مستند','Doc')+'</button>'+
       '<label class="pdf-font-color" title="'+tt('لون الخط','Font color')+'"><input type="color" data-fb-color value="#123d36"><span class="pdf-font-swatch" aria-hidden="true"></span></label>'+
       '<input class="pdf-font-hex" data-fb-hex maxlength="9" value="#123d36" spellcheck="false" aria-label="'+tt('كود اللون','Color code')+'">'+
+      '<button type="button" class="pdf-fb-btn pdf-fb-colors" data-fb-colors title="'+tt('الألوان المحفوظة','Saved colors')+'" aria-label="'+tt('الألوان المحفوظة','Saved colors')+'"><span class="pdf-color-dot" aria-hidden="true"></span></button>'+
       '<select data-fb-reset aria-label="'+tt('استعادة الافتراضي','Restore default')+'"><option value="">'+tt('استعادة…','Reset…')+'</option><option value="all">'+tt('الكل','All')+'</option><option value="color">'+tt('اللون','Color')+'</option><option value="size">'+tt('الحجم','Size')+'</option><option value="weight">'+tt('الوزن','Weight')+'</option><option value="family">'+tt('الخط','Font')+'</option></select>'+
       '<button type="button" class="pdf-fb-close" data-fb-close aria-label="'+tt('إغلاق','Close')+'" title="'+tt('إغلاق','Close')+'">×</button>';
   }
   function hidePdfFontBar(){
     const bar=document.getElementById('pdfFontBar');
     if(bar)bar.hidden=true;
+    hidePdfColorPresets();
   }
   function hidePdfFontTrigger(){
     const el=document.getElementById('pdfFontTrigger');
@@ -1128,11 +1168,22 @@
   });
   document.addEventListener('scroll',()=>hidePdfFontTrigger(),true);
   document.addEventListener('mousedown',e=>{
-    const bar=e.target.closest('#pdfFontBar');
-    if(bar&&e.target.closest('button'))e.preventDefault();
+    const zone=e.target.closest('#pdfFontBar,#pdfColorPresets');
+    if(zone&&e.target.closest('button'))e.preventDefault();
   },true);
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-fb-close]')){hidePdfFontBar();return}
+    if(e.target.closest('[data-fb-colors]')){e.preventDefault();const el=document.getElementById('pdfColorPresets');if(el&&!el.hidden)hidePdfColorPresets();else showPdfColorPresets();return}
+    if(e.target.closest('[data-fb-colors-close]')){hidePdfColorPresets();return}
+    const savedColor=e.target.closest('[data-fb-saved-color]');
+    if(savedColor){const c=savedColor.dataset.fbSavedColor;const bar=document.getElementById('pdfFontBar');const ci=bar&&bar.querySelector('[data-fb-color]'),hi=bar&&bar.querySelector('[data-fb-hex]');if(ci)ci.value=c;if(hi)hi.value=c;applyFontStyle({color:c});return}
+    const delColor=e.target.closest('[data-fb-del-color]');
+    if(delColor){writeColorPresets(readColorPresets().filter(x=>x!==delColor.dataset.fbDelColor));showPdfColorPresets();return}
+    if(e.target.closest('[data-fb-save-color]')){
+      const bar=document.getElementById('pdfFontBar');const c=bar&&bar.querySelector('[data-fb-color]')?.value;
+      if(c){writeColorPresets([...readColorPresets(),c]);showPdfColorPresets()}
+      return;
+    }
     const fb=e.target.closest('[data-fb]');
     if(fb){pdfFontAction(fb.dataset.fb);return}
   });
@@ -1241,7 +1292,6 @@
     return '<div class="page-card pdf-offer-card'+(checked?' on':'')+'" data-pdf-offer-card="'+oi+'">'+
       '<input class="page-check" type="checkbox" data-pdf-offer="'+oi+'" aria-label="'+esc(offerLabel(oi))+' · '+tt('تحديد ملف PDF','Select PDF file')+'" '+(checked?'checked':'')+'>'+
       '<img src="'+first.thumb+'" alt="'+esc(offerLabel(oi))+'" data-pv-page="'+g.pages[0]+'">'+
-      '<span class="pno">'+pageCountLabel(g.pages.length)+'</span>'+
       '<div class="pdf-offer-info"><div><b>'+esc(offerLabel(oi))+'</b>'+(offerClient(oi)?'<span>'+esc(offerClient(oi))+'</span>':'')+'</div><button type="button" class="pdf-offer-open" data-pv-page="'+g.pages[0]+'" aria-label="'+tt('فتح PDF','Open PDF')+'" title="'+tt('فتح PDF','Open PDF')+'">'+icon('open',14)+'</button></div>'+
     '</div>';
   }
@@ -1344,7 +1394,7 @@
     const copyLabel=S.textMode==='horizontal'?tt('نسخ أفقي','Copy horizontal'):tt('نسخ رأسي','Copy vertical');
     const fileLabel=S.pdfLayout==='horizontal'?tt('ملف أفقي','File horizontal'):tt('ملف رأسي','File vertical');
     const fileMenu='<div class="share-layout-menu" role="menu" aria-label="'+tt('شكل ملف PDF','PDF file layout')+'"><button type="button" data-file-layout="horizontal" class="'+(S.pdfLayout==='horizontal'?'on':'')+'">'+tt('ملف أفقي','File horizontal')+'</button><button type="button" data-file-layout="vertical" class="'+(S.pdfLayout==='vertical'?'on':'')+'">'+tt('ملف رأسي','File vertical')+'</button></div>';
-    return '<div class="share-controls"><button type="button" class="share-toggle" data-share-act="toggle-language">'+(docLang()==='ar'?'العربية':'EN')+'</button><span class="share-layout-wrap"><button type="button" class="share-toggle share-layout-btn" data-share-act="toggle-layout" title="'+tt('كليك شمال: نسخ فقط · كليك يمين: شكل الملف','Left click: copy only · Right click: file layout')+'">'+copyLabel+'</button><button type="button" class="share-layout-caret" data-share-act="layout-menu" aria-haspopup="menu" aria-expanded="false" title="'+fileLabel+'">▾</button>'+fileMenu+'</span><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button><button type="button" class="share-zoom-btn" data-share-act="zoom-toggle" title="'+tt('ملاءمة الصفحة أو الرجوع إلى 100%','Fit page or return to 100%')+'">'+zoom+'%</button>'+(S.built?'<span class="share-doc-meta">'+pageCountLabel(S.built.pages.length)+'</span>':'')+'</div>';
+    return '<div class="share-controls"><button type="button" class="share-toggle" data-share-act="toggle-language">'+(docLang()==='ar'?'العربية':'EN')+'</button><span class="share-layout-wrap"><button type="button" class="share-toggle share-layout-btn" data-share-act="toggle-layout" title="'+tt('كليك شمال: نسخ فقط · كليك يمين: شكل الملف','Left click: copy only · Right click: file layout')+'">'+copyLabel+'</button><button type="button" class="share-layout-caret" data-share-act="layout-menu" aria-haspopup="menu" aria-expanded="false" title="'+fileLabel+'">▾</button>'+fileMenu+'</span><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button><button type="button" class="share-zoom-btn" data-share-act="zoom-toggle" title="'+tt('ملاءمة الصفحة أو الرجوع إلى 100%','Fit page or return to 100%')+'">'+zoom+'%</button></div>';
   }
   function footHtml(){
     if(S.result){
@@ -2664,6 +2714,7 @@
     if(e.target.matches('[data-note-text]')&&S.open){
       const type=e.target.dataset.noteText;
       S[type+'Text']=e.target.value;S[type+'Dirty']=true;S[type+'Preset']='';
+      try{A.setNoteDefault(type,e.target.value)}catch{}
       S.text=buildShareText();
       if(S.tab==='text')updateTextArea();
       return;

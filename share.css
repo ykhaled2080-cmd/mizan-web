@@ -899,3 +899,27 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-font-trigger:hover{background:var(--tint)}
 .pdf-font-trigger[hidden]{display:none}
 .pdf-page .pdf-legal-line{font-weight:700!important}
+
+.pdf-table tfoot td{font-family:var(--pdf-font-body);font-size:13px;font-weight:700;color:#123d35;padding:7px 8px;border-top:1.5px solid #123d35;background:transparent;white-space:nowrap}
+.pdf-table tfoot .total-label{text-align:center;font-family:var(--pdf-font-sub)}
+.pdf-table tfoot .num.total-amount{text-align:center;direction:ltr}
+
+.share-x-float{width:30px;height:30px;border:0;border-radius:8px;background:transparent;box-shadow:none;color:var(--sub);font-size:19px}
+.share-x-float:hover{background:var(--tint);color:var(--text)}
+.share-x-float:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+@media(max-width:760px){.share-x-float{top:8px;inset-inline-end:8px;width:30px;height:30px}}
+
+.pdf-fb-colors .pdf-color-dot{display:block;width:13px;height:13px;border-radius:50%;background:conic-gradient(#123d35,#d6b778,#14614f,#263b36,#123d35);border:1px solid #ffffff88}
+.pdf-color-presets{position:fixed;z-index:321;width:250px;padding:9px;border:1px solid var(--rule);border-radius:9px;background:var(--surface);color:var(--text);box-shadow:0 14px 38px #11322933}
+.pdf-color-presets[hidden]{display:none}
+.pdf-color-presets-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.pdf-color-presets-head b{font-size:11px;font-weight:700;color:var(--green)}
+.pdf-color-swatches{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center}
+.pdf-color-preset{position:relative;display:inline-flex;align-items:center}
+.pdf-color-preset>[data-fb-saved-color]{width:22px;height:22px;padding:0;border:1px solid var(--rule);border-radius:5px;cursor:pointer}
+.pdf-color-del{position:absolute;top:-5px;inset-inline-end:-5px;width:13px;height:13px;padding:0;border:1px solid var(--surface);border-radius:50%;background:var(--sub);color:var(--surface);font-size:9px;line-height:1;display:grid;place-items:center}
+.pdf-color-empty{font-size:10px;color:var(--sub);line-height:1.5}
+.pdf-color-save{width:100%;height:26px;margin-top:7px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--green);font-size:10.5px;font-weight:600}
+.pdf-color-save:hover{background:var(--tint)}
+
+.pdf-page .pdf-table td.num,.pdf-page .pdf-table td.type-cell .type{font-weight:400!important}

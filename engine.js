@@ -51,7 +51,7 @@ function normalizeOffer(input) {
   for (const key of ITEM_KEYS) {
     const item = o.items[key] && typeof o.items[key] === 'object' ? o.items[key] : {};
     o.items[key] = {
-      state: ['unspecified', 'included', 'extra'].includes(item.state) ? item.state : 'unspecified',
+      state: ['unspecified', 'included', 'excluded', 'extra'].includes(item.state) ? item.state : 'unspecified',
       amount: Number.isFinite(+item.amount) ? Math.max(0, +item.amount) : 0,
       due: isMonth(item.due) ? item.due : '',
       day: dayPart(item.day)
@@ -142,7 +142,8 @@ function schedule(input) {
     ? fullDate(p.maintenanceDate, p.maintenanceDay)
     : handoverDate;
   const maintenanceSplit = !cash && p.maintenanceDateMode === 'split';
-  const customPrincipal = cash ? 0 : p.customRows.reduce((sum, row) => sum + (row.value > 0 ? inputPounds(row.value) : 0), 0);
+  const visibleCustomRows = cash ? [] : p.customRows.filter(row => !p.hidden.includes(row.id));
+  const customPrincipal = cash ? 0 : visibleCustomRows.reduce((sum, row) => sum + (row.value > 0 ? inputPounds(row.value) : 0), 0);
   const installmentBudget = cash ? 0 : financed - customPrincipal;
   let overAllocated = !cash && installmentBudget < 0;
   const valid = price > 0 && Number.isFinite(financed) && (cash || (financed >= 0 && planCount > 0 && handoverDate >= startDate && installmentBudget >= 0));
@@ -212,7 +213,7 @@ function schedule(input) {
     if (edit && isDate(edit.date)) row.date = edit.date;
   }
 
-  const generated = rows.filter(row => row.generated);
+  const generated = rows.filter(row => row.generated && !p.hidden.includes(row.id));
   const fixed = new Map();
   const sortedAllocations = [...p.allocations].sort((a, b) => (a.month ? 1 : 0) - (b.month ? 1 : 0));
   for (const allocation of sortedAllocations) {
@@ -268,6 +269,29 @@ function schedule(input) {
   let balance = price;
   let installmentNumber = 0;
   const principalTypes = ['down', 'delivery', 'installment', 'payment'];
+  const principalRows = active.filter(row => principalTypes.includes(row.type));
+  let reconcile = price - principalRows.reduce((sum, row) => sum + row.value, 0);
+  if (!cash && reconcile !== 0) {
+    const pool = active.filter(row => row.type === 'installment' || row.type === 'payment');
+    const fallback = active.filter(row => row.type === 'delivery' || row.type === 'down');
+    const targets = pool.length ? pool : fallback;
+    if (!targets.length) {
+      overAllocated = true;
+    } else if (reconcile > 0) {
+      targets.forEach((row, index) => { row.value += part(reconcile, index + 1, targets.length); });
+      reconcile = 0;
+    } else {
+      let remaining = -reconcile;
+      [...targets].sort((a, b) => b.value - a.value).forEach(row => {
+        if (remaining <= 0) return;
+        const take = Math.min(row.value, wholePounds(remaining));
+        row.value -= take;
+        remaining -= take;
+      });
+      if (remaining > 0) overAllocated = true;
+      reconcile = remaining;
+    }
+  }
   for (const row of active) {
     if (principalTypes.includes(row.type)) balance -= row.value;
     row.balance = balance;
@@ -294,6 +318,12 @@ function schedule(input) {
   if (p.maintenanceState === 'included') includes.push('maintenance');
   for (const key of ITEM_KEYS) if (p.items[key].state === 'included') includes.push(key);
   const includedItems = includes.map(key => ({ key, amount: key === 'maintenance' ? 0 : itemAmountCents(p.items[key]) }));
+  const excludedItems = [];
+  for (const key of ITEM_KEYS) {
+    const item = p.items[key];
+    if (!item || item.state !== 'excluded') continue;
+    excludedItems.push({ key, label: key, amount: itemAmountCents(item), due: item.due ? fullDate(item.due, item.day) : '', dueMode: item.due ? 'date' : '' });
+  }
 
   const extrasTotal = extras.reduce((sum, item) => sum + (item.excluded ? 0 : item.amount), 0);
   /* The unit price is the offer total; extra charges and commission are shown
@@ -314,8 +344,8 @@ function schedule(input) {
     maintenanceDate,
     deliveryDate,
     commission, financed, count, planCount, rows: active, total, gap,
-    extras, includes, includedItems, extrasTotal, remainingUnit,
-    customPrincipal, installmentBudget, overAllocated,
+    extras, includes, includedItems, excludedItems, extrasTotal, remainingUnit,
+    customPrincipal, installmentBudget, overAllocated, reconcile,
     downPct: price ? down / price * 100 : 0,
     deliveryPct: price ? delivery / price * 100 : 0,
     maintenancePct: price ? maintenanceExtra / price * 100 : 0,

@@ -520,3 +520,32 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:6px}
 .schedule-grid th.cell-date,.schedule-grid td.cell-date{text-align:right!important;padding-inline:6px}
 }
+
+/* 1.0.21 overview rail hierarchy and native table scrollbar */
+.rail-overview{gap:13px}
+.side-block.rail-group{gap:3px;min-width:0}
+.rail-head{display:flex;align-items:center;gap:5px;min-width:0;margin-bottom:1px}
+.rail-accent{width:3px;height:12px;border-radius:2px;background:var(--green);flex:none}
+.rail-head h3{font-size:11.5px;line-height:1.3;font-weight:600;color:var(--green);margin:0;letter-spacing:0}
+.rail-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:11.5px;line-height:1.6;color:var(--side-muted)}
+.rail-line b{font-weight:600;color:var(--side-ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rail-primary span{color:var(--side-ink);font-weight:600}
+.rail-primary b{font-size:14px;color:var(--green)}
+.rail-selected{color:var(--green);font-size:10.8px}
+.rail-overview .side-lines .extra-line{font-size:11.5px;line-height:1.6}
+.rail-overview .side-lines .extra-name{font-weight:600;color:var(--side-ink)}
+.rail-overview .side-lines .extra-amount{font-size:12px;color:var(--green)}
+@media(min-width:761px){
+.schedule-table-col .tablewrap{max-height:556px;overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:var(--green) transparent;-ms-overflow-style:auto}
+.workspace .tablewrap{scrollbar-width:thin;-ms-overflow-style:auto}
+.workspace .tablewrap::-webkit-scrollbar{display:block;width:8px;height:8px}
+.workspace .tablewrap::-webkit-scrollbar-thumb{background:var(--green);border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+.workspace .tablewrap::-webkit-scrollbar-track{background:transparent}
+}
+
+/* Table body values/type stay regular; only headers keep emphasis. */
+.schedule-grid td.cell-value,.schedule-grid td.cell-balance{font-weight:400!important}
+.schedule-grid td.cell-type,.schedule-grid td.cell-type .type{font-weight:400!important}
+
+.schedule-grid td.cell-value .money,.schedule-grid td.cell-balance .money{font-weight:400!important}
+
