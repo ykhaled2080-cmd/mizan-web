@@ -552,7 +552,7 @@ let DOC_STYLE=readDocStyle();
     const t=(ar,en)=>lang==='ar'?ar:en;
     if(layout==='vertical')return '<div class="pdf-list" data-pdf-body></div>';
     const arrow=lang==='ar'?'rtl':'ltr';
-    return '<table class="pdf-table" dir="'+arrow+'"><colgroup><col style="width:28%"><col style="width:28%"><col style="width:26%"><col style="width:18%"></colgroup><thead><tr><th>'+t('نوع الدفعة','Payment type')+'</th><th>'+t('القيمة','Amount')+'</th><th>'+t('رصيد الوحدة','Property balance')+'</th><th>'+t('تاريخ الدفعة','Payment date')+'</th></tr></thead><tbody data-pdf-body></tbody></table>';
+    return '<table class="pdf-table" dir="'+arrow+'"><colgroup><col style="width:24%"><col style="width:24%"><col style="width:23%"><col style="width:29%"></colgroup><thead><tr><th>'+t('نوع الدفعة','Payment type')+'</th><th>'+t('تاريخ الدفعة','Payment date')+'</th><th>'+t('القيمة','Amount')+'</th><th>'+t('رصيد الوحدة','Property balance')+'</th></tr></thead><tbody data-pdf-body></tbody></table>';
   }
   function pdfRow(lang,r,data,layout){
     const t=(ar,en)=>lang==='ar'?ar:en;
@@ -561,12 +561,12 @@ let DOC_STYLE=readDocStyle();
     if(layout==='vertical'){
       const card=document.createElement('div');
       card.className='pdf-pay';card.dataset.rowId=r.id;
-      card.innerHTML='<div class="pdf-pay-head"><span class="date">'+data.f.date(r.date)+'</span><span class="type">'+nm+'</span></div><div class="pdf-pay-line"><span class="lbl">'+t('القيمة','Amount')+'</span><b class="val">'+data.f.intl.format(r.value/100)+' '+data.curr+'</b></div><div class="pdf-pay-line"><span class="lbl">'+t('الرصيد','Balance')+'</span><b class="val">'+data.f.intl.format(r.balance/100)+' '+data.curr+'</b></div>';
+      card.innerHTML='<div class="pdf-pay-head"><span class="type">'+nm+'</span><span class="date">'+data.f.date(r.date)+'</span></div><div class="pdf-pay-line"><span class="lbl">'+t('القيمة','Amount')+'</span><b class="val">'+data.f.intl.format(r.value/100)+' '+data.curr+'</b></div><div class="pdf-pay-line"><span class="lbl">'+t('الرصيد','Balance')+'</span><b class="val">'+data.f.intl.format(r.balance/100)+' '+data.curr+'</b></div>';
       return card;
     }
     const tr=document.createElement('tr');
     tr.dataset.rowId=r.id;
-    tr.innerHTML='<td class="type-cell '+r.type+'"><span class="type">'+nm+'</span></td><td class="num">'+data.f.intl.format(r.value/100)+'</td><td class="num">'+data.f.intl.format(r.balance/100)+'</td><td class="date">'+data.f.date(r.date)+'</td>';
+    tr.innerHTML='<td class="type-cell '+r.type+'"><span class="type">'+nm+'</span></td><td class="date"><bdi dir="ltr">'+data.f.date(r.date)+'</bdi></td><td class="num">'+data.f.intl.format(r.value/100)+'</td><td class="num">'+data.f.intl.format(r.balance/100)+'</td>';
     return tr;
   }
   function makePage(lang,data,cont,layout,summaryOnly){
@@ -655,7 +655,7 @@ let DOC_STYLE=readDocStyle();
           if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
           const tr=document.createElement('tr');
           tr.className='pdf-total-row';
-          tr.innerHTML='<td class="type-cell total-label">'+totalLabel+'</td><td class="num total-amount"><bdi dir="ltr">'+f.intl.format(pdfSum/100)+'</bdi> '+data.curr+'</td><td></td><td></td>';
+          tr.innerHTML='<td class="type-cell total-label">'+totalLabel+'</td><td class="date"></td><td class="num total-amount"><bdi dir="ltr">'+f.intl.format(pdfSum/100)+'</bdi> '+data.curr+'</td><td></td>';
           tfoot.appendChild(tr);
           if(footerMismatch&&mismatchText){
            const note=document.createElement('tr');

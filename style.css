@@ -656,3 +656,26 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .summary-classification.summary-full,.summary-classification.summary-four,.summary-classification.summary-two,.summary-classification.summary-one{grid-template-columns:1fr!important}
 }
 
+
+/* 1.0.32: balanced RTL payment columns: checkbox | type | date | value | balance. */
+@media(min-width:761px){
+.schedule-grid{min-width:0}
+.schedule-table-col .tablewrap{padding-right:16px}
+.schedule-grid col.col-check{width:42px}
+.schedule-grid col.col-type{width:23%}
+.schedule-grid col.col-date{width:23%}
+.schedule-grid col.col-value{width:22%}
+.schedule-grid col.col-balance{width:27%}
+.schedule-grid th,.schedule-grid td{padding:7px 10px}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{padding-inline:8px;text-align:center!important}
+.schedule-grid th.cell-type,.schedule-grid td.cell-type,
+.schedule-grid th.cell-date,.schedule-grid td.cell-date,
+.schedule-grid th.cell-value,.schedule-grid td.cell-value,
+.schedule-grid th.cell-balance,.schedule-grid td.cell-balance{text-align:center!important;padding-inline:10px}
+.schedule-grid th.cell-type,.schedule-grid th.cell-date,
+.schedule-grid th.cell-value,.schedule-grid th.cell-balance{direction:inherit!important}
+.schedule-grid td.cell-date{white-space:nowrap;direction:ltr!important}
+.schedule-grid td.cell-value,.schedule-grid td.cell-balance{white-space:nowrap;direction:ltr!important}
+.schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:16px;height:16px;margin:0}
+.schedule-grid td.cell-type{white-space:normal;overflow-wrap:anywhere}
+}
