@@ -429,13 +429,14 @@ function calculator(){
  const extraRows=(s.extras||[]).map(e=>({name:itemName(e.label),amount:e.amount,meta:extraMeta(normalizeOffer(p),e)}));
  const commissionLine=s.commission?'<div class="extra-line extra-commission"><b class="extra-name">'+t('عمولة الوساطة','Brokerage commission')+' - '+commissionMeta+':</b> <b class="extra-amount">'+fmtMoney(s.commission/100)+' '+curr()+'</b></div>':'';
  const extraCount=extraRows.length;
+ const extrasWide=extraRows.some(x=>x.meta);
  const extrasBlock=extraCount?'<div class="side-block rail-group">'+railHead(t('مستحقات إضافية','Additional charges'))+'<div class="'+(extraCount>=2?'side-lines summary-lines-grid':'side-lines')+'">'+extraRows.map(x=>itemLine(x.name,x.amount,x.meta)).join('')+'</div></div>':'';
  const commissionBlock=s.commission?'<div class="side-block rail-group">'+railHead(t('أموال إضافية','Additional amounts'))+'<div class="side-lines">'+commissionLine+'</div></div>':'';
  const summaryNote=infoLines.length?'<div class="summary-info">'+infoLines.join('')+'</div>':'';
  const summaryGroups=[];
  if(includedRows.length)summaryGroups.push({count:includedRows.length,html:includedBlock});
  if(excludedRows.length)summaryGroups.push({count:excludedRows.length,html:excludedBlock});
- if(extraCount)summaryGroups.push({count:extraCount,html:extrasBlock});
+ if(extraCount)summaryGroups.push({count:extraCount+(extrasWide?1:0),html:extrasBlock});
  if(s.commission)summaryGroups.push({count:1,html:commissionBlock});
  const summaryWeight=count=>Math.min(3.2,1+Math.max(0,count-1)*0.55);
  const summaryStyle=summaryGroups.length>1?' style="grid-template-columns:'+summaryGroups.map(g=>'minmax(0,'+summaryWeight(g.count).toFixed(2)+'fr)').join(' ')+'"':'';

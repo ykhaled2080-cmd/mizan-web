@@ -938,6 +938,7 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-page .pdf-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);background:var(--div-color,#d2dcd5);border-radius:1px}
 .pdf-page .pdf-divider:hover::before,.pdf-page .pdf-divider.selected::before{background:var(--green)}
 .pdf-page .pdf-divider.selected{outline:1px dashed rgba(20,97,79,.35);outline-offset:-2px}
+body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-select:none!important}
 .pdf-page .pdf-title{font-family:var(--doc-title-font);font-size:var(--doc-title-size);font-weight:var(--doc-title-weight);color:var(--doc-title-color)}
 .pdf-page .pdf-sectionhead h2{font-family:var(--doc-main-font);font-size:var(--doc-main-size);font-weight:var(--doc-main-weight);color:var(--doc-main-color)}
 .pdf-page .pdf-section-title h3,.pdf-page .pdf-legal-title{font-family:var(--doc-sub-font);font-size:var(--doc-sub-size);font-weight:var(--doc-sub-weight);color:var(--doc-sub-color)}
@@ -949,7 +950,18 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-page .pdf-sectionhead span,.pdf-page .pdf-folio,.pdf-page .pdf-price-block .pdf-curr,.pdf-page .pdf-pay-item .val small,.pdf-page .pdf-table td.date,.pdf-page .pdf-sitem .meta,.pdf-page .pdf-due{font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color)}
 .pdf-page .pdf-legal-line span{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:var(--doc-label-color)}
 .pdf-page .pdf-total .amt small,.pdf-page .pdf-total-note,.pdf-page .pdf-schedule-total-note{font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color)}
+.pdf-page .pdf-due{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:var(--doc-label-color)}
 .pdf-page .pdf-table th{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:#eef6f0}
+.pdf-page .pdf-price-block .amt{color:#193f34}
+.pdf-page .pdf-table td{font-weight:400;color:#243c34}
+.pdf-page .pdf-table td.date{color:#243c34}
+.pdf-page .pdf-table tfoot td{font-size:13px;font-weight:700}
+.pdf-page .pdf-table tfoot .num.total-amount{font-size:13px;font-weight:700}
+.pdf-page .pdf-cash-total .amt{font-size:22px;font-weight:700}
+.pdf-page .pdf-legal-line{font-size:13px;font-weight:400;color:#334b43}
+.pdf-page .pdf-legal-line span{font-size:13px;font-weight:700;color:#4e665d}
+.pdf-page .pdf-support-line{font-size:12.5px;font-weight:400;color:#334b43}
+.pdf-page .pdf-support-line b{font-weight:600;color:#4e665d}
 
 /* Document style / dividers / presets panel */
 .doc-style-panel{position:absolute;top:58px;left:50%;transform:translateX(-50%);width:min(900px,calc(100% - 32px));z-index:40;max-height:calc(100% - 120px);overflow:auto;background:var(--surface);border:1px solid var(--rule);border-radius:12px;box-shadow:0 22px 60px #11322933;padding:12px}
@@ -987,4 +999,10 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .doc-style-panel{position:fixed;inset:8px 8px calc(8px + env(safe-area-inset-bottom,0px));left:auto;transform:none;width:auto;max-height:78dvh}
 .ds-grid{grid-template-columns:1fr}
 }
+/* Compact document-preset picker (the full formatting panel is retired). */
+.share-preset-picker{display:inline-flex;align-items:center;gap:2px;min-width:0}
+.share-preset-picker select{height:26px;max-width:150px;padding:2px 6px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px}
+.share-preset-save{display:inline-grid;place-items:center;width:26px;height:26px;min-width:26px;padding:0;border:0;background:transparent;color:var(--sub)}
+.share-preset-save:hover{background:var(--tint);color:var(--green)}
+@media(max-width:760px){.share-preset-picker select{max-width:105px}}
 

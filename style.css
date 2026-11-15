@@ -358,6 +358,7 @@ html[data-font-custom] #app{font-size:var(--ui-base-size)}
  text-align:center;
  white-space:nowrap;
  border-bottom:0;
+ border-top:1px solid color-mix(in srgb,var(--green) 18%,var(--rule));
  box-shadow:inset 0 -1px 0 var(--rule)!important;
 }
 .schedule-grid tbody tr:not(.row-edit-line) td{
@@ -599,7 +600,7 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-summary .rail-head h3{font-size:11.5px;letter-spacing:0}
 .schedule-summary .side-lines .extra-line{display:block;font-size:12px;line-height:1.65;padding:0}
 .schedule-summary .side-lines .extra-name{font-weight:600;color:var(--side-ink)}
-.schedule-summary .side-lines .extra-amount{font-size:12.5px}
+.schedule-summary .side-lines .extra-amount{font-size:11.8px}
 .schedule-summary .side-lines.summary-lines-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 18px;align-content:start}
 .schedule-summary .extra-due{white-space:normal}
 .schedule-summary .extra-meta{white-space:nowrap}
@@ -617,15 +618,16 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .titleline .plan-title{margin-inline-start:12px;position:relative;top:3px}
 .titleline .actions .btn[data-act="save"]{border:0!important;border-radius:4px;background:var(--green);color:var(--surface);box-shadow:none!important;padding:7px 13px}
 .titleline .actions .btn[data-act="save"]:hover{filter:brightness(.92)}
-.titleline .actions .btn[data-act="wa-share"]{border:0!important;border-radius:4px;background:color-mix(in srgb,var(--tint) 60%,var(--surface));color:var(--green);box-shadow:none!important;padding:7px 12px}
+.titleline .actions .btn[data-act="wa-share"]{border:1px solid var(--rule)!important;border-radius:6px;background:var(--surface);color:var(--text);box-shadow:none!important;padding:6px 11px}
 .titleline .actions .btn[data-act="wa-share"]:hover{background:var(--tint)}
+.titleline .actions .btn[data-act="wa-share"]:active{background:var(--rule)}
 .hero .kicker{font-weight:700;color:#d8e8d9}
 .hero .big{font-weight:700}
 .hero .metrics div,.hero .metrics span{font-weight:700}
 @media(min-width:761px){
 .schedule-grid{min-width:560px}
 .schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:18px 4px}
-.schedule-grid th.cell-value,.schedule-grid td.cell-value{text-align:center!important;direction:ltr!important;padding-left:8px;padding-right:4px}
+.schedule-grid th.cell-value,.schedule-grid td.cell-value{text-align:center!important;direction:ltr!important;padding-left:20px;padding-right:4px}
 .terms-head h2{margin-inline-start:12px}
 }
 @media(max-width:1400px){
