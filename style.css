@@ -566,3 +566,15 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 /* 1.0.22 heading rules become horizontal, not vertical. */
 .rail-head .rail-accent{order:2;flex:1 1 auto;width:auto;height:1px;background:var(--rule);border-radius:0}
 .rail-head h3{order:1}
+
+/* 1.0.23 equal data columns and right-aligned type */
+@media(min-width:761px){
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:right!important}
+}
+
+.rail-dash{order:2;color:var(--sub);font-size:11px;line-height:1;flex:none}
+.rail-head .rail-accent{order:3}
+
+.rail-rule{height:1px;background:var(--rule);margin-top:2px}
+.rail-commission{gap:5px}
+.rail-commission span{color:var(--side-ink);font-weight:600;line-height:1.55}

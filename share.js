@@ -326,12 +326,13 @@
     const priceRows=[...includedRows,...excludedRows];
     const includedHtml=priceRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+priceRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
     const excludedHtml='';
-    const extrasHtml=charges.length?sectionTitle(t('مستحقات إضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
+    const extrasHtml=charges.length?sectionTitle(t('السعر لا يشمل · مستحقات إضافية','Price does not include · Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const feeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
     const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
     const feeMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
-    const feeLine=s.commission?'<div class="pdf-support-line pdf-fee-line"><b>'+feeMeta+':</b> <span class="pdf-fee-amount">'+amount(s.commission)+'</span></div>':'';
-    const depositHtml=s.commission?sectionTitle(t('عمولة الوساطة','Brokerage commission'),'pdf-deposit-title')+'<div class="pdf-deposit-block">'+feeLine+'</div>':'';
+    const feeLine=s.commission?'<div class="pdf-support-line pdf-fee-line"><b>'+t('المبلغ','Amount')+':</b> <span class="pdf-fee-amount">'+amount(s.commission)+'</span></div>':'';
+    const feeTitle=t('عمولة الوساطة','Brokerage commission')+(feeMeta?' - '+feeMeta:'');
+    const depositHtml=s.commission?sectionTitle(feeTitle,'pdf-deposit-title')+'<div class="pdf-deposit-block">'+feeLine+'</div>':'';
     const identity='<div class="pdf-identity"><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div></div>';
     const includedText=(s.includedItems||[]).map(x=>esc(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+amount(x.amount):'')).join(' · ');
     const legalFinancial=p.legal&&p.legal.noDues?(s.cash&&!(s.extras.length||(s.commission&&p.payer==='buyer'))?t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.'):t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.')):'';
