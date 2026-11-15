@@ -1016,3 +1016,20 @@ body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-se
 
 
 .pdf-page [data-text-id].pdf-text-selected{outline:1px dashed rgba(25,75,61,.72);outline-offset:2px;border-radius:1px}
+
+/* 1.0.37: lighter PDF payment-table typography. */
+.pdf-page .pdf-table thead th{font-weight:600!important}
+.pdf-page .pdf-table tbody td{font-weight:400!important}
+.pdf-page .pdf-table tbody td.date{font-weight:400!important}
+.pdf-page .pdf-table tbody td.type-cell{font-weight:400!important}
+.pdf-page .pdf-table tbody td.type-cell .type{font-weight:400!important}
+.pdf-page .pdf-table tbody td.type-cell.down .type,
+.pdf-page .pdf-table tbody td.type-cell.delivery .type{font-weight:500!important}
+.pdf-page .pdf-table tbody td.value-cell{font-weight:500!important}
+.pdf-page .pdf-table tbody td.balance-cell{font-weight:400!important}
+.pdf-page .pdf-table tfoot td{font-weight:600!important}
+.pdf-page .pdf-table tfoot .num.total-amount{font-weight:600!important}
+.pdf-page .pdf-table tbody td.date{font-size:13px!important}
+.pdf-page .pdf-table tbody td.type-cell .type{font-size:13px!important}
+
+.pdf-page>.pdf-watermark.wm-first{width:53%;max-height:120px;opacity:.075}
