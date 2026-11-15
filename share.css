@@ -927,3 +927,7 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 /* 1.0.24 PDF total reconciliation note */
 .pdf-table tfoot .pdf-total-note td{font-size:9px;font-weight:500;line-height:1.5;color:#8a5a2b;border-top:0;padding:2px 8px 6px;text-align:start;white-space:normal}
 .pdf-schedule-total-note{font-size:9.5px;line-height:1.5;color:#8a5a2b;margin-top:3px;text-align:start}
+
+/* 1.0.27 brokerage commission inside additional-charges group */
+.pdf-charge-commission{border-top:1px solid #d2dcd5;margin-top:3px;padding-top:4px}
+.pdf-charge-commission .lbl{font-weight:600}
