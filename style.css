@@ -135,6 +135,8 @@ html[dir=rtl] .mini-field select{background-position:left 7px center}
 .cash-charge-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:14px;padding:7px 0;border-bottom:1px solid var(--rule)}
 .cash-charge-row:last-child{border-bottom:0}
 .cash-commission-row .cash-charge-name{font-weight:600;color:var(--green)}
+.cash-charge-row.is-commission .cash-charge-name{font-weight:600;color:var(--green)}
+.cash-charge-row.is-commission.has-rule{margin-top:3px;padding-top:9px;border-top:1px solid var(--rule)}
 .cash-charge-desc{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0}
 .cash-charge-name{font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
 .cash-charge-due{font-size:11.5px;color:var(--sub);white-space:nowrap}
@@ -606,6 +608,7 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-summary .extra-meta{white-space:nowrap}
 .schedule-summary .extra-dash{color:var(--side-muted)}
 .schedule-summary .extra-commission .extra-name{color:var(--green)}
+.schedule-summary .extra-commission.has-rule{margin-top:3px;padding-top:4px;border-top:1px solid var(--rule)}
 .schedule-table-col{padding-right:0}
 .schedule-table-col .tablewrap{border:0;border-radius:0;max-height:556px;background:var(--surface)}
 .schedule-selection{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 28px;padding:9px 14px 0;color:var(--side-muted);font-size:12px;line-height:1.6}
@@ -613,6 +616,12 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-selection .sel-label{color:var(--side-ink);font-weight:600}
 .schedule-selection b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .schedule-grid th.cell-check,.schedule-grid td.cell-check{width:42px;padding-inline:16px 2px}
+.increase-inline{margin-top:9px;padding:0;border:0;background:transparent}
+.increase-inline>summary{display:inline-flex;align-items:center;gap:5px;width:auto;padding:2px 0;border:0;background:none;color:var(--green);font-size:12px;font-weight:600;cursor:pointer;list-style:none}
+.increase-inline>summary::-webkit-details-marker{display:none}
+.increase-inline>summary::before{content:'+';display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid var(--rule);border-radius:4px;font-size:12px;line-height:1}
+.increase-inline[open]>summary::before{content:'−'}
+.increase-inline .increase-row{margin-top:5px}
 .increase-term{margin-top:9px}
 .titleline h1{font-size:clamp(24px,2.2vw,32px)}
 .titleline .plan-title{margin-inline-start:12px;position:relative;top:3px}

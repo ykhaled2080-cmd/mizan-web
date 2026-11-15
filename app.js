@@ -64,14 +64,24 @@ let includeIntro=read('includeIntro',true), includeOutro=read('includeOutro',tru
 const t=(ar,en)=>lang==='ar'?ar:en;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateNow=new Date(), start=dateNow.getFullYear()+'-'+String(dateNow.getMonth()+1).padStart(2,'0');
-const defaults={unit:'',client:'',phone:'',price:5000000,mode:'rate',down:10,delivery:10,maintenance:8,maintenanceState:'extra',split:false,start,startDay:'',handover:monthAfter(start,36),handoverDay:'',deliveryDateMode:'handover',deliveryDate:'',deliveryDay:'',maintenanceDateMode:'handover',maintenanceDate:'',maintenanceDay:'',fee:0,feeMode:'rate',payer:'buyer',years:7,period:3,termMonths:0,hidden:[],intro:'',outro:'',offerType:'installments',items:emptyItems(),legal:{noDues:false,poa:false,contract:false},showTotal:true,types:{},customRows:[],allocations:[],edits:{}};
+const defaults={unit:'',client:'',phone:'',price:5000000,mode:'rate',down:10,delivery:10,maintenance:8,maintenanceState:'extra',split:false,start,startDay:'',handover:monthAfter(start,36),handoverDay:'',deliveryDateMode:'handover',deliveryDate:'',deliveryDay:'',maintenanceDateMode:'handover',maintenanceDate:'',maintenanceDay:'',fee:0,feeMode:'rate',payer:'buyer',years:7,period:3,termMonths:84,termMonthsMigrated:true,hidden:[],intro:'',outro:'',offerType:'installments',items:emptyItems(),legal:{noDues:false,poa:false,contract:false},showTotal:true,types:{},customRows:[],allocations:[],edits:{}};
 let defaultIntro=read('defaultIntro',''), defaultOutro=read('defaultOutro','');
 const newOffer=()=>{const o=structuredClone(defaults);o.intro=defaultIntro;o.outro=defaultOutro;return normalizeOffer(o)};
 let p=normalizeOffer(read('draft',newOffer())), saved=read('saved',[]).map(normalizeOffer), selected=new Set(),beforeDelete=null;
 let editing=null;
 let itemFocusAfterRender=null;
 let allocYear='',allocAmount='',allocMonths=new Set(['0']);
-let plans=read('plans',[{years:7,down:10},{years:5,down:15},{years:8,down:10}]), search='', savedSel=new Set();
+const defaultOpenSections=()=>new Set(['client','unit']);
+let sectionOpen=defaultOpenSections();
+const readPlans=()=>{
+ const raw=read('plans',[{years:7,down:10},{years:5,down:15},{years:8,down:10}]);
+ return (Array.isArray(raw)?raw:[]).map(plan=>{
+  const source=plan&&typeof plan==='object'?plan:{};
+  const months=Number.isFinite(+source.months)&&+source.months>0?Math.round(+source.months):Math.round((+source.years||0)*12);
+  return {...source,months:months>0?months:0,down:Number.isFinite(+source.down)?+source.down:10};
+ }).filter(plan=>plan.months>0);
+};
+let plans=readPlans(), search='', savedSel=new Set();
 const paths={logo:'M3 20V9l7-5v16M10 20V8l6-4v16M16 20v-9l5-3v12M2 21h20',calc:'M4 4h16v16H4zM8 8h8M8 12h2m4 0h2m-8 4h2m4 0h2',compare:'M4 20V9h4v11m2 0V4h4v16m2 0v-8h4v8',saved:'M4 5h6l2 2h8v12H4z',save:'M4 4h13l3 3v13H4zM8 4v6h8V4M8 20v-6h8v6',share:'M8 12h9m-4-4 4 4-4 4M6 5H3v14h3',check:'M20 6 9 17l-5-5',sun:'M12 3v2m0 14v2M3 12h2m14 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',moon:'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z',plus:'M12 5v14M5 12h14',trash:'M3 6h18M9 6V3h6v3M6 6l1 14h10l1-14M10 9v8m4-8v8',list:'M8 6h13M8 12h13M8 18h13M3 6h1m-1 6h1m-1 6h1',undo:'M8 4 3 9l5 5M4 9h9a6 6 0 0 1 0 12',palette:'M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 1.4-3 1.8 1.8 0 0 1 1.4-3H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9ZM7.5 10.5h.01M9.5 7h.01M13 6.5h.01M16 8h.01',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',note:'M5 3h10l4 4v14H5zM15 3v5h5M8 12h8M8 16h6',pen:'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16zM13 7l4 4'};
 const icon=(k,size=18)=>'<svg aria-hidden="true" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" viewBox="0 0 24 24"><path d="'+paths[k]+'"/></svg>';
 const brandMark=()=>'<svg class="brand-mark" aria-hidden="true" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 38V24l8-6v20M14 38V15l11-6v29M25 38V26l9-5v17M4 40h40"/><path d="M9 27l5-3.5M9 32l5-3.5M17 21l8-4.5M17 27l8-4.5M28 30l6-3.5M28 35l6-3.5" opacity=".5" stroke-width="1.3"/><circle cx="39" cy="9" r="2.4" fill="#d6b778" stroke="none"/></svg>';
@@ -181,7 +191,10 @@ function hero(s){
  return '<section class="hero"><div class="herogrid"><div><div class="kicker">'+(fixed?k:vk)+' · '+frequency()[p.period]+'</div><div class="big">'+instBig+'</div><div class="kicker">'+[termText,s.count+' '+t('قسطًا','installments')].filter(Boolean).join(' · ')+'</div></div><div class="metrics">'+[[t('سعر الوحدة','Unit price'),s.price],[names.down(),s.down],[t('الموزّع على الأقساط','Financed amount'),s.financed]].map(([k,v])=>'<div><span>'+k+'</span>'+money(v)+'</div>').join('')+'</div>'+logoMarkup()+'</div></section>';
 }
 function showTotalValue(s){return s.total}
-function details(id,name,body){return '<details class="line" data-section="'+id+'"><summary>'+name+'</summary><div class="fields">'+body+'</div></details>'}
+function details(id,name,body){return '<details class="line" data-section="'+id+'" '+(sectionOpen.has(id)?'open':'')+'><summary>'+name+'</summary><div class="fields">'+body+'</div></details>'}
+function increaseBlock(s){
+ return '<details class="increase-inline" data-section="increase"><summary>'+t('زيادة المقدم بمبلغ','Increase down payment by amount')+'</summary><div class="increase-row"><label class="field"><span>'+t('المبلغ الإضافي','Additional amount')+'</span><input dir="ltr" id="extra" inputmode="decimal"></label>'+B('increase',t('إضافة','Add'),'plus')+'</div></details>';
+}
 function typeSwitch(){
  const cash=p.offerType==='cash';
  return '<div class="offer-type" role="group" aria-label="'+t('نوع العرض','Offer type')+'">'+
@@ -248,10 +261,10 @@ function editor(s){
  const cash=s.cash;
  return '<aside class="editor" id="terms"><div class="sectionhead terms-head"><h2>'+t('شروط العرض','Offer terms')+'</h2><div class="terms-center">'+typeSwitch()+'</div><div class="terms-new">'+B('reset',t('عرض جديد','New offer'))+'</div></div>'+
   '<p class="mobile-hint">'+t('اسحب أي حقل رقمي أفقيًا بالصباع لزيادة القيمة أو تقليلها.','Drag any numeric field horizontally to change its value.')+'</p>'+
-  '<div class="fields">'+textField('unit',t('الوحدة','Unit'),p.unit,'text')+numberField('price',t('سعر الوحدة','Unit price')+' · '+curr(),p.price)+'</div>'+
-  (cash?'':'<div class="fields">'+numberField('rate',t('نسبة مقدم التعاقد','Down payment')+' %',p.mode==='rate'?p.down:+(s.down/s.price*100||0).toFixed(5))+numberField('amount',t('مبلغ مقدم التعاقد','Down payment amount'),Math.round(s.down/100))+'</div>'+
-   '<details class="line" data-section="increase"><summary>'+t('زيادة المقدم بمبلغ','Increase down payment by amount')+'</summary><div class="increase-row"><label class="field"><span>'+t('المبلغ الإضافي','Additional amount')+'</span><input dir="ltr" id="extra" inputmode="decimal"></label>'+B('increase',t('إضافة','Add'),'plus')+'</div><div class="fields increase-term">'+numberField('termMonths',t('مدة التقسيط بالشهور','Term in months'),p.termMonths||Math.round((+p.years||0)*12))+'</div></details>'+
-   '<div class="fields">'+numberField('years',t('مدة التقسيط بالسنوات','Term in years'))+options('period',t('دورية القسط','Frequency'),Object.entries(frequency()))+'</div>')+
+  details('client',t('بيانات العميل','Client details'),textField('client',t('اسم العميل','Client name'))+textField('phone',t('رقم واتساب','WhatsApp number')))+
+  details('unit',t('بيانات الوحدة','Unit details'),textField('unit',t('الوحدة','Unit'),p.unit,'text')+numberField('price',t('سعر الوحدة','Unit price')+' · '+curr(),p.price))+
+  (cash?'':details('down',t('مقدم التعاقد','Down payment'),'<div class="fields">'+numberField('rate',t('نسبة مقدم التعاقد','Down payment')+' %',p.mode==='rate'?p.down:+(s.down/s.price*100||0).toFixed(5))+numberField('amount',t('مبلغ مقدم التعاقد','Down payment amount'),Math.round(s.down/100))+'</div>'+
+   increaseBlock(s))+details('plan',t('خطة التقسيط','Payment plan'),'<div class="fields">'+numberField('termMonths',t('مدة التقسيط بالشهور','Term in months'),p.termMonths||Math.round((+p.years||0)*12))+options('period',t('دورية القسط','Frequency'),Object.entries(frequency()))+'</div>'))+
    details('fees',names.fee()+(s.commission?' · '+fmt(s.commission/100)+' '+curr():''),options('feeMode',t('طريقة الحساب','Calculation'),[['rate',t('نسبة من السعر','Percentage')],['amount',t('مبلغ ثابت','Fixed amount')]])+numberField('fee',names.fee()+' · '+(p.feeMode==='rate'?'%':curr()),p.feeMode==='amount'?Math.round(p.fee):p.fee)+options('payer',t('يتحملها','Paid by'),[['buyer',t('المشتري','Buyer')],['seller',t('البائع','Seller')]]))+
   details('handover',t('الاستلام والصيانة والتواريخ','Handover, maintenance & dates'),
    (cash?'':numberField('delivery',names.delivery()+' %')+options('deliveryDateMode',t('موعد دفعة الاستلام','Handover payment date'),[['handover',t('عند الاستلام','At handover')],['date',t('تاريخ محدد','Specific date')],['none',t('بدون ذكر','No timing')]])+(p.deliveryDateMode==='date'?monthDayField('deliveryDate',t('تاريخ دفعة الاستلام','Handover payment date'),p.deliveryDate||p.handover,p.deliveryDay,'deliveryDay'):''))+
@@ -261,7 +274,6 @@ function editor(s){
    monthDayField('handover',t('تاريخ الاستلام','Handover date'),p.handover,p.handoverDay))+
   details('items',t('الجراج والمخزن والمرافق','Garage, storage & utilities'),'<div class="wide">'+itemEditor()+'</div>')+
   details('legal',t('الحالة المالية والقانونية','Financial & legal status'),'<div class="wide">'+legalEditor()+'</div>')+
-  details('client',t('بيانات العميل','Client details'),textField('client',t('اسم العميل','Client name'))+textField('phone',t('رقم واتساب','WhatsApp number')))+
   details('notes',t('المقدمة والخاتمة','Intro & closing'),noteField('intro',t('مقدمة','Introduction'))+noteField('outro',t('خاتمة','Closing'))+checkline('data-show-total',t('إظهار الإجمالي في العرض','Show the overall total'),p.showTotal!==false))+'</aside>';
 }
 function rowEditorPanel(s){
@@ -362,16 +374,17 @@ function cashPanel(s){
  const feeRate=p.feeMode==='rate'?fmtPct(p.fee)+'%':'';
  const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
  const dueHtml=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
+ const extraChargeCount=charges.length;
+ if(s.commission)charges.push({name:names.fee()+' - '+[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' '),due:'',amount:s.commission,commission:true});
  const included=s.includes.length?'<section class="cash-section cash-included"><h3>'+t('السعر يشمل','Price includes')+'</h3><div class="cash-included-list">'+s.includedItems.map(x=>'<div class="cash-included-row"><span class="cash-included-name">'+esc(itemName(x.key))+'</span>'+(x.amount>0?'<b class="cash-included-amount">'+fmtMoney(x.amount/100)+' <small>'+curr()+'</small></b>':'')+'</div>').join('')+'</div></section>':'';
  const excludedCash=(s.excludedItems||[]).length?'<section class="cash-section cash-excluded"><h3>'+t('السعر لا يشمل','Price does not include')+'</h3><div class="cash-included-list">'+s.excludedItems.map(x=>'<div class="cash-included-row"><span class="cash-included-name">'+esc(itemName(x.key))+'</span>'+(x.amount>0?'<b class="cash-included-amount">'+fmtMoney(x.amount/100)+' <small>'+curr()+'</small></b>':'')+'</div>').join('')+'</div></section>':'';
- const chargesHtml=charges.length?'<section class="cash-section cash-charges"><h3>'+t('مستحقات إضافية','Additional charges')+'</h3><div class="cash-charge-list">'+charges.map(c=>'<div class="cash-charge-row"><div class="cash-charge-desc"><span class="cash-charge-name">'+esc(c.name)+'</span>'+(c.due?'<span class="cash-charge-due">'+dueHtml(c.due)+'</span>':'')+'</div><b class="cash-charge-amount">'+fmtMoney(c.amount/100)+' <small>'+curr()+'</small></b></div>').join('')+'</div></section>':'';
- const commissionHtml=s.commission?'<section class="cash-section cash-commission"><h3>'+t('أموال إضافية','Additional amounts')+'</h3><div class="cash-charge-list"><div class="cash-charge-row"><div class="cash-charge-desc"><span class="cash-charge-name">'+esc(names.fee()+' - '+[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' '))+'</span></div><b class="cash-charge-amount">'+fmtMoney(s.commission/100)+' <small>'+curr()+'</small></b></div></div></section>':'';
+ const chargesHtml=charges.length?'<section class="cash-section cash-charges"><h3>'+t('مستحقات إضافية','Additional charges')+'</h3><div class="cash-charge-list">'+charges.map(c=>'<div class="cash-charge-row'+(c.commission?' is-commission'+(extraChargeCount?' has-rule':''):'')+'"><div class="cash-charge-desc"><span class="cash-charge-name">'+esc(c.name)+'</span>'+(c.due?'<span class="cash-charge-due">'+dueHtml(c.due)+'</span>':'')+'</div><b class="cash-charge-amount">'+fmtMoney(c.amount/100)+' <small>'+curr()+'</small></b></div>').join('')+'</div></section>':'';
  const financial=src.legal.noDues?((charges.length>0||s.commission)?t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.'):t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.')):'';
  const legalStatus=[src.legal.poa?t('يوجد توكيل.','A power of attorney exists.'):'',src.legal.contract?t('يوجد عقد نهائي.','A final contract exists.'):''].filter(Boolean).join(' ');
  const legalHtml=(financial||legalStatus)?'<section class="cash-section cash-legal"><h3>'+t('الحالة المالية والقانونية','Financial & legal status')+'</h3>'+
   (financial?'<div class="cash-legal-line"><b>'+t('الحالة المالية:','Financial status:')+'</b> '+esc(financial)+'</div>':'')+
   (legalStatus?'<div class="cash-legal-line"><b>'+t('الحالة القانونية:','Legal status:')+'</b> '+esc(legalStatus)+'</div>':'')+'</section>':'';
- return '<div class="cash-panel">'+included+excludedCash+chargesHtml+commissionHtml+legalHtml+'</div>';
+ return '<div class="cash-panel">'+included+excludedCash+chargesHtml+legalHtml+'</div>';
 }
 function tableSummary(s){
  const src=normalizeOffer(p);
@@ -381,8 +394,11 @@ function tableSummary(s){
  const excludedItems=s.excludedItems||[];
  if(excludedItems.length)rows.push([t('السعر لا يشمل','Price does not include'),excludedItems.map(e=>itemName(e.key)+(e.amount>0?' '+fmtMoney(e.amount/100)+' '+curr():'')).join(' · ')]);
  const extraItems=s.extras||[];
- if(extraItems.length)rows.push([t('أموال إضافية','Additional amounts'),extraItems.map(e=>itemName(e.label)+' '+fmtMoney(e.amount/100)+' '+curr()+(extraMeta(src,e)?' · '+extraMeta(src,e):'')).join(' · ')]);
- if(s.commission)rows.push([t('عمولة الوساطة','Brokerage commission'),fmtMoney(s.commission/100)+' '+curr()+' · '+(p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller'))]);
+ const feeRate=p.feeMode==='rate'?fmtPct(p.fee)+'%':'';
+ const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
+ const extraParts=extraItems.map(e=>itemName(e.label)+' '+fmtMoney(e.amount/100)+' '+curr()+(extraMeta(src,e)?' · '+extraMeta(src,e):''));
+ if(s.commission)extraParts.push(names.fee()+' '+fmtMoney(s.commission/100)+' '+curr()+' · '+[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' '));
+ if(extraParts.length)rows.push([t('مستحقات إضافية','Additional charges'),extraParts.join(' · ')]);
  if(s.gap)rows.push([t('غير مجدول','Unscheduled'),fmtMoney(s.gap/100)+' '+curr()]);
  const totalRow='<div class="ts-row ts-total"><span class="ts-label">'+t('إجمالي سداد الوحدة','Unit payment total')+'</span><b class="ts-val">'+money(s.total)+' '+curr()+'</b></div>';
  return '<div class="table-summary">'+totalRow+rows.map(([label,value])=>'<div class="ts-row"><span class="ts-label">'+label+'</span><span class="ts-val">'+esc(value)+'</span></div>').join('')+'</div>';
@@ -427,17 +443,15 @@ function calculator(){
  const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
  const commissionMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
  const extraRows=(s.extras||[]).map(e=>({name:itemName(e.label),amount:e.amount,meta:extraMeta(normalizeOffer(p),e)}));
- const commissionLine=s.commission?'<div class="extra-line extra-commission"><b class="extra-name">'+t('عمولة الوساطة','Brokerage commission')+' - '+commissionMeta+':</b> <b class="extra-amount">'+fmtMoney(s.commission/100)+' '+curr()+'</b></div>':'';
+ const commissionLine=s.commission?'<div class="extra-line extra-commission'+(extraRows.length?' has-rule':'')+'"><b class="extra-name">'+t('عمولة الوساطة','Brokerage commission')+' - '+commissionMeta+':</b> <b class="extra-amount">'+fmtMoney(s.commission/100)+' '+curr()+'</b></div>':'';
  const extraCount=extraRows.length;
  const extrasWide=extraRows.some(x=>x.meta);
- const extrasBlock=extraCount?'<div class="side-block rail-group">'+railHead(t('مستحقات إضافية','Additional charges'))+'<div class="'+(extraCount>=2?'side-lines summary-lines-grid':'side-lines')+'">'+extraRows.map(x=>itemLine(x.name,x.amount,x.meta)).join('')+'</div></div>':'';
- const commissionBlock=s.commission?'<div class="side-block rail-group">'+railHead(t('أموال إضافية','Additional amounts'))+'<div class="side-lines">'+commissionLine+'</div></div>':'';
+ const extrasBlock=(extraCount||s.commission)?'<div class="side-block rail-group">'+railHead(t('مستحقات إضافية','Additional charges'))+'<div class="'+(extraCount>=2?'side-lines summary-lines-grid':'side-lines')+'">'+extraRows.map(x=>itemLine(x.name,x.amount,x.meta)).join('')+commissionLine+'</div></div>':'';
  const summaryNote=infoLines.length?'<div class="summary-info">'+infoLines.join('')+'</div>':'';
  const summaryGroups=[];
  if(includedRows.length)summaryGroups.push({count:includedRows.length,html:includedBlock});
  if(excludedRows.length)summaryGroups.push({count:excludedRows.length,html:excludedBlock});
- if(extraCount)summaryGroups.push({count:extraCount+(extrasWide?1:0),html:extrasBlock});
- if(s.commission)summaryGroups.push({count:1,html:commissionBlock});
+ if(extraCount||s.commission)summaryGroups.push({count:extraCount+(s.commission?1:0)+(extrasWide?1:0),html:extrasBlock});
  const summaryWeight=count=>Math.min(3.2,1+Math.max(0,count-1)*0.55);
  const summaryStyle=summaryGroups.length>1?' style="grid-template-columns:'+summaryGroups.map(g=>'minmax(0,'+summaryWeight(g.count).toFixed(2)+'fr)').join(' ')+'"':'';
  const classificationClass=summaryGroups.length===4?' summary-four':summaryGroups.length===3?' summary-full':summaryGroups.length===2?' summary-two':' summary-one';
@@ -454,11 +468,11 @@ function calculator(){
 }
 function feeLabel(s){const meta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');return names.fee()+(meta?' ('+meta+')':'')+' · '+fmtMoney(s.commission/100)+' '+curr()}
 function compare(){
- const headers=[t('الخطة','Plan'),t('مقدم التعاقد %','Down %'),t('السنوات','Years'),names.down(),t('قيمة القسط','Installment'),t('الإجراءات','Actions')];
+ const headers=[t('الخطة','Plan'),t('مقدم التعاقد %','Down %'),t('مدة التقسيط بالشهور','Term in months'),names.down(),t('قيمة القسط','Installment'),t('الإجراءات','Actions')];
  return '<div class="titleline"><h1>'+titles().compare+'</h1><div class="actions">'+B('saveAllPlans',t('حفظ كل الخطط','Save all plans'),'save','primary')+B('addPlan',t('إضافة خطة','Add plan'),'plus')+'</div></div><p class="muted">'+t('سعر الوحدة','Property price')+' · '+fmt(p.price)+' '+curr()+' · '+frequency()[p.period]+'</p><div class="tablewrap compare"><table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+plans.map((obj,i)=>{
- const s=schedule({...p,...obj,mode:'rate',termMonths:0,hidden:[],offerType:'installments'});
- const input=(key,kind)=>'<input aria-label="'+headers[{name:0,down:1,years:2}[key]]+'" data-plan="'+i+'" data-prop="'+key+'" type="'+kind+'" value="'+esc(obj[key]??(t('خطة','Plan')+' '+(i+1)))+'">';
- return '<tr><td>'+input('name','text')+'</td><td>'+input('down','number')+'</td><td>'+input('years','number')+'</td><td>'+money(s.down)+'</td><td>'+(s.valid&&s.count?money(Math.round(s.financed/s.count)):t('راجع الشروط','Invalid terms'))+'</td><td><div class="actions">'+B('use-'+i,t('تطبيق','Apply'))+B('remove-'+i,t('حذف','Delete'))+'</div></td></tr>';
+ const s=schedule({...p,...obj,mode:'rate',termMonths:+obj.months||0,hidden:[],offerType:'installments'});
+ const input=(key,kind)=>'<input aria-label="'+headers[{name:0,down:1,months:2}[key]]+'" data-plan="'+i+'" data-prop="'+key+'" type="'+kind+'" value="'+esc(obj[key]??(t('خطة','Plan')+' '+(i+1)))+'">';
+ return '<tr><td>'+input('name','text')+'</td><td>'+input('down','number')+'</td><td>'+input('months','number')+'</td><td>'+money(s.down)+'</td><td>'+(s.valid&&s.count?money(Math.round(s.financed/s.count)):t('راجع الشروط','Invalid terms'))+'</td><td><div class="actions">'+B('use-'+i,t('تطبيق','Apply'))+B('remove-'+i,t('حذف','Delete'))+'</div></td></tr>';
  }).join('')+'</tbody></table></div>';
 }
 function filteredSaved(){
@@ -488,11 +502,13 @@ function offerKey(o){
  return JSON.stringify([o.unit,o.client,o.price,o.mode,o.down,o.delivery,o.maintenance,o.maintenanceState,o.offerType,o.showTotal,o.items,o.legal,o.period,o.years,o.termMonths,o.feeMode,o.fee,o.payer,o.start,o.startDay,o.handover,o.handoverDay,o.deliveryDateMode,o.deliveryDate,o.deliveryDay,o.maintenanceDateMode,o.maintenanceDate,o.maintenanceDay,o.allocations,o.customRows,o.types,o.edits]);
 }
 function render(){
- const open=[...document.querySelectorAll('[data-section][open]')].map(e=>e.dataset.section);
+ if(page==='calc'){
+  const sections=[...document.querySelectorAll('[data-section]')];
+  if(sections.length)sectionOpen=new Set(sections.filter(e=>e.open).map(e=>e.dataset.section));
+ }
  const scroll=$('.tablewrap')?.scrollTop||0;
  hideScheduleRowTools();
  drawHeader(); A.innerHTML=page==='calc'?calculator():page==='compare'?compare():'<div class="titleline"><h1>'+titles().saved+'</h1></div><div id="records">'+savedRows()+'</div>';
- open.forEach(id=>{const e=document.querySelector('[data-section="'+id+'"]');if(e)e.open=true});
  if($('.tablewrap'))$('.tablewrap').scrollTop=scroll;
  const all=$('[data-all]');
  if(all){
@@ -773,7 +789,7 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
   }
   if(s.commission){
    const feeMeta=[src.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller'),src.feeMode==='rate'?fmtPct(s.commissionPct)+'%':''].filter(Boolean).join(' ');
-   var cashCommissionLine=names.fee()+' - '+feeMeta+': '+value(s.commission);
+   cashCharges.push({name:names.fee()+' - '+feeMeta,amount:s.commission,due:''});
   }
   const includedValues=(s.includedItems||includes.map(k=>({key:k,amount:0}))).map(x=>(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+value(x.amount):''));
   const excludedCash=Array.isArray(s.excludedItems)?s.excludedItems:[];
@@ -791,11 +807,6 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
    summary.push('');
    summary.push(t('مستحقات إضافية','Additional charges'));
    for(const c of cashCharges)summary.push(dueJoin('- '+c.name+': '+value(c.amount),c.due));
-  }
-  if(cashCommissionLine){
-   summary.push('');
-   summary.push(t('أموال إضافية','Additional amounts'));
-   summary.push('- '+cashCommissionLine);
   }
  }else{
   summary.push(t('سعر الوحدة','Unit price')+': '+value(s.price));
@@ -829,12 +840,12 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
    const feeMeta=[src.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller'),src.feeMode==='rate'?fmtPct(s.commissionPct)+'%':''].filter(Boolean).join(' ');
    commissionLineText=t('عمولة الوساطة','Brokerage commission')+' - '+feeMeta+': '+value(s.commission);
   }
-  if(includedItems.length||excluded.length||extraLines.length||commissionLineText){
+  if(commissionLineText)extraLines.push(commissionLineText);
+  if(includedItems.length||excluded.length||extraLines.length){
    summary.push('');
    if(includedItems.length)summary.push(t('السعر يشمل','Price includes')+': '+includedItems.map(e=>(names[e.key]?names[e.key]():e.key)+(e.amount>0?' '+value(e.amount):'')).join(sep));
    if(excluded.length)summary.push(t('السعر لا يشمل','Price does not include')+': '+excluded.map(e=>(names[e.key]?names[e.key]():e.key)+(e.amount>0?' '+value(e.amount):'')).join(sep));
    if(extraLines.length)summary.push(t('مستحقات إضافية','Additional charges')+': '+extraLines.join(sep));
-   if(commissionLineText)summary.push(t('أموال إضافية','Additional amounts')+': '+commissionLineText);
   }
   summary.push('',(s.selectedOnly?t('إجمالي الدفعات المحددة','Selected payments total'):t('إجمالي العرض','Offer total'))+': '+value(s.selectedOnly?s.selectedTotal:s.total));
  }
@@ -1059,7 +1070,7 @@ document.addEventListener('change',e=>{
  if(el.dataset.legal){p.legal[el.dataset.legal]=el.checked;persist();refreshTerms();return}
  if(el.dataset.showTotal!==undefined){p.showTotal=el.checked;persist();refreshTerms();return}
  if(el.dataset.id){el.checked?selected.add(el.dataset.id):selected.delete(el.dataset.id);render();return}
- if(el.dataset.plan!==undefined){const obj=plans[+el.dataset.plan],key=el.dataset.prop;const v=key==='name'?el.value:num(el.value);if(key!=='name'&&(!Number.isFinite(v)||v<0||(key==='years'&&(!Number.isInteger(v)||v<1||v>60))||(key==='down'&&v>100))){invalid();render();return}obj[key]=v;write('plans',plans);render();return}
+ if(el.dataset.plan!==undefined){const obj=plans[+el.dataset.plan],key=el.dataset.prop;const v=key==='name'?el.value:num(el.value);if(key!=='name'&&(!Number.isFinite(v)||v<0||(key==='months'&&(!Number.isInteger(v)||v<1||v>600))||(key==='down'&&v>100))){invalid();render();return}obj[key]=v;write('plans',plans);render();return}
  if(el.dataset.datePart){applyDateSeg(el.closest('[data-date-seg]'));return}
  if(!k)return;
  if(el.dataset.dayKey){
@@ -1081,19 +1092,19 @@ document.addEventListener('change',e=>{
  }
  const dayKeys=['startDay','handoverDay','deliveryDay','maintenanceDay'];
  if(k==='termMonths'&&el.value.trim()===''){p.termMonths=0;p.edits={};persist();render();return}
- const numeric=['price','rate','amount','fee','delivery','maintenance','years','period','termMonths'].includes(k)||dayKeys.includes(k);
+ const numeric=['price','rate','amount','fee','delivery','maintenance','period','termMonths'].includes(k)||dayKeys.includes(k);
  let v=numeric?num(el.value):el.value;
  if(dayKeys.includes(k)){
   if(el.value==='')v='';
   else if(!Number.isInteger(v)||v<1||v>31){invalid();render();return}
- }else if(numeric&&(!Number.isFinite(v)||v<0||v>1e12||(['rate','delivery','maintenance'].includes(k)&&v>100)||(k==='years'&&(!Number.isInteger(v)||v<1||v>60))||(k==='termMonths'&&(!Number.isInteger(v)||v<1||v>600)))){invalid();render();return}
+ }else if(numeric&&(!Number.isFinite(v)||v<0||v>1e12||(['rate','delivery','maintenance'].includes(k)&&v>100)||(k==='termMonths'&&(!Number.isInteger(v)||v<1||v>600)))){invalid();render();return}
  if(['start','handover'].includes(k)&&!isMonth(v)){invalid();render();return}
  if(['deliveryDate','maintenanceDate'].includes(k)&&v!==''&&!isMonth(v)){invalid();render();return}
  if(numeric&&(k==='price'||k==='amount'||(k==='fee'&&p.feeMode==='amount')))v=Math.round(v);
  if(k==='rate'||k==='amount'){p.mode=k==='rate'?'rate':'amount';p.down=v}
  else if(k==='feeMode'){const s=schedule(p);p.fee=v==='amount'?s.commission/100:(s.price?+(100*s.commission/s.price).toFixed(6):0);p.feeMode=v}
  else p[k]=v;
- if(k==='years'){p.termMonths=0;const tm=document.querySelector('[data-key="termMonths"]');if(tm)tm.value=Math.round(v*12)}
+ if(k==='termMonths'&&Number.isInteger(v))p.years=Math.round(v/12*1000)/1000;
  if(!['unit','phone','client','fee','payer','feeMode','maintenance','split','deliveryDateMode','deliveryDate','deliveryDay','maintenanceDateMode','maintenanceDate','maintenanceDay','startDay','handoverDay'].includes(k)){p.edits={};editing=null}
  beforeDelete=null;selected.clear();persist();refreshTerms();
 });
@@ -1107,7 +1118,7 @@ document.addEventListener('input',e=>{const field=e.target, key=field.dataset.ke
   persist();
   return;
  }
- if(field.type==='text' && key && (['unit','phone','client'].includes(key) || field.value.trim()!=='' && Number.isFinite(num(field.value)) && num(field.value)>=0 && num(field.value)<=1e12 && (!['rate','delivery','maintenance'].includes(key)||num(field.value)<=100) && (key!=='years'||Number.isInteger(num(field.value))&&num(field.value)>=1&&num(field.value)<=60) && (key!=='termMonths'||Number.isInteger(num(field.value))&&num(field.value)>=1&&num(field.value)<=600))){
+ if(field.type==='text' && key && (['unit','phone','client'].includes(key) || field.value.trim()!=='' && Number.isFinite(num(field.value)) && num(field.value)>=0 && num(field.value)<=1e12 && (!['rate','delivery','maintenance'].includes(key)||num(field.value)<=100) && (key!=='termMonths'||Number.isInteger(num(field.value))&&num(field.value)>=1&&num(field.value)<=600))){
  const original=field.value;field.dispatchEvent(new Event('change',{bubbles:true}));if(field.isConnected)field.value=original;
  }
  if(e.target.id==='search'){
@@ -1315,7 +1326,7 @@ document.addEventListener('click',async e=>{
  if(a==='saveAllPlans'){
   const existing=new Set(saved.map(offerKey));let added=0;
   for(const plan of plans){
-   const offer={...structuredClone(p),...plan,mode:'rate',edits:{},hidden:[],offerType:'installments',id:crypto.randomUUID(),updated:Date.now()};
+   const offer={...structuredClone(p),...plan,mode:'rate',termMonths:+plan.months||p.termMonths,edits:{},hidden:[],offerType:'installments',id:crypto.randomUUID(),updated:Date.now()};
    if(!schedule(offer).valid)continue;
    const key=offerKey(offer);if(existing.has(key))continue;
    existing.add(key);saved=[offer,...saved];added++;
@@ -1389,16 +1400,16 @@ document.addEventListener('click',async e=>{
  else if(a==='theme-toggle'){theme=document.documentElement.hasAttribute('data-dark')?'light':'dark';write('theme',theme)}
  else if(a==='increase'){const v=num($('#extra').value);if(!Number.isFinite(v)||v<=0||s.down/100+v>p.price){invalid();return}p.mode='amount';p.down=(s.down+Math.round(v)*100)/100;p.edits={};editing=null;beforeDelete=null}
  else if(a==='save'){p.id=p.id||crypto.randomUUID();p.updated=Date.now();saved=[normalizeOffer(structuredClone(p)),...saved.filter(o=>o.id!==p.id)];write('saved',saved);note(t('تم حفظ العرض','Offer saved'))}
- else if(a==='reset'){if(!confirm(t('بدء عرض جديد؟','Start a new offer?')))return;p=newOffer();selected.clear();beforeDelete=null}
+ else if(a==='reset'){if(!confirm(t('بدء عرض جديد؟','Start a new offer?')))return;p=newOffer();sectionOpen=defaultOpenSections();selected.clear();beforeDelete=null}
  else if(a==='selectInst'){selected=new Set(s.rows.filter(r=>r.type==='installment').map(r=>r.id))}
  else if(['delete','clear','restore'].includes(a)){beforeDelete=[...p.hidden];p.hidden=a==='restore'?[]:[...new Set([...p.hidden,...(a==='clear'?s.rows.map(r=>r.id):selected)])];selected.clear()}
  else if(a==='undo'){p.hidden=beforeDelete||[];beforeDelete=null;selected.clear()}
- else if(a==='addPlan'){plans.push({down:Math.round(100*s.down/(s.price||1)),years:p.years});write('plans',plans)}
+ else if(a==='addPlan'){plans.push({down:Math.round(100*s.down/(s.price||1)),months:p.termMonths||84});write('plans',plans)}
  else if(a.startsWith('remove-')){plans.splice(+a.slice(7),1);write('plans',plans)}
- else if(a.startsWith('use-')){const o=plans[+a.slice(4)];if(!schedule({...p,...o,mode:'rate'}).valid){invalid();return}Object.assign(p,{edits:{},down:o.down,mode:'rate',years:o.years,termMonths:0,hidden:[],offerType:'installments'});selected.clear();beforeDelete=null;page='calc'}
+ else if(a.startsWith('use-')){const o=plans[+a.slice(4)];if(!schedule({...p,...o,mode:'rate',termMonths:+o.months||0}).valid){invalid();return}Object.assign(p,{edits:{},down:o.down,mode:'rate',years:Math.round((+o.months||0)/12*1000)/1000,termMonths:+o.months||0,hidden:[],offerType:'installments'});sectionOpen=defaultOpenSections();selected.clear();beforeDelete=null;page='calc'}
  else if(/^(open|clone|drop)-/.test(a)){const cut=a.indexOf('-'),op=a.slice(0,cut),id=a.slice(cut+1);const offer=saved.find(o=>o.id===id);if(!offer)return;
  if(op==='drop'){if(!confirm(t('حذف العرض المحفوظ؟','Delete saved offer?')))return;saved=saved.filter(o=>o.id!==id);write('saved',saved);if(p.id===id)delete p.id}
- else{p=normalizeOffer(structuredClone(offer));if(op==='clone'){delete p.id;p.unit=(p.unit||t('عرض','Offer'))+' · '+t('نسخة','Copy')}selected.clear();beforeDelete=null;page='calc'}}
+ else{p=normalizeOffer(structuredClone(offer));if(op==='clone'){delete p.id;p.unit=(p.unit||t('عرض','Offer'))+' · '+t('نسخة','Copy')}sectionOpen=defaultOpenSections();selected.clear();beforeDelete=null;page='calc'}}
  else if(a==='print'){window.MizanShare.open('pdf');return}
  else if(a==='copy'){try{await navigator.clipboard.writeText(clientText(s,true));note(t('تم النسخ','Copied'))}catch{note(t('تعذر النسخ','Copy unavailable'))}return}
  else if(a==='whatsapp'){window.MizanShare.open('pdf');return}

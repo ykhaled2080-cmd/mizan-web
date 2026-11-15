@@ -295,7 +295,7 @@ html[data-dark] .pv-done{background:#9ed4bc;color:#0f1a17}
 .pdf-brand-rule{width:1px;height:calc(20px * var(--pdf-brand-scale));background:#d6b778;opacity:.8;flex:none}
 .pdf-brand-latin{direction:ltr;display:inline-flex;align-items:center;gap:1px;font-family:var(--pdf-font-title);font-size:calc(17px * var(--pdf-brand-scale));font-weight:700;letter-spacing:-.4px;line-height:1;color:#123e35;padding-bottom:1px}
 .pdf-brand-latin .brand-mark{width:1.15em;height:1.15em;flex:none;color:#123e35}
-.pdf-title{margin:0;font-family:var(--pdf-font-title);font-size:calc(23px * var(--pdf-heading-scale));line-height:1.25;font-weight:700;color:#123e35;letter-spacing:0;word-spacing:normal}
+.pdf-title{margin:0;font-family:var(--pdf-font-title);font-size:calc(23px * var(--pdf-heading-scale));line-height:1.25;font-weight:700;color:#17483B;letter-spacing:0;word-spacing:normal}
 .pdf-page h1,.pdf-page h2,.pdf-page h3{letter-spacing:normal;word-spacing:normal}
 .pdf-sub{margin-top:3px;color:#5d7169;font-family:var(--pdf-font-body);font-size:10.5px}
 .pdf-sub b{font-weight:600;color:#27443b}
@@ -321,7 +321,7 @@ html[data-dark] .pv-done{background:#9ed4bc;color:#0f1a17}
 .pdf-meta-item b{display:block;font-family:var(--pdf-font-body);font-size:11.5px;font-weight:600;color:#19302a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .pdf-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-variant-numeric:tabular-nums}
 .pdf-table th{background:#123d35;color:#f7faf5;font-family:var(--pdf-font-sub);font-size:10px;font-weight:600;text-align:center;padding:9px 8px;border-top:1px solid #123d35;border-bottom:1px solid #123d35;white-space:nowrap}
-.pdf-table td{font-family:var(--pdf-font-body);font-size:10.2px;text-align:center;padding:8px 10px;border-bottom:1px solid #dbe2da;color:#243c34;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pdf-table td{font-family:var(--pdf-font-body);font-size:10.2px;text-align:center;padding:8px 10px;border-bottom:1px solid #D8E2DB;color:#173F33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pdf-table tbody tr:nth-child(even) td{background:transparent}
 .pdf-table td.num{font-weight:600;text-align:left;direction:ltr;padding-inline-start:12px}
 .pdf-table td.date{color:#51675e;text-align:center}
@@ -350,7 +350,7 @@ html[dir=rtl] #header .desktop-nav{direction:rtl;justify-content:flex-start}
 #header .tools-sep{width:1px;height:15px;background:var(--rule);flex:none;margin:0 1px}
 @media(max-width:760px){#header .tools{margin-left:4px;border:0;padding-left:0}}
 .pdf-page{padding:34px 46px 38px;print-color-adjust:exact;-webkit-print-color-adjust:exact}
-.pdf-brandline{justify-content:space-between;gap:20px;margin:0 0 20px;padding-bottom:13px;border-bottom:1.5px solid #193f34}
+.pdf-brandline{justify-content:space-between;gap:20px;margin:0 0 20px;padding-bottom:13px;border-bottom:1.5px solid #194B3D}
 .pdf-brandline img{width:162px;height:45px;object-fit:contain}
 .pdf-title{font-size:26px}
 .pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:0 0 12px}
@@ -581,7 +581,7 @@ html[data-dark] .pv-toast{background:#9ed4bc;color:#0f1a17}
 .pdf-support{margin-top:10px;display:grid;gap:4px;font-size:11.5px;line-height:1.6;color:#334b43}
 .pdf-support-line b{font-weight:600;color:#4e665d}
 .pdf-total{border-top:0;margin-top:4px}
-.pdf-identity{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;border-bottom:1px solid #e4ebe1;padding:0 0 8px;margin:0 0 10px}
+.pdf-identity{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;border-bottom:1px solid #D8E2DB;padding:0 0 8px;margin:0 0 10px}
 .pdf-identity span{display:block;font-size:10.5px;color:#6a7571;font-weight:500}
 .pdf-identity b{display:block;font-size:13px;color:#19302a;font-weight:600;margin-top:1px;overflow-wrap:anywhere}
 .pdf-price-block{padding:6px 0 10px;border-bottom:1px solid #d2dcd5;margin-bottom:10px}
@@ -598,19 +598,20 @@ html[data-dark] .pv-toast{background:#9ed4bc;color:#0f1a17}
 .pdf-section-title{display:flex;align-items:center;gap:6px;margin:14px 0 8px;min-width:0}
 .pdf-section-title .accent{width:2px;height:14px;background:#14614f;border-radius:1px;flex:none}
 .pdf-section-title h3{font-size:11.5px;font-weight:600;color:#193f34;margin:0;white-space:nowrap}
-.pdf-section-title .rule{flex:1 1 auto;height:1px;background:#e4ebe1}
+.pdf-section-title .rule{flex:1 1 auto;height:1px;background:#D8E2DB}
 .pdf-charges{display:flex;flex-wrap:wrap;gap:4px 12px;margin-bottom:8px}
 .pdf-charge{flex:1 1 200px;max-width:calc(50% - 6px);min-width:0;padding:4px 0}
 .pdf-charge .lbl{display:block;font-size:10.5px;color:#5c6f66;font-weight:500;line-height:1.5;overflow-wrap:anywhere}
 .pdf-charge .val{display:block;font-size:12.5px;color:#19302a;font-weight:600;margin-top:1px;white-space:normal;overflow-wrap:anywhere}
-.pdf-total.with-extras{border-top:1px solid #d2dcd5;margin-top:8px}
+.pdf-total.with-extras{border-top:1px solid #D8E2DB;margin-top:8px}
 .pdf-identity{padding-bottom:6px;margin-bottom:6px}
 .pdf-price-block{padding:1px 0 4px;margin-bottom:0}
 .pdf-price-block .lbl{font-size:11px;margin-bottom:1px}
 .pdf-price-block .amt{font-size:18px}
-.pdf-cash-total{padding:2px 0 7px;border-bottom:1px solid #d2dcd5;margin-bottom:0}
+.pdf-cash-total{padding:2px 0 7px;border-bottom:1px solid #D8E2DB;margin-bottom:0}
 .pdf-cash-total .amt{font-size:24px}
 .pdf-cash-included-list{font-size:11px;line-height:1.55;color:#334b43;margin:0 0 6px;padding-inline-start:1px}
+.pdf-group .pdf-cash-included-list{grid-column:1/-1}
 .pdf-cash-charges-title{margin-top:12px}
 .pdf-pay-grid{gap:0 24px;margin:0 0 7px}
 .pdf-pay-item{padding:4px 0 3px}
@@ -878,15 +879,15 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 
 /* 1.0.17 PDF type scale removed; typography is role-driven (see end of file). */
 
-.pdf-schedule-total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:6px;padding:6px 4px 0;border-top:1px solid #d2dcd5;font-family:var(--pdf-font-body);font-size:13px;font-weight:700;color:#193f34}
-.pdf-schedule-total span{font-family:var(--pdf-font-sub);font-size:13px;font-weight:700;color:#193f34}
-.pdf-schedule-total b{font-size:13px;font-weight:700;color:#123e35;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pdf-schedule-total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:6px;padding:6px 4px 0;border-top:1px solid #D8E2DB;font-family:var(--pdf-font-body);font-size:13px;font-weight:700;color:#173F33}
+.pdf-schedule-total span{font-family:var(--pdf-font-sub);font-size:13px;font-weight:700;color:#173F33}
+.pdf-schedule-total b{font-size:13px;font-weight:700;color:#173F33;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .pdf-font-trigger{position:fixed;z-index:319;width:30px;height:26px;padding:0;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--green);font-size:11px;font-weight:800;letter-spacing:-.4px;box-shadow:0 6px 18px #11322933;line-height:1}
 .pdf-font-trigger:hover{background:var(--tint)}
 .pdf-font-trigger[hidden]{display:none}
 
-.pdf-table tfoot td{font-family:var(--pdf-font-body);font-size:13px;font-weight:700;color:#123d35;padding:7px 8px;border-top:1.5px solid #123d35;background:transparent;white-space:nowrap}
+.pdf-table tfoot td{font-family:var(--pdf-font-body);font-size:13px;font-weight:700;color:#173F33;padding:7px 8px;border-top:1.5px solid #194B3D;background:transparent;white-space:nowrap}
 .pdf-table tfoot .total-label{text-align:center;font-family:var(--pdf-font-sub)}
 .pdf-table tfoot .num.total-amount{text-align:center;direction:ltr}
 
@@ -913,7 +914,9 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-schedule-total-note{font-size:9.5px;line-height:1.5;color:#8a5a2b;margin-top:3px;text-align:start}
 
 /* 1.0.27 brokerage commission inside additional-charges group */
-.pdf-charge-commission .lbl{font-weight:600}
+.pdf-group .pdf-charge.pdf-charge-commission{grid-column:1/-1}
+.pdf-charge-commission.has-rule{border-top:1px solid #D8E2DB;margin-top:2px;padding-top:4px}
+.pdf-charge-commission .lbl{font-weight:700}
 
 /* 1.0.29 role-driven PDF typography, grouped sections and editable dividers. */
 .pdf-page{
@@ -925,36 +928,40 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
  --doc-secondary-font:var(--pdf-font-sub);--doc-secondary-size:10.5px;--doc-secondary-weight:400;--doc-secondary-color:#6f8078;
  --doc-total-font:var(--pdf-font-title);--doc-total-size:16px;--doc-total-weight:600;--doc-total-color:#145b47;
 }
-.pdf-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px;margin:0 0 8px;align-items:start}
-.pdf-groups-1{grid-template-columns:1fr}
-.pdf-groups-3 .pdf-group:last-child{grid-column:1/-1}
-.pdf-group{min-width:0;break-inside:avoid}
-.pdf-group .pdf-section-title{margin:0 0 5px}
-.pdf-group .pdf-charges{display:grid;grid-template-columns:1fr;gap:0;margin-bottom:0}
-.pdf-group .pdf-charge{max-width:none;padding:3px 0;border-bottom:0}
+.pdf-groups{display:block;margin:0 0 8px}
+.pdf-groups-1{display:block}
+.pdf-group{min-width:0;break-inside:avoid;margin:0 0 6px}
+.pdf-group:last-child{margin-bottom:0}
+.pdf-group .pdf-section-title{margin:8px 0 4px}
+.pdf-group .pdf-charges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px;margin-bottom:2px}
+.pdf-group .pdf-charge{max-width:none;padding:2px 0;border-bottom:0}
+.pdf-group .pdf-charge .lbl{min-width:0;overflow-wrap:anywhere}
 .pdf-page .pdf-price-block,.pdf-page .pdf-pay-item{position:relative;border-bottom:0!important}
+.pdf-page .pdf-price-block,.pdf-page .pdf-pay-grid,.pdf-page .pdf-pay-item{z-index:auto}
 .pdf-page .pdf-pay-grid{margin-bottom:4px}
-.pdf-page .pdf-divider{position:absolute;left:0;right:0;bottom:0;height:12px;display:none;z-index:5;cursor:ns-resize;touch-action:none;user-select:none}
-.pdf-page .pdf-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);background:var(--div-color,#d2dcd5);border-radius:1px}
-.pdf-page .pdf-divider:hover::before,.pdf-page .pdf-divider.selected::before{background:var(--green)}
-.pdf-page .pdf-divider.selected{outline:1px dashed rgba(20,97,79,.35);outline-offset:-2px}
+.pdf-page .pdf-divider{position:absolute;left:0;right:0;bottom:0;height:calc(22px / var(--zoom,1));display:none;z-index:8;cursor:ns-resize;touch-action:none;user-select:none}
+.pdf-page .pdf-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);background:var(--div-color,#D8E2DB);opacity:var(--div-opacity,1);border-radius:1px}
+.pdf-page .pdf-divider::after{content:'';position:absolute;left:0;right:0;top:50%;height:var(--div-thickness,1px);transform:translateY(-50%);border-radius:2px;pointer-events:none;box-shadow:0 0 0 0 transparent}
+.pdf-page .pdf-divider:hover::after{box-shadow:0 0 0 3px rgba(25,75,61,.12)}
+.pdf-page .pdf-divider.selected::after{box-shadow:0 0 0 1px rgba(25,75,61,.55),0 0 0 4px rgba(25,75,61,.1)}
+.pdf-page .pdf-divider.selected{outline:0}
 body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-select:none!important}
 .pdf-page .pdf-title{font-family:var(--doc-title-font);font-size:var(--doc-title-size);font-weight:var(--doc-title-weight);color:var(--doc-title-color)}
 .pdf-page .pdf-sectionhead h2{font-family:var(--doc-main-font);font-size:var(--doc-main-size);font-weight:var(--doc-main-weight);color:var(--doc-main-color)}
 .pdf-page .pdf-section-title h3,.pdf-page .pdf-legal-title{font-family:var(--doc-sub-font);font-size:var(--doc-sub-size);font-weight:var(--doc-sub-weight);color:var(--doc-sub-color)}
 .pdf-page .pdf-price-block .lbl,.pdf-page .pdf-sitem .lbl,.pdf-page .pdf-pay-item .lbl,.pdf-page .pdf-charge .lbl,.pdf-page .pdf-identity span,.pdf-page .pdf-support-line b,.pdf-page .pdf-table th,.pdf-page .pdf-total .lbl,.pdf-page .pdf-schedule-total span,.pdf-page .pdf-cash-total .lbl{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:var(--doc-label-color)}
-.pdf-page .pdf-price-block .amt,.pdf-page .pdf-sitem .val,.pdf-page .pdf-pay-item .val,.pdf-page .pdf-charge .val,.pdf-page .pdf-identity b,.pdf-page .pdf-table td,.pdf-page .pdf-table .type,.pdf-page .pdf-support-line,.pdf-page .pdf-cash-included-list,.pdf-page .pdf-legal-line{font-family:var(--doc-value-font);font-size:var(--doc-value-size);font-weight:var(--doc-value-weight);color:var(--doc-value-color)}
+.pdf-page .pdf-sitem .val,.pdf-page .pdf-pay-item .val,.pdf-page .pdf-charge .val,.pdf-page .pdf-identity b,.pdf-page .pdf-table td,.pdf-page .pdf-table .type,.pdf-page .pdf-support-line,.pdf-page .pdf-cash-included-list,.pdf-page .pdf-legal-line{font-family:var(--doc-value-font);font-size:var(--doc-value-size);font-weight:var(--doc-value-weight);color:var(--doc-value-color)}
 .pdf-page .pdf-total .amt,.pdf-page .pdf-cash-total .amt,.pdf-page .pdf-schedule-total b{font-family:var(--doc-total-font);font-size:var(--doc-total-size);font-weight:var(--doc-total-weight);color:var(--doc-total-color)}
 .pdf-page .pdf-table tfoot td{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:var(--doc-label-color)}
 .pdf-page .pdf-table tfoot .num.total-amount{font-family:var(--doc-total-font);font-size:var(--doc-total-size);font-weight:var(--doc-total-weight);color:var(--doc-total-color)}
 .pdf-page .pdf-sectionhead span,.pdf-page .pdf-folio,.pdf-page .pdf-price-block .pdf-curr,.pdf-page .pdf-pay-item .val small,.pdf-page .pdf-table td.date,.pdf-page .pdf-sitem .meta,.pdf-page .pdf-due{font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color)}
 .pdf-page .pdf-legal-line span{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:var(--doc-label-color)}
 .pdf-page .pdf-total .amt small,.pdf-page .pdf-total-note,.pdf-page .pdf-schedule-total-note{font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color)}
-.pdf-page .pdf-due{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:var(--doc-label-color)}
+.pdf-page .pdf-due{font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color)}
 .pdf-page .pdf-table th{font-family:var(--doc-label-font);font-size:var(--doc-label-size);font-weight:var(--doc-label-weight);color:#eef6f0}
-.pdf-page .pdf-price-block .amt{color:#193f34}
-.pdf-page .pdf-table td{font-weight:400;color:#243c34}
-.pdf-page .pdf-table td.date{color:#243c34}
+.pdf-page .pdf-price-block .amt{font-family:var(--doc-unit-font);font-size:var(--doc-unit-size);font-weight:var(--doc-unit-weight);color:var(--doc-unit-color)}
+.pdf-page .pdf-table td{font-weight:400;color:#173F33}
+.pdf-page .pdf-table td.date{color:#52665C}
 .pdf-page .pdf-table tfoot td{font-size:13px;font-weight:700}
 .pdf-page .pdf-table tfoot .num.total-amount{font-size:13px;font-weight:700}
 .pdf-page .pdf-cash-total .amt{font-size:22px;font-weight:700}

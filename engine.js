@@ -75,6 +75,11 @@ function normalizeOffer(input) {
   o.split = o.maintenanceDateMode === 'split';
   if (!['handover', 'date', 'none'].includes(o.deliveryDateMode)) o.deliveryDateMode = 'handover';
   o.termMonths = Number.isFinite(+o.termMonths) ? Math.max(0, Math.min(600, Math.round(+o.termMonths))) : 0;
+  if (!o.termMonthsMigrated) {
+    if (!o.termMonths && +o.years > 0) o.termMonths = Math.max(0, Math.min(600, Math.round(+o.years * 12)));
+    o.termMonthsMigrated = true;
+  }
+  o.years = o.termMonths > 0 ? Math.round((o.termMonths / 12) * 1000) / 1000 : 0;
 
   o.start = isMonth(o.start) ? o.start : (isDate(o.start) ? String(o.start).slice(0, 7) : new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
   o.handover = isMonth(o.handover) ? o.handover : (isDate(o.handover) ? String(o.handover).slice(0, 7) : monthAfter(o.start, 36));
