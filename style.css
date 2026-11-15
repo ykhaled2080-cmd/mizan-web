@@ -549,3 +549,20 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 
 .schedule-grid td.cell-value .money,.schedule-grid td.cell-balance .money{font-weight:400!important}
 
+
+/* 1.0.22: right-side transparent custom scrollbar and drag-to-scroll. */
+@media(min-width:761px){
+.schedule-table-col .tablewrap{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+.schedule-table-col .tablewrap::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+}
+.schedule-vscroll{position:absolute;top:36px;right:3px;bottom:2px;width:10px;z-index:6;background:transparent;touch-action:none}
+.schedule-vscroll[hidden]{display:none}
+.schedule-vscroll-thumb{position:absolute;left:2px;right:2px;min-height:26px;border-radius:999px;background:rgba(20,97,79,.28);transition:background .15s}
+.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{background:rgba(20,97,79,.52)}
+@media(max-width:760px){.schedule-vscroll{display:none}}
+.schedule-table-col .tablewrap.drag-scroll{cursor:grabbing}
+.schedule-table-col .tablewrap.drag-scroll *{cursor:grabbing!important;user-select:none!important}
+
+/* 1.0.22 heading rules become horizontal, not vertical. */
+.rail-head .rail-accent{order:2;flex:1 1 auto;width:auto;height:1px;background:var(--rule);border-radius:0}
+.rail-head h3{order:1}
