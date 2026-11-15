@@ -130,7 +130,6 @@ html[dir=rtl] .mini-field select{background-position:left 7px center}
 .cash-included-amount small{font-size:10px;font-weight:400;color:var(--sub);margin-inline-start:2px}
 .cash-section{display:grid;gap:3px;margin-top:2px}
 .cash-section h3{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--green);margin:0 0 2px;line-height:1.5}
-.cash-section h3:before{content:'';width:2px;height:13px;background:var(--green);border-radius:1px;flex:none}
 .cash-section h3:after{content:'';flex:1 1 auto;height:1px;background:var(--rule);min-width:16px}
 .cash-charge-list{display:grid;gap:0;max-width:460px}
 .cash-charge-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:14px;padding:7px 0;border-bottom:1px solid var(--rule)}
@@ -629,8 +628,11 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-grid th.cell-value,.schedule-grid td.cell-value{text-align:center!important;direction:ltr!important;padding-left:8px;padding-right:4px}
 .terms-head h2{margin-inline-start:12px}
 }
+@media(max-width:1400px){
+.summary-classification.summary-four{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
 @media(max-width:1000px){
-.summary-classification.summary-full,.summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.summary-classification.summary-full,.summary-classification.summary-four,.summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
 @media(max-width:760px){
 .schedule-workspace-head{margin-bottom:7px}
@@ -640,6 +642,6 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .summary-info{padding:0 12px 8px}
 }
 @media(max-width:560px){
-.summary-classification.summary-full,.summary-classification.summary-two,.summary-classification.summary-one{grid-template-columns:1fr!important}
+.summary-classification.summary-full,.summary-classification.summary-four,.summary-classification.summary-two,.summary-classification.summary-one{grid-template-columns:1fr!important}
 }
 

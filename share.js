@@ -50,9 +50,94 @@
     text:'',busy:false,result:null,lastFiles:null,lastText:null,lastKind:'',
     cropBusy:false,rowFilter:null,pv:null,docLang:null,textMode:'horizontal',textScope:'full',fileScope:'full',pdfLayout:'horizontal',
     offers:null,includeIntro:!!A.includeIntro,includeOutro:!!A.includeOutro,showTotalOverride:null,
-    zoom:1,zoomMode:'actual',activeOffer:0,introText:'',outroText:'',introDirty:false,outroDirty:false,introPreset:'',outroPreset:'',notesOpen:false,scopePrompt:null
+    zoom:1,zoomMode:'actual',activeOffer:0,introText:'',outroText:'',introDirty:false,outroDirty:false,introPreset:'',outroPreset:'',notesOpen:false,scopePrompt:null,dividerSelected:'',docStyleOpen:false,docPresetSel:'',docRoleSel:'main',docDividerSel:'price',docPresetName:''
   };
   const FIXED_PDF_STYLE={title:'Arial',sub:'Arial',body:'Arial',brandScale:100,headingScale:100};
+const DOC_STYLE_KEY='mizan.docStyle';
+const DOC_PRESETS_KEY='mizan.docPresets';
+const DOC_FONT_MAIN='"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif';
+const DOC_ROLE_DEFS={
+ title:{label:'عنوان المستند',size:24,weight:600,color:'#164a3d'},
+ main:{label:'العناوين الرئيسية',size:16,weight:600,color:'#164a3d'},
+ sub:{label:'العناوين الفرعية',size:13,weight:500,color:'#285a4b'},
+ label:{label:'عناوين الحقول',size:11.5,weight:500,color:'#45564f'},
+ value:{label:'القيم والنصوص',size:12.5,weight:500,color:'#263d34'},
+ secondary:{label:'المعلومات الثانوية',size:10.5,weight:400,color:'#6f8078'},
+ total:{label:'الإجماليات',size:16,weight:600,color:'#145b47'}
+};
+const DOC_DIVIDER_DEFS={
+ price:{label:'فاصل سعر الوحدة',visible:true,offset:2,thickness:1,color:'#d2dcd5',length:100},
+ down:{label:'فاصل مقدم التعاقد',visible:true,offset:2,thickness:1,color:'#d2dcd5',length:100},
+ plan:{label:'فاصل خطة التقسيط',visible:true,offset:2,thickness:1,color:'#d2dcd5',length:100},
+ delivery:{label:'فاصل دفعة الاستلام',visible:false,offset:0,thickness:1,color:'#d2dcd5',length:100},
+ installment:{label:'فاصل قيمة القسط',visible:false,offset:0,thickness:1,color:'#d2dcd5',length:100}
+};
+function docRoles(font){return Object.fromEntries(Object.entries(DOC_ROLE_DEFS).map(([key,def])=>[key,{font:font||DOC_FONT_MAIN,size:def.size,weight:def.weight,color:def.color}]));}
+function docDividers(){return Object.fromEntries(Object.entries(DOC_DIVIDER_DEFS).map(([key,def])=>[key,{...def}]));}
+function docDefaultStyle(){return {activePreset:'balanced',roles:docRoles(DOC_FONT_MAIN),dividers:docDividers()};}
+function docBuiltinPresets(){
+ const balanced=docDefaultStyle();
+ const minimal=docDefaultStyle();minimal.activePreset='minimal';
+ Object.assign(minimal.roles.title,{size:23,weight:600,color:'#263832'});
+ Object.assign(minimal.roles.main,{size:15,weight:500,color:'#263832'});
+ Object.assign(minimal.roles.sub,{size:12.5,weight:500,color:'#3a4c45'});
+ Object.assign(minimal.roles.label,{size:11,weight:400,color:'#53615a'});
+ Object.assign(minimal.roles.value,{size:12,weight:400,color:'#263832'});
+ Object.assign(minimal.roles.secondary,{size:10,weight:400,color:'#7a8580'});
+ Object.assign(minimal.roles.total,{size:15,weight:600,color:'#1d5746'});
+ const contrast=docDefaultStyle();contrast.activePreset='contrast';
+ Object.assign(contrast.roles.title,{size:24,weight:600,color:'#123f33'});
+ Object.assign(contrast.roles.main,{size:16,weight:600,color:'#123f33'});
+ Object.assign(contrast.roles.sub,{size:13,weight:600,color:'#244f41'});
+ Object.assign(contrast.roles.label,{size:11.5,weight:500,color:'#394941'});
+ Object.assign(contrast.roles.value,{size:12.5,weight:500,color:'#172e26'});
+ Object.assign(contrast.roles.secondary,{size:10.5,weight:400,color:'#66766c'});
+ Object.assign(contrast.roles.total,{size:16,weight:600,color:'#0f5943'});
+ const soft=docDefaultStyle();soft.activePreset='soft';
+ Object.assign(soft.roles.title,{size:24,weight:600,color:'#285a49'});
+ Object.assign(soft.roles.main,{size:16,weight:600,color:'#285a49'});
+ Object.assign(soft.roles.sub,{size:13,weight:500,color:'#52705f'});
+ Object.assign(soft.roles.label,{size:11.5,weight:400,color:'#596b61'});
+ Object.assign(soft.roles.value,{size:12.5,weight:500,color:'#34463c'});
+ Object.assign(soft.roles.secondary,{size:10.5,weight:400,color:'#7c8b80'});
+ Object.assign(soft.roles.total,{size:16,weight:600,color:'#28664f'});
+ return [
+  {id:'balanced',name:'Mizan Balanced',builtin:true,style:balanced},
+  {id:'minimal',name:'Editorial Minimal',builtin:true,style:minimal},
+  {id:'contrast',name:'Professional Contrast',builtin:true,style:contrast},
+  {id:'soft',name:'Soft Green',builtin:true,style:soft}
+ ];
+}
+function mergeDocStyle(saved){
+ const base=docDefaultStyle();
+ if(!saved||typeof saved!=='object')return base;
+ const style={activePreset:typeof saved.activePreset==='string'?saved.activePreset:base.activePreset,roles:docRoles(DOC_FONT_MAIN),dividers:docDividers()};
+ for(const key of Object.keys(DOC_ROLE_DEFS)){
+  const src=saved.roles&&saved.roles[key];
+  if(src&&typeof src==='object'){
+   style.roles[key].font=typeof src.font==='string'&&src.font?src.font:style.roles[key].font;
+   style.roles[key].size=Number.isFinite(+src.size)?Math.max(7,Math.min(48,+src.size)):style.roles[key].size;
+   style.roles[key].weight=[400,500,600,700].includes(+src.weight)?+src.weight:style.roles[key].weight;
+   style.roles[key].color=/^#[0-9a-f]{6}$/i.test(src.color||'')?src.color:style.roles[key].color;
+  }
+ }
+ for(const key of Object.keys(DOC_DIVIDER_DEFS)){
+  const src=saved.dividers&&saved.dividers[key];
+  if(src&&typeof src==='object'){
+   style.dividers[key].visible=!!src.visible;
+   style.dividers[key].offset=Number.isFinite(+src.offset)?Math.max(-2,Math.min(6,+src.offset)):style.dividers[key].offset;
+   style.dividers[key].thickness=Number.isFinite(+src.thickness)?Math.max(.5,Math.min(4,+src.thickness)):style.dividers[key].thickness;
+   style.dividers[key].color=/^#[0-9a-f]{6}$/i.test(src.color||'')?src.color:style.dividers[key].color;
+   style.dividers[key].length=Number.isFinite(+src.length)?Math.max(20,Math.min(100,+src.length)):style.dividers[key].length;
+  }
+ }
+ return style;
+}
+function readDocStyle(){try{return mergeDocStyle(JSON.parse(localStorage.getItem(DOC_STYLE_KEY)||'null'))}catch{return docDefaultStyle()}}
+function writeDocStyle(style){try{localStorage.setItem(DOC_STYLE_KEY,JSON.stringify(style))}catch{}}
+function readCustomDocPresets(){try{const list=JSON.parse(localStorage.getItem(DOC_PRESETS_KEY)||'[]');return Array.isArray(list)?list.filter(p=>p&&p.id&&p.name&&p.style).map(p=>({id:String(p.id),name:String(p.name),builtin:false,style:mergeDocStyle(p.style)})):[]}catch{return[]}}
+function writeCustomDocPresets(list){try{localStorage.setItem(DOC_PRESETS_KEY,JSON.stringify(list))}catch{}}
+let DOC_STYLE=readDocStyle();
 
   function tt(ar,en){return A.lang==='ar'?ar:en}
   function docLang(){return S.docLang||A.lang}
@@ -245,6 +330,30 @@
     page.style.setProperty('--pdf-font-body',fontStack(FIXED_PDF_STYLE.body));
     page.style.setProperty('--pdf-brand-scale',(FIXED_PDF_STYLE.brandScale/100).toFixed(3));
     page.style.setProperty('--pdf-heading-scale',(FIXED_PDF_STYLE.headingScale/100).toFixed(3));
+    for(const key of Object.keys(DOC_ROLE_DEFS)){
+      const def=DOC_ROLE_DEFS[key],role=(DOC_STYLE.roles&&DOC_STYLE.roles[key])||def;
+      page.style.setProperty('--doc-'+key+'-font',role.font||DOC_FONT_MAIN);
+      page.style.setProperty('--doc-'+key+'-size',(+role.size||def.size)+'px');
+      page.style.setProperty('--doc-'+key+'-weight',String(+role.weight||def.weight));
+      page.style.setProperty('--doc-'+key+'-color',role.color||def.color);
+    }
+    applyDividerStyles(page);
+  }
+  function applyDividerStyles(root){
+    const scope=root&&root.querySelectorAll?root:document;
+    scope.querySelectorAll('.pdf-divider[data-divider]').forEach(el=>{
+      const key=el.dataset.divider;
+      const cfg=(DOC_STYLE.dividers&&DOC_STYLE.dividers[key])||DOC_DIVIDER_DEFS[key];
+      if(!cfg)return;
+      el.style.display=cfg.visible?'block':'none';
+      el.style.transform='translateY('+(+cfg.offset||0)+'px)';
+      el.style.setProperty('--div-thickness',(+cfg.thickness||1)+'px');
+      el.style.setProperty('--div-color',cfg.color||'#d2dcd5');
+      const inset=Math.max(0,(100-(+cfg.length||100))/2);
+      el.style.left=inset+'%';
+      el.style.right=inset+'%';
+      el.classList.toggle('selected',S.dividerSelected===key);
+    });
   }
   function resetBuilt(){
     S.buildToken++;
@@ -271,7 +380,7 @@
     const pct=n=>n>0?' ('+data.f.pct.format(n)+'%)':'';
     const non=t('غير محدد','Not specified');
     const amount=cents=>'<bdi dir="ltr">'+cash(cents)+'</bdi> '+data.curr;
-    const dueJoin=(base,due)=>due?base+(/^(عند|خلال)/.test(due)||/^(at|over)\b/i.test(due)?' ':' – ')+due:base;
+    const dueJoin=(base,due)=>due?base+(/^(عند|خلال)/.test(due)||/^(at|over)\b/i.test(due)?' ':' – ')+'<span class="pdf-due">'+due+'</span>':base;
     const handoverDate=p.handover?fullDate(p.handover,p.handoverDay):'';
     const deliveryShown=p.deliveryDateMode==='date'&&p.deliveryDate?fullDate(p.deliveryDate,p.deliveryDay):handoverDate;
     const deliveryLabel=p.deliveryDateMode==='none'?'':(deliveryShown?t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(deliveryShown):'');
@@ -305,35 +414,39 @@
     const roundingAdjusted=baseEqual&&lastInstValue!==baseValues[0]&&lastDiff>0&&lastDiff<=inst.length*100;
     const fixedPlan=inst.length>0&&(values.length===1||roundingAdjusted);
     const fixedValue=values.length===1?values[0]:(baseValues.length?baseValues[0]:lastInstValue);
-    const priceBlock='<div class="pdf-price-block"><span class="lbl">'+t('سعر الوحدة','Unit price')+'</span><b class="amt"><bdi dir="ltr">'+cash(s.price)+'</bdi> <small class="pdf-curr">'+data.curr+'</small></b></div>';
+    const priceBlock='<div class="pdf-price-block"><span class="lbl">'+t('سعر الوحدة','Unit price')+'</span><b class="amt"><bdi dir="ltr">'+cash(s.price)+'</bdi> <small class="pdf-curr">'+data.curr+'</small></b><span class="pdf-divider" data-divider="price" contenteditable="false"></span></div>';
     const payItems=[];
-    if(!s.cash&&s.down)payItems.push('<div class="pdf-pay-item"><span class="lbl">'+names.down()+(p.mode==='rate'?pct(s.downPct):'')+'</span><b class="val">'+amount(s.down)+'</b></div>');
-    if(!s.cash&&inst.length)payItems.push('<div class="pdf-pay-item"><span class="lbl">'+t('خطة التقسيط','Payment plan')+'</span><b class="val">'+esc(planText)+'</b></div>');
+    if(!s.cash&&s.down)payItems.push('<div class="pdf-pay-item pdf-pay-down"><span class="lbl">'+names.down()+(p.mode==='rate'?pct(s.downPct):'')+'</span><b class="val">'+amount(s.down)+'</b><span class="pdf-divider" data-divider="down" contenteditable="false"></span></div>');
+    if(!s.cash&&inst.length)payItems.push('<div class="pdf-pay-item pdf-pay-plan"><span class="lbl">'+t('خطة التقسيط','Payment plan')+'</span><b class="val">'+esc(planText)+'</b><span class="pdf-divider" data-divider="plan" contenteditable="false"></span></div>');
     if(!s.cash&&s.delivery){
-      payItems.push('<div class="pdf-pay-item"><span class="lbl">'+dueJoin(names.delivery()+(p.delivery>0?pct(s.deliveryPct):''),deliveryLabel)+'</span><b class="val">'+amount(s.delivery)+'</b></div>');
+      payItems.push('<div class="pdf-pay-item pdf-pay-delivery"><span class="lbl">'+dueJoin(names.delivery()+(p.delivery>0?pct(s.deliveryPct):''),deliveryLabel)+'</span><b class="val">'+amount(s.delivery)+'</b><span class="pdf-divider" data-divider="delivery" contenteditable="false"></span></div>');
     }
     if(!s.cash&&inst.length){
       const instValue=fixedPlan?amount(fixedValue):t('متغيرة حسب الفترة','Variable by period');
-      payItems.push('<div class="pdf-pay-item"><span class="lbl">'+t('قيمة القسط','Installment amount')+'</span><b class="val">'+instValue+'</b></div>');
+      payItems.push('<div class="pdf-pay-item pdf-pay-installment"><span class="lbl">'+t('قيمة القسط','Installment amount')+'</span><b class="val">'+instValue+'</b><span class="pdf-divider" data-divider="installment" contenteditable="false"></span></div>');
     }
     const payGrid=payItems.length?'<div class="pdf-pay-grid">'+payItems.join('')+'</div>':'';
-    const charges=[];
+    const extraCharges=[];
     for(const e of s.extras){
       const label=(names[e.label]?names[e.label]():e.label)+(e.label==='maintenance'&&p.maintenance>0?pct(s.maintenancePct):'');
       const due=e.label==='maintenance'?maintenanceLabel:extraDateCond(e);
-      charges.push('<div class="pdf-charge"><span class="lbl">'+dueJoin(label,due)+'</span><b class="val">'+amount(e.amount)+'</b></div>');
+      extraCharges.push('<div class="pdf-charge"><span class="lbl">'+dueJoin(label,due)+'</span><b class="val">'+amount(e.amount)+'</b></div>');
     }
     const feeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
     const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
     const feeMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
     const feeTitle=t('عمولة الوساطة','Brokerage commission')+(feeMeta?' - '+feeMeta:'');
-    if(s.commission)charges.push('<div class="pdf-charge pdf-charge-commission"><span class="lbl">'+feeTitle+'</span><b class="val">'+amount(s.commission)+'</b></div>');
-    const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
+    const moneyCharges=s.commission?['<div class="pdf-charge pdf-charge-commission"><span class="lbl">'+feeTitle+'</span><b class="val">'+amount(s.commission)+'</b></div>']:[];
+    const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><h3>'+title+'</h3><span class="rule"></span></div>';
+    const pdfGroup=(title,items,cls)=>items.length?'<section class="pdf-group '+(cls||'')+'">'+sectionTitle(title,cls)+'<div class="pdf-charges">'+items.join('')+'</div></section>':'';
     const includedRows=(s.includedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
     const excludedRows=(s.excludedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount,due:x.due&&x.dueMode==='date'?t('بتاريخ','on')+' '+data.f.date(x.due):''}));
-    const includedHtml=includedRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+includedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-    const excludedHtml=excludedRows.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-excluded-title')+'<div class="pdf-charges">'+excludedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-    const extrasHtml=charges.length?sectionTitle(t('أموال إضافية','Additional amounts'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
+    const includedGroup=pdfGroup(t('السعر يشمل','Included in price'),includedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-included-title');
+    const excludedGroup=pdfGroup(t('السعر لا يشمل','Price does not include'),excludedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-excluded-title');
+    const extrasGroup=pdfGroup(t('مستحقات إضافية','Additional charges'),extraCharges,'pdf-extras-title');
+    const moneyGroup=pdfGroup(t('أموال إضافية','Additional amounts'),moneyCharges,'pdf-money-title');
+    const pdfGroups=[includedGroup,excludedGroup,extrasGroup,moneyGroup].filter(Boolean);
+    const groupsHtml=pdfGroups.length?'<div class="pdf-groups pdf-groups-'+pdfGroups.length+'">'+pdfGroups.join('')+'</div>':'';
     const identity='<div class="pdf-identity"><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div></div>';
     const includedText=(s.includedItems||[]).map(x=>esc(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+amount(x.amount):'')).join(' · ');
     const legalFinancial=p.legal&&p.legal.noDues?(s.cash&&!(s.extras.length||(s.commission&&p.payer==='buyer'))?t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.'):t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.')):'';
@@ -357,18 +470,23 @@
       const cashFeeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
       const cashFeePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
       const cashFeeMeta=[cashFeePayer,cashFeeRate?'('+cashFeeRate+')':''].filter(Boolean).join(' ');
-      if(s.commission)cashCharges.push({label:t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),due:'',amount:s.commission,commission:true});
+      const cashMoney=s.commission?[{label:t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),amount:s.commission}]:[];
       const dueBdi=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
-      const cashChargesHtml=cashCharges.length?sectionTitle(t('أموال إضافية','Additional amounts'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge'+(c.commission?' pdf-charge-commission':'')+'"><span class="lbl">'+dueJoin(c.label,dueBdi(c.due))+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
+      const cashExtrasItems=cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(c.label,dueBdi(c.due))+'</span><b class="val">'+amount(c.amount)+'</b></div>');
+      const cashMoneyItems=cashMoney.map(c=>'<div class="pdf-charge pdf-charge-commission"><span class="lbl">'+c.label+'</span><b class="val">'+amount(c.amount)+'</b></div>');
+      const cashIncluded=pdfGroup(t('السعر يشمل','Price includes'),['<div class="pdf-cash-included-list">'+includedText+'</div>'],'pdf-cash-included-title');
+      const cashExcluded=pdfGroup(t('السعر لا يشمل','Price does not include'),(s.excludedItems||[]).map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-cash-excluded-title');
+      const cashExtras=pdfGroup(t('مستحقات إضافية','Additional charges'),cashExtrasItems,'pdf-cash-charges-title');
+      const cashMoneyGroup=pdfGroup(t('أموال إضافية','Additional amounts'),cashMoneyItems,'pdf-cash-money-title');
+      const cashGroups=[cashIncluded,cashExcluded,cashExtras,cashMoneyGroup].filter(Boolean);
+      const cashGroupsHtml=cashGroups.length?'<div class="pdf-groups pdf-groups-'+cashGroups.length+'">'+cashGroups.join('')+'</div>':'';
       const cashTotal='<div class="pdf-price-block pdf-cash-total"><span class="lbl">'+cashTotalLabel+'</span><b class="amt">'+amount(s.price)+'</b></div>';
-      const cashIncluded=s.includes.length?sectionTitle(t('السعر يشمل','Price includes'),'pdf-cash-included-title')+'<div class="pdf-cash-included-list">'+includedText+'</div>':'';
-      const cashExcluded=(s.excludedItems||[]).length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-cash-excluded-title')+'<div class="pdf-charges">'+s.excludedItems.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-      return heading+identity+cashTotal+cashIncluded+cashExcluded+cashChargesHtml+legalHtml+scheduleHeading;
+      return heading+identity+cashTotal+cashGroupsHtml+legalHtml+scheduleHeading;
     }
     const support=[];
     if(legalHtml)support.push(legalHtml);
     if(s.gap&&!s.selectedOnly)support.push('<div class="pdf-support-line"><b>'+t('غير مجدول:','Unscheduled:')+'</b> '+amount(s.gap)+'</div>');
-    return heading+identity+priceBlock+payGrid+includedHtml+excludedHtml+extrasHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
+    return heading+identity+priceBlock+payGrid+groupsHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
   }
   function pdfTableShell(lang,layout){
     const t=(ar,en)=>lang==='ar'?ar:en;
@@ -793,7 +911,7 @@
     const format='<label class="share-format"><span>'+tt('تنسيق','Format')+'</span><select id="shareFormat" aria-label="'+tt('تنسيق التصدير','Export format')+'"><option value="pdf" '+(S.tab==='pdf'?'selected':'')+'>PDF</option><option value="images" '+(S.tab==='images'?'selected':'')+'>'+tt('صور','Images')+'</option><option value="text" '+(S.tab==='text'?'selected':'')+'>'+tt('نص','Text')+'</option></select></label>';
     const zoomTools=S.tab==='pdf'?'<div class="share-zoom" role="group" aria-label="'+tt('التكبير','Zoom')+'"><button type="button" data-share-act="zoom-out" aria-label="'+tt('تصغير','Zoom out')+'">−</button><button type="button" class="zoom-value" data-share-act="zoom-reset" title="'+tt('إعادة الضبط إلى 100%','Reset to 100%')+'">'+zoom+'%</button><button type="button" data-share-act="zoom-in" aria-label="'+tt('تكبير','Zoom in')+'">+</button><button type="button" class="zoom-fit" data-share-act="zoom-fit" title="'+tt('ملاءمة العرض','Fit to view')+'" aria-label="'+tt('ملاءمة العرض','Fit to view')+'">'+icon('fit',13)+'</button></div>':'';
     const context=S.tab==='pdf'&&S.built?'<span class="share-doc-meta">'+pageCountLabel(S.built.pages.length)+(offersMode()?' · '+esc(offerLabel(S.activeOffer)):'')+'</span>':'';
-    const view='<div class="share-view-tools"><button type="button" class="share-toggle" data-share-act="toggle-language"></button><button type="button" class="share-toggle" data-share-act="toggle-layout"></button><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button></div>';
+    const view='<div class="share-view-tools"><button type="button" class="share-toggle" data-share-act="toggle-language"></button><button type="button" class="share-toggle" data-share-act="toggle-layout"></button><button type="button" class="share-toggle share-style-btn" data-share-act="doc-style">'+icon('pen',13)+tt('تنسيق','Style')+'</button><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button></div>';
     return format+zoomTools+context+view;
   }
   function docPageHtml(page,number,index){
@@ -828,13 +946,31 @@
       localStorage.setItem(PAGE_EDITS_KEY,JSON.stringify(all));
     }catch{}
   }
+  function upgradeStoredPageHtml(html){
+    try{
+      const wrap=document.createElement('div');wrap.innerHTML=html;
+      const page=wrap.querySelector('.pdf-page');
+      if(!page)return html;
+      const price=page.querySelector('.pdf-price-block');
+      if(price&&!price.querySelector('.pdf-divider[data-divider="price"]')){
+        const span=document.createElement('span');span.className='pdf-divider';span.dataset.divider='price';span.setAttribute('contenteditable','false');price.appendChild(span);
+      }
+      const keys=['down','plan','delivery','installment'];
+      [...page.querySelectorAll('.pdf-pay-item')].forEach((item,i)=>{
+        const key=keys[i];if(!key||item.querySelector('.pdf-divider[data-divider="'+key+'"]'))return;
+        const span=document.createElement('span');span.className='pdf-divider';span.dataset.divider=key;span.setAttribute('contenteditable','false');item.appendChild(span);
+      });
+      applyPdfStyle(page);
+      return page.outerHTML;
+    }catch{return html}
+  }
   function applyStoredPageEdits(built){
     try{
       const pages=readPageEdits()[pageEditKey()];
       if(!Array.isArray(pages))return;
       pages.forEach((html,i)=>{
         if(built.pages[i]&&typeof html==='string'){
-          built.pages[i].html=html;
+          built.pages[i].html=upgradeStoredPageHtml(html);
           built.pages[i].rasterDirty=true;
           built.pages[i].renderPromise=null;
         }
@@ -984,6 +1120,206 @@
     ['"Times New Roman",Times,serif','Times New Roman']
   ];
   const PDF_FONT_SIZES=[9,10,11,12,13,14,16,18,20,22,24,28,32];
+  const DOC_ROLE_SIZES=[9,10,10.5,11,11.5,12,12.5,13,13.5,14,15,16,17,18,20,22,24,26,28,32];
+  function docPresetList(){return [...docBuiltinPresets(),...readCustomDocPresets()]}
+  function docPresetById(id){return docPresetList().find(p=>p.id===id)||null}
+  function docSelectedPresetId(){const list=docPresetList();const id=S.docPresetSel||DOC_STYLE.activePreset;return list.some(p=>p.id===id)?id:list[0].id}
+  function roleStyleAttr(role){const font=String(role.font||DOC_FONT_MAIN).replace(/"/g,'&quot;');return 'font-family:'+font+';font-size:'+(+role.size||12)+'px;font-weight:'+(+role.weight||400)+';color:'+role.color}
+  function docStylePanelHtml(){
+    const presets=docPresetList();
+    let selectedId=S.docPresetSel||DOC_STYLE.activePreset||'';
+    if(selectedId&&!presets.some(p=>p.id===selectedId))selectedId='';
+    S.docPresetSel=selectedId;
+    const selected=selectedId?presets.find(p=>p.id===selectedId):null;
+    const preview=selected?selected.style:DOC_STYLE;
+    const roleKey=DOC_ROLE_DEFS[S.docRoleSel]?S.docRoleSel:'main';S.docRoleSel=roleKey;
+    const role=DOC_STYLE.roles[roleKey];
+    const dividerKey=DOC_DIVIDER_DEFS[S.docDividerSel]?S.docDividerSel:'price';S.docDividerSel=dividerKey;
+    const div=DOC_STYLE.dividers[dividerKey];
+    const custom=selected&&!selected.builtin;
+    const fontOptions=PDF_FONT_FAMILIES.map(([value,label])=>'<option value="'+esc(value)+'" '+(role.font===value?'selected':'')+'>'+label+'</option>').join('');
+    const sizeOptions=DOC_ROLE_SIZES.map(n=>'<option value="'+n+'" '+(Math.abs(+role.size-n)<.01?'selected':'')+'>'+n+'</option>').join('');
+    const weightOptions=[[400,tt('عادي','Regular')],[500,tt('متوسط','Medium')],[600,tt('نصف عريض','Semi-bold')],[700,tt('عريض','Bold')]].map(([value,label])=>'<option value="'+value+'" '+(+role.weight===value?'selected':'')+'>'+label+'</option>').join('');
+    const currentOption=selectedId?'':'<option value="" selected>'+tt('النمط الحالي','Current style')+'</option>';
+    const presetOptions=currentOption+presets.map(p=>'<option value="'+p.id+'" '+(p.id===selectedId?'selected':'')+'>'+esc(p.name)+(p.builtin?'':' · '+tt('مخصص','Custom'))+'</option>').join('');
+    const roleOptions=Object.entries(DOC_ROLE_DEFS).map(([key,def])=>'<option value="'+key+'" '+(key===roleKey?'selected':'')+'>'+def.label+'</option>').join('');
+    const dividerOptions=Object.entries(DOC_DIVIDER_DEFS).map(([key,def])=>'<option value="'+key+'" '+(key===dividerKey?'selected':'')+'>'+def.label+'</option>').join('');
+    const pv=preview.roles||DOC_STYLE.roles;
+    const sample='<div class="ds-sample"><b style="'+roleStyleAttr(pv.title)+'">'+tt('عرض سداد تقديري','Estimated payment offer')+'</b><span style="'+roleStyleAttr(pv.main)+'">'+tt('الملخص المالي','Financial summary')+'</span><div class="ds-sample-line"><span style="'+roleStyleAttr(pv.label)+'">'+tt('سعر الوحدة','Unit price')+'</span><b style="'+roleStyleAttr(pv.value)+'">5,000,000 ج.م</b></div><b class="ds-sample-total" style="'+roleStyleAttr(pv.total)+'">'+tt('إجمالي العرض','Offer total')+' · 5,000,000 ج.م</b></div>';
+    return '<div class="ds-head"><b>'+tt('تنسيق المستند','Document style')+'</b><button type="button" class="pdf-fb-close" data-ds-act="close" aria-label="'+tt('إغلاق','Close')+'">×</button></div>'+
+      '<div class="ds-grid"><div class="ds-col">'+
+        '<div class="ds-block"><div class="ds-block-title">'+tt('القالب','Preset')+'</div>'+
+          '<div class="ds-row"><select data-ds-preset class="ds-grow" aria-label="'+tt('القالب','Preset')+'">'+presetOptions+'</select><button type="button" class="ds-btn primary" data-ds-act="apply-preset" '+(!selectedId?'disabled':'')+'>'+tt('تطبيق','Apply')+'</button></div>'+
+          sample+
+          '<div class="ds-actions"><button type="button" class="ds-btn" data-ds-act="restore-defaults">'+tt('استعادة الأصل','Restore original')+'</button></div>'+
+        '</div>'+
+        '<div class="ds-block"><div class="ds-block-title">'+tt('الخط','Typography')+'</div>'+
+          '<label class="ds-field"><span>'+tt('الدور','Role')+'</span><select data-ds-role>'+roleOptions+'</select></label>'+
+          '<div class="ds-row"><label class="ds-field ds-grow"><span>'+tt('الخط','Font')+'</span><select data-ds-role-font>'+fontOptions+'</select></label><label class="ds-field"><span>'+tt('الحجم','Size')+'</span><select data-ds-role-size>'+sizeOptions+'</select></label></div>'+
+          '<div class="ds-row"><label class="ds-field ds-grow"><span>'+tt('الوزن','Weight')+'</span><select data-ds-role-weight>'+weightOptions+'</select></label><label class="ds-field ds-color-field"><span>'+tt('اللون','Color')+'</span><input type="color" data-ds-role-color value="'+role.color+'"><input class="ds-hex" data-ds-role-hex value="'+role.color+'" maxlength="7" spellcheck="false"></label></div>'+
+          '<div class="ds-actions"><button type="button" class="ds-btn" data-ds-act="reset-role">'+tt('إعادة ضبط الدور','Reset role')+'</button></div>'+
+        '</div>'+
+      '</div><div class="ds-col">'+
+        '<div class="ds-block"><div class="ds-block-title">'+tt('الفواصل','Dividers')+'</div>'+
+          '<label class="ds-field"><span>'+tt('الفاصل','Divider')+'</span><select data-ds-divider>'+dividerOptions+'</select></label>'+
+          '<label class="ds-check"><input type="checkbox" data-ds-divider-visible '+(div.visible?'checked':'')+'><span>'+tt('إظهار الفاصل','Show divider')+'</span></label>'+
+          '<label class="ds-range"><span>'+tt('الإزاحة','Offset')+'</span><input type="range" min="-2" max="6" step="0.5" data-ds-divider-offset value="'+div.offset+'"><output data-ds-out="offset">'+div.offset+'px</output></label>'+
+          '<label class="ds-range"><span>'+tt('السماكة','Thickness')+'</span><input type="range" min="0.5" max="4" step="0.5" data-ds-divider-thickness value="'+div.thickness+'"><output data-ds-out="thickness">'+div.thickness+'px</output></label>'+
+          '<label class="ds-range"><span>'+tt('الطول','Length')+'</span><input type="range" min="20" max="100" step="5" data-ds-divider-length value="'+div.length+'"><output data-ds-out="length">'+div.length+'%</output></label>'+
+          '<div class="ds-row"><label class="ds-field ds-color-field ds-grow"><span>'+tt('اللون','Color')+'</span><input type="color" data-ds-divider-color value="'+div.color+'"><input class="ds-hex" data-ds-divider-hex value="'+div.color+'" maxlength="7" spellcheck="false"></label><button type="button" class="ds-btn" data-ds-act="reset-divider">'+tt('استعادة الفاصل','Reset divider')+'</button></div>'+
+        '</div>'+
+        '<div class="ds-block"><div class="ds-block-title">'+tt('قوالب مخصصة','Custom presets')+'</div>'+
+          '<label class="ds-field"><span>'+tt('اسم النمط','Preset name')+'</span><input data-ds-preset-name value="'+esc(S.docPresetName)+'" placeholder="'+tt('اسم النمط','Preset name')+'"></label>'+
+          '<div class="ds-actions"><button type="button" class="ds-btn primary" data-ds-act="save-preset">'+tt('حفظ الحالي','Save current')+'</button><button type="button" class="ds-btn" data-ds-act="update-preset" '+(custom?'':'disabled')+'>'+tt('تحديث','Update')+'</button><button type="button" class="ds-btn" data-ds-act="rename-preset" '+(custom?'':'disabled')+'>'+tt('إعادة تسمية','Rename')+'</button><button type="button" class="ds-btn" data-ds-act="delete-preset" '+(custom?'':'disabled')+'>'+tt('حذف','Delete')+'</button></div>'+
+        '</div>'+
+      '</div></div>';
+  }
+  function ensureDocStylePanel(){
+    let el=document.getElementById('docStylePanel');
+    if(!el){el=document.createElement('div');el.id='docStylePanel';el.className='doc-style-panel';el.hidden=true;const sheet=document.querySelector('.share-sheet');(sheet||document.body).appendChild(el)}
+    return el;
+  }
+  function renderDocStylePanel(){const el=document.getElementById('docStylePanel');if(el&&!el.hidden)el.innerHTML=docStylePanelHtml()}
+  function showDocStylePanel(){const el=ensureDocStylePanel();el.hidden=false;S.docStyleOpen=true;renderDocStylePanel()}
+  function hideDocStylePanel(){const el=document.getElementById('docStylePanel');if(el)el.hidden=true;S.docStyleOpen=false}
+  function applyDocStyleLive(){document.querySelectorAll('.pdf-page').forEach(page=>applyPdfStyle(page))}
+  function markDocStyleCustom(){DOC_STYLE.activePreset='';S.docPresetSel=''}
+  function commitDocStyle(){writeDocStyle(DOC_STYLE);applyDocStyleLive();if(S.built){flushEditablePages();S.built.vectorPdf=null}}
+  function applyDocPreset(id){
+    const preset=docPresetById(id);if(!preset)return;
+    DOC_STYLE=mergeDocStyle(preset.style);DOC_STYLE.activePreset=id;S.docPresetSel=id;
+    commitDocStyle();renderDocStylePanel();A.note(tt('تم تطبيق النمط','Preset applied'));
+  }
+  function restoreDocDefaults(){
+    DOC_STYLE=docDefaultStyle();DOC_STYLE.activePreset='balanced';S.docPresetSel='balanced';
+    commitDocStyle();renderDocStylePanel();A.note(tt('تمت استعادة التنسيق الأصلي','Original styling restored'));
+  }
+  function resetDocRole(){
+    const key=S.docRoleSel||'main';
+    DOC_STYLE.roles[key]=docRoles(DOC_FONT_MAIN)[key];
+    commitDocStyle();renderDocStylePanel();
+  }
+  function resetDocDivider(){
+    const key=S.docDividerSel||'price';
+    DOC_STYLE.dividers[key]={...DOC_DIVIDER_DEFS[key]};
+    commitDocStyle();renderDocStylePanel();
+  }
+  function saveCustomDocPreset(){
+    const nameEl=document.querySelector('[data-ds-preset-name]');
+    const name=(nameEl?nameEl.value:'').trim();
+    if(!name){A.note(tt('أدخل اسمًا للنمط.','Enter a preset name.'));return}
+    const list=readCustomDocPresets();
+    if(list.some(p=>p.name.toLowerCase()===name.toLowerCase())){A.note(tt('هذا الاسم مستخدم بالفعل.','This name is already used.'));return}
+    const id='custom-'+Date.now().toString(36);
+    list.push({id,name,builtin:false,style:mergeDocStyle(DOC_STYLE)});
+    writeCustomDocPresets(list);S.docPresetSel=id;DOC_STYLE.activePreset=id;writeDocStyle(DOC_STYLE);S.docPresetName='';
+    renderDocStylePanel();A.note(tt('تم حفظ النمط','Preset saved'));
+  }
+  function selectedCustomPreset(){const id=S.docPresetSel;const p=readCustomDocPresets().find(x=>x.id===id);return p||null}
+  function updateCustomDocPreset(){
+    const p=selectedCustomPreset();if(!p){A.note(tt('اختر نمطًا مخصصًا أولًا.','Select a custom preset first.'));return}
+    const list=readCustomDocPresets().map(x=>x.id===p.id?{...x,style:mergeDocStyle(DOC_STYLE)}:x);
+    writeCustomDocPresets(list);A.note(tt('تم تحديث النمط','Preset updated'));renderDocStylePanel();
+  }
+  function renameCustomDocPreset(){
+    const p=selectedCustomPreset();if(!p)return;
+    const name=prompt(tt('اسم النمط','Preset name'),p.name);
+    if(!name||!name.trim())return;
+    const clean=name.trim();
+    if(readCustomDocPresets().some(x=>x.id!==p.id&&x.name.toLowerCase()===clean.toLowerCase())){A.note(tt('هذا الاسم مستخدم بالفعل.','This name is already used.'));return}
+    writeCustomDocPresets(readCustomDocPresets().map(x=>x.id===p.id?{...x,name:clean}:x));
+    renderDocStylePanel();A.note(tt('تمت إعادة التسمية','Preset renamed'));
+  }
+  function deleteCustomDocPreset(){
+    const p=selectedCustomPreset();if(!p)return;
+    if(!confirm(tt('حذف النمط المخصص؟','Delete custom preset?')))return;
+    writeCustomDocPresets(readCustomDocPresets().filter(x=>x.id!==p.id));
+    S.docPresetSel='';DOC_STYLE.activePreset='';writeDocStyle(DOC_STYLE);
+    renderDocStylePanel();A.note(tt('تم حذف النمط','Preset deleted'));
+  }
+  function liveDocRoleChange(){
+    markDocStyleCustom();
+    const role=DOC_STYLE.roles[S.docRoleSel||'main'];
+    applyDocStyleLive();
+    const out=document.querySelector('[data-ds-role-hex]');if(out)out.value=role.color;
+  }
+  function liveDocDividerChange(){
+    markDocStyleCustom();
+    applyDocStyleLive();
+    const div=DOC_STYLE.dividers[S.docDividerSel||'price'];
+    const set=(name,val)=>{const el=document.querySelector('[data-ds-out="'+name+'"]');if(el)el.textContent=val};
+    set('offset',div.offset+'px');set('thickness',div.thickness+'px');set('length',div.length+'%');
+    const hex=document.querySelector('[data-ds-divider-hex]');if(hex)hex.value=div.color;
+  }
+  document.addEventListener('click',e=>{
+    const act=e.target.closest('[data-ds-act]');
+    if(!act)return;
+    const a=act.dataset.dsAct;
+    if(a==='close'){hideDocStylePanel();return}
+    if(a==='apply-preset'){applyDocPreset(S.docPresetSel);return}
+    if(a==='restore-defaults'){restoreDocDefaults();return}
+    if(a==='reset-role'){resetDocRole();return}
+    if(a==='reset-divider'){resetDocDivider();return}
+    if(a==='save-preset'){saveCustomDocPreset();return}
+    if(a==='update-preset'){updateCustomDocPreset();return}
+    if(a==='rename-preset'){renameCustomDocPreset();return}
+    if(a==='delete-preset'){deleteCustomDocPreset();return}
+  });
+  document.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.matches('[data-ds-preset]')){S.docPresetSel=t.value;renderDocStylePanel();return}
+    if(t.matches('[data-ds-role]')){S.docRoleSel=t.value;renderDocStylePanel();return}
+    if(t.matches('[data-ds-divider]')){S.docDividerSel=t.value;applyDividerStyles(document);renderDocStylePanel();return}
+    if(t.matches('[data-ds-role-font]')){markDocStyleCustom();DOC_STYLE.roles[S.docRoleSel||'main'].font=t.value;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-role-size]')){markDocStyleCustom();DOC_STYLE.roles[S.docRoleSel||'main'].size=+t.value||12;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-role-weight]')){markDocStyleCustom();DOC_STYLE.roles[S.docRoleSel||'main'].weight=+t.value||400;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-role-color]')){markDocStyleCustom();DOC_STYLE.roles[S.docRoleSel||'main'].color=t.value;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-role-hex]')){if(/^#[0-9a-f]{6}$/i.test(t.value)){markDocStyleCustom();DOC_STYLE.roles[S.docRoleSel||'main'].color=t.value;commitDocStyle();renderDocStylePanel()}return}
+    if(t.matches('[data-ds-divider-visible]')){markDocStyleCustom();DOC_STYLE.dividers[S.docDividerSel||'price'].visible=t.checked;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-divider-color]')){markDocStyleCustom();DOC_STYLE.dividers[S.docDividerSel||'price'].color=t.value;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-divider-hex]')){if(/^#[0-9a-f]{6}$/i.test(t.value)){markDocStyleCustom();DOC_STYLE.dividers[S.docDividerSel||'price'].color=t.value;commitDocStyle();renderDocStylePanel()}return}
+    if(t.matches('[data-ds-divider-offset]')){markDocStyleCustom();DOC_STYLE.dividers[S.docDividerSel||'price'].offset=+t.value;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-divider-thickness]')){markDocStyleCustom();DOC_STYLE.dividers[S.docDividerSel||'price'].thickness=+t.value;commitDocStyle();renderDocStylePanel();return}
+    if(t.matches('[data-ds-divider-length]')){markDocStyleCustom();DOC_STYLE.dividers[S.docDividerSel||'price'].length=+t.value;commitDocStyle();renderDocStylePanel();return}
+  });
+  document.addEventListener('input',e=>{
+    const t=e.target;
+    if(t.matches('[data-ds-preset-name]')){S.docPresetName=t.value;return}
+    if(t.matches('[data-ds-role-color]')){DOC_STYLE.roles[S.docRoleSel||'main'].color=t.value;writeDocStyle(DOC_STYLE);liveDocRoleChange();return}
+    if(t.matches('[data-ds-role-hex]')){if(/^#[0-9a-f]{6}$/i.test(t.value)){DOC_STYLE.roles[S.docRoleSel||'main'].color=t.value;writeDocStyle(DOC_STYLE);liveDocRoleChange()}return}
+    if(t.matches('[data-ds-divider-color]')){DOC_STYLE.dividers[S.docDividerSel||'price'].color=t.value;writeDocStyle(DOC_STYLE);liveDocDividerChange();return}
+    if(t.matches('[data-ds-divider-hex]')){if(/^#[0-9a-f]{6}$/i.test(t.value)){DOC_STYLE.dividers[S.docDividerSel||'price'].color=t.value;writeDocStyle(DOC_STYLE);liveDocDividerChange()}return}
+    if(t.matches('[data-ds-divider-offset]')){DOC_STYLE.dividers[S.docDividerSel||'price'].offset=+t.value;writeDocStyle(DOC_STYLE);liveDocDividerChange();return}
+    if(t.matches('[data-ds-divider-thickness]')){DOC_STYLE.dividers[S.docDividerSel||'price'].thickness=+t.value;writeDocStyle(DOC_STYLE);liveDocDividerChange();return}
+    if(t.matches('[data-ds-divider-length]')){DOC_STYLE.dividers[S.docDividerSel||'price'].length=+t.value;writeDocStyle(DOC_STYLE);liveDocDividerChange();return}
+  });
+  document.addEventListener('pointerdown',e=>{
+    const divider=e.target.closest&&e.target.closest('.pdf-divider[data-divider]');
+    if(!divider||!S.open||S.pv)return;
+    e.preventDefault();e.stopPropagation();
+    const key=divider.dataset.divider;
+    if(!DOC_STYLE.dividers[key])return;
+    S.dividerSelected=key;S.docDividerSel=key;
+    applyDividerStyles(document);
+    showDocStylePanel();
+    const cfg=DOC_STYLE.dividers[key];
+    const startY=e.clientY,startOffset=+cfg.offset||0;
+    const move=ev=>{cfg.offset=Math.round(Math.max(-2,Math.min(6,startOffset+(ev.clientY-startY)))*2)/2;writeDocStyle(DOC_STYLE);liveDocDividerChange()};
+    const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);commitDocStyle();renderDocStylePanel()};
+    document.addEventListener('pointermove',move);
+    document.addEventListener('pointerup',up);
+  },true);
+  document.addEventListener('keydown',e=>{
+    if(!S.docStyleOpen||!S.dividerSelected||!['ArrowUp','ArrowDown'].includes(e.key))return;
+    if(e.target.matches('input,select,textarea'))return;
+    e.preventDefault();
+    const cfg=DOC_STYLE.dividers[S.dividerSelected];
+    if(!cfg)return;
+    const step=(e.shiftKey?2:1)*(e.key==='ArrowDown'?1:-1);
+    markDocStyleCustom();
+    cfg.offset=Math.round(Math.max(-2,Math.min(6,(+cfg.offset||0)+step))*2)/2;
+    commitDocStyle();renderDocStylePanel();
+  });
   function rgbHex(value){
     const m=String(value||'').match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
     if(!m)return /^#/.test(value||'')?value:'#123d36';
@@ -1147,10 +1483,7 @@
     const cs=pdfRangeStyle();
     if(!cs)return;
     if(action==='preset'){
-      const page=document.querySelector('.pdf-page');
-      if(!page)return;
-      const pageStyle=getComputedStyle(page);
-      return applyFontStyle({fontFamily:pageStyle.fontFamily,fontSize:pageStyle.fontSize,fontWeight:'400',color:pageStyle.color});
+      return resetPdfFont('all');
     }
     const weight=parseInt(cs.fontWeight,10)||400;
     if(action==='bold'){
@@ -1423,7 +1756,7 @@
     const copyLabel=S.textMode==='horizontal'?tt('نسخ أفقي','Copy horizontal'):tt('نسخ رأسي','Copy vertical');
     const fileLabel=S.pdfLayout==='horizontal'?tt('ملف أفقي','File horizontal'):tt('ملف رأسي','File vertical');
     const fileMenu='<div class="share-layout-menu" role="menu" aria-label="'+tt('شكل ملف PDF','PDF file layout')+'"><button type="button" data-file-layout="horizontal" class="'+(S.pdfLayout==='horizontal'?'on':'')+'">'+tt('ملف أفقي','File horizontal')+'</button><button type="button" data-file-layout="vertical" class="'+(S.pdfLayout==='vertical'?'on':'')+'">'+tt('ملف رأسي','File vertical')+'</button></div>';
-    return '<div class="share-controls"><button type="button" class="share-toggle" data-share-act="toggle-language">'+(docLang()==='ar'?'العربية':'EN')+'</button><span class="share-layout-wrap"><button type="button" class="share-toggle share-layout-btn" data-share-act="toggle-layout" title="'+tt('كليك شمال: نسخ فقط · كليك يمين: شكل الملف','Left click: copy only · Right click: file layout')+'">'+copyLabel+'</button><button type="button" class="share-layout-caret" data-share-act="layout-menu" aria-haspopup="menu" aria-expanded="false" title="'+fileLabel+'">▾</button>'+fileMenu+'</span><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button><button type="button" class="share-zoom-btn" data-share-act="zoom-toggle" title="'+tt('ملاءمة الصفحة أو الرجوع إلى 100%','Fit page or return to 100%')+'">'+zoom+'%</button></div>';
+    return '<div class="share-controls"><button type="button" class="share-toggle" data-share-act="toggle-language">'+(docLang()==='ar'?'العربية':'EN')+'</button><span class="share-layout-wrap"><button type="button" class="share-toggle share-layout-btn" data-share-act="toggle-layout" title="'+tt('كليك شمال: نسخ فقط · كليك يمين: شكل الملف','Left click: copy only · Right click: file layout')+'">'+copyLabel+'</button><button type="button" class="share-layout-caret" data-share-act="layout-menu" aria-haspopup="menu" aria-expanded="false" title="'+fileLabel+'">▾</button>'+fileMenu+'</span><button type="button" class="share-toggle share-style-btn" data-share-act="doc-style">'+icon('pen',14)+tt('تنسيق','Style')+'</button><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button><button type="button" class="share-zoom-btn" data-share-act="zoom-toggle" title="'+tt('ملاءمة الصفحة أو الرجوع إلى 100%','Fit page or return to 100%')+'">'+zoom+'%</button></div>';
   }
   function footHtml(){
     if(S.result){
@@ -1672,6 +2005,7 @@
     flushEditablePages();
     hidePdfFontBar();
     hidePdfFontTrigger();
+    hideDocStylePanel();
     S.fontHost=null;S.fontRange=null;S.fontDefaults=null;S.fontBarHover=false;S.fontApplying=false;
     S.open=false;
     S.offers=null;
@@ -2608,6 +2942,7 @@
     if(!act||!S.open)return;
     const a=act.dataset.shareAct;
     if(a==='font-tools'){showPdfFontBar();return}
+    if(a==='doc-style'){if(S.docStyleOpen)hideDocStylePanel();else{S.notesOpen=false;notesMount();showDocStylePanel()}return}
     if(a==='notes'){S.notesOpen=!S.notesOpen;notesMount();return}
     if(a==='notes-close'){S.notesOpen=false;notesMount();return}
     if(a==='zoom-toggle'){toggleZoom();return}
