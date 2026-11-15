@@ -579,35 +579,41 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .rail-commission{gap:5px}
 .rail-commission span{color:var(--side-ink);font-weight:600;line-height:1.55}
 
-/* 1.0.25: sharp integrated payment summary with vertical grouped columns. */
+/* 1.0.26: one unified payment-table module. */
 .schedule-layout{display:block}
-.schedule-table-col{padding-right:0}
-.schedule-topbar{background:var(--surface);border:1px solid var(--rule);border-bottom:0;border-radius:0;padding:10px 14px;margin-bottom:0;justify-content:space-between}
-.schedule-topbar .section-actions{margin-inline-start:auto}
-.schedule-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:0 26px;padding:11px 14px 12px;background:var(--surface);border-inline:1px solid var(--rule);border-radius:0}
+.schedule-module{position:relative;border:1px solid var(--rule);border-radius:0;background:var(--surface)}
+.schedule-module .schedule-head{background:var(--surface);border:0;border-bottom:1px solid var(--rule);border-radius:0;padding:9px 14px;margin-bottom:0;justify-content:space-between;row-gap:6px}
+.schedule-module .section-actions{margin-inline-start:auto}
+.schedule-options-btn{display:inline-grid;place-items:center;width:30px;height:30px;min-width:30px;padding:0;border:0;border-radius:4px;background:color-mix(in srgb,var(--tint) 55%,var(--surface));color:var(--sub);line-height:1;list-style:none;cursor:pointer}
+.schedule-options-btn::-webkit-details-marker{display:none}
+.schedule-options-btn:hover,.schedule-options[open] .schedule-options-btn{background:var(--tint);color:var(--green)}
+.schedule-options-btn:active{background:var(--rule)}
+.schedule-options-btn:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
+.schedule-summary{background:var(--surface);border:0;border-radius:0;padding:0}
+.summary-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 26px;padding:7px 14px 8px;border-bottom:1px solid var(--rule);background:var(--surface)}
+.summary-metric{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:0;text-align:right}
+.summary-metric span{font-size:11px;line-height:1.4;font-weight:600;color:var(--side-muted);white-space:normal}
+.summary-metric b{font-size:13.5px;line-height:1.4;font-weight:700;color:var(--side-ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.summary-metric-primary b{font-size:15px;color:var(--green)}
+.summary-info{grid-column:1/-1;margin-top:2px}
+.summary-info .summary-note{margin:0;font-size:10.5px;line-height:1.5;color:var(--side-muted)}
+.summary-classification{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:0 26px;padding:9px 14px 10px;background:var(--surface);background:color-mix(in srgb,var(--tint) 52%,var(--surface))}
 @media(min-width:1180px){
-.schedule-summary.summary-full{grid-template-columns:minmax(0,.95fr) minmax(0,1.4fr) minmax(0,1.2fr)}
-.schedule-summary.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.summary-classification.summary-full{grid-template-columns:minmax(0,.9fr) minmax(0,.9fr) minmax(0,1.5fr)}
+.summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-.schedule-summary.summary-one .summary-facts{max-width:380px}
-.summary-col{min-width:0}
-.summary-prices .rail-group + .rail-group{margin-top:8px}
+.summary-classification.summary-one{grid-template-columns:1fr}
 .schedule-summary .rail-head{margin-bottom:1px}
 .schedule-summary .rail-head h3{font-size:11.5px;letter-spacing:0}
-.schedule-summary .side-lines .extra-line{display:block;font-size:12px;line-height:1.7;padding:1px 0}
+.schedule-summary .side-lines .extra-line{display:block;font-size:12px;line-height:1.65;padding:0}
 .schedule-summary .side-lines .extra-name{font-weight:600;color:var(--side-ink)}
 .schedule-summary .side-lines .extra-amount{font-size:12.5px}
 .schedule-summary .extra-due{white-space:normal}
+.schedule-summary .extra-meta{white-space:nowrap}
 .schedule-summary .extra-dash{color:var(--side-muted)}
-.summary-facts{display:flex;flex-direction:column;gap:7px}
-.summary-fact{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;line-height:1.55;color:var(--side-muted)}
-.summary-fact span{color:var(--side-ink);font-weight:600}
-.summary-fact b{font-size:12.5px;font-weight:700;color:var(--side-ink);white-space:nowrap;font-variant-numeric:tabular-nums}
-.summary-fact-primary b{font-size:14.5px;color:var(--green)}
-.summary-facts .summary-rule{margin:1px 0 5px}
-.summary-facts .summary-note{margin:0;font-size:11px;line-height:1.55}
-.schedule-table-col .tablewrap{border:1px solid var(--rule);border-top:0;border-radius:0;max-height:556px}
-.schedule-selection{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 28px;padding:10px 14px 0;color:var(--side-muted);font-size:12px;line-height:1.6}
+.schedule-table-col{padding-right:0}
+.schedule-table-col .tablewrap{border:0;border-radius:0;max-height:556px;background:var(--surface)}
+.schedule-selection{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 28px;padding:9px 14px 0;color:var(--side-muted);font-size:12px;line-height:1.6}
 .schedule-selection .sel-item{display:inline-flex;align-items:baseline;gap:5px}
 .schedule-selection .sel-label{color:var(--side-ink);font-weight:600}
 .schedule-selection b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -620,13 +626,19 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .hero .metrics div,.hero .metrics span{font-weight:700}
 @media(min-width:761px){
 .schedule-grid{min-width:560px}
-.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:12px}
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:18px 4px}
 }
 @media(max-width:760px){
-.schedule-summary{grid-template-columns:1fr 1fr;padding:10px 12px 11px;gap:0 20px}
+.schedule-module .schedule-head{padding:8px 12px}
+.summary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px;padding:8px 12px 9px}
+.summary-metric-commission{grid-column:1/-1}
+.summary-classification{padding:9px 12px 10px;gap:0 20px}
 .schedule-table-col .tablewrap{max-height:450px}
+.schedule-selection{padding:9px 12px 0}
 }
 @media(max-width:560px){
-.schedule-summary{grid-template-columns:1fr}
+.summary-metrics{grid-template-columns:1fr}
+.summary-metric-commission{grid-column:auto}
+.summary-classification{grid-template-columns:1fr}
 }
 

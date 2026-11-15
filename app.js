@@ -411,15 +411,16 @@ function calculator(){
    .replace(/^over first two years/,'over\u00A0first\u00A0two\u00A0years')
    .replace(/^on /,'on\u00A0');
   const phrase=/^(عند|خلال|بدون)/.test(text)||/^(at|over|no)\b/i.test(text);
-  return (phrase?'':'<span class="extra-dash">–</span> ')+'<span class="extra-due">'+esc(text)+'</span>';
+  if(phrase)return '<span class="extra-due">'+esc(text)+'</span>';
+  return '<span class="extra-meta"><span class="extra-dash">–</span> <span class="extra-due">'+esc(text)+'</span></span>';
  };
  const itemLine=(name,amount,meta)=>{
   const value=Number(amount)>0?'<b class="extra-amount">'+fmtMoney(amount/100)+' '+curr()+'</b>':'';
   const after=meta?metaText(meta):'';
   return '<div class="extra-line"><b class="extra-name">'+name+':</b> '+(value?value:'')+(after?' '+after:'')+'</div>';
  };
- const countBlock='<div class="summary-fact"><span>'+t('إجمالي الدفعات','Total payments')+':</span><b>'+paymentCountText(paymentRows.length)+'</b></div>';
- const totalBlock='<div class="summary-fact summary-fact-primary"><span>'+t('إجمالي سداد الوحدة','Unit payment total')+':</span><b>'+money(s.total)+' '+curr()+'</b></div>';
+ const countBlock='<div class="summary-metric"><span>'+t('إجمالي الدفعات','Total payments')+':</span><b>'+paymentCountText(paymentRows.length)+'</b></div>';
+ const totalBlock='<div class="summary-metric summary-metric-primary"><span>'+t('إجمالي سداد الوحدة','Unit payment total')+':</span><b>'+money(s.total)+' '+curr()+'</b></div>';
  const includedRows=(s.includedItems||[]).map(x=>({name:itemName(x.key),amount:x.amount,due:''}));
  const includedBlock=includedRows.length?'<div class="side-block rail-group">'+railHead(t('السعر يشمل','Included in price'))+'<div class="side-lines">'+includedRows.map(x=>itemLine(x.name,x.amount,x.due)).join('')+'</div></div>':'';
  const excludedRows=(s.excludedItems||[]).map(x=>({name:itemName(x.key),amount:x.amount,due:extraMeta(normalizeOffer(p),x)}));
@@ -429,20 +430,20 @@ function calculator(){
  const feeRate=p.feeMode==='rate'?fmtPct(p.fee)+'%':'';
  const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
  const commissionMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
- const commissionBlock=s.commission?'<div class="summary-commission"><div class="rail-rule summary-rule"></div><div class="rail-line rail-commission"><span>'+t('عمولة الوساطة','Brokerage commission')+' - '+commissionMeta+':</span><b>'+fmtMoney(s.commission/100)+' '+curr()+'</b></div></div>':'';
+ const commissionBlock=s.commission?'<div class="summary-metric summary-metric-commission"><span>'+t('عمولة الوساطة','Brokerage commission')+' - '+commissionMeta+':</span><b>'+fmtMoney(s.commission/100)+' '+curr()+'</b></div>':'';
  const summaryNote=infoLines.length?'<div class="summary-info">'+infoLines.join('')+'</div>':'';
- const priceColumn=(includedRows.length||excludedRows.length)?'<div class="summary-col summary-prices">'+includedBlock+excludedBlock+'</div>':'';
- const extrasColumn=extraRows.length?'<div class="summary-col summary-extras">'+extrasBlock+'</div>':'';
- const factsColumn='<div class="summary-col summary-facts">'+totalBlock+countBlock+commissionBlock+summaryNote+'</div>';
- const summaryCols=[priceColumn,extrasColumn,factsColumn].filter(Boolean);
- const summaryClass=summaryCols.length===3?' summary-full':summaryCols.length===2?' summary-two':' summary-one';
- const summaryHtml='<div class="schedule-summary'+summaryClass+'" role="group" aria-label="'+t('ملخص خطة السداد','Payment plan summary')+'">'+summaryCols.join('')+'</div>';
+ const metricsHtml='<div class="summary-metrics">'+totalBlock+countBlock+commissionBlock+summaryNote+'</div>';
+ const classificationCols=[includedBlock,excludedBlock,extrasBlock].filter(Boolean);
+ const classificationClass=classificationCols.length===3?' summary-full':classificationCols.length===2?' summary-two':' summary-one';
+ const classificationHtml=classificationCols.length?'<div class="summary-classification'+classificationClass+'">'+classificationCols.join('')+'</div>':'';
+ const summaryHtml='<div class="schedule-summary" role="group" aria-label="'+t('ملخص خطة السداد','Payment plan summary')+'">'+metricsHtml+classificationHtml+'</div>';
  const error=s.overAllocated?t('المبلغ المخصص للأقساط يتجاوز المتبقي من سعر الوحدة. راجع التوزيع أو الصفوف المضافة.','Custom installment amounts exceed the remaining unit price. Check the allocation or added rows.'):t('راجع سعر الوحدة ومقدم التعاقد ودفعة الاستلام وترتيب التواريخ.','Check price, down payment, handover payment and dates.');
- const scheduleActions='<details class="pop"><summary class="btn">'+icon('list')+t('خيارات الجدول','Schedule options')+'</summary><div class="menu">'+B('addRow',t('إضافة','Add'),'plus')+B('selectInst',t('تحديد الأقساط فقط','Select installments'))+B('clear',t('مسح الجدول','Clear schedule'))+B('restore',t('استعادة جميع الدفعات','Restore all payments'))+B('redistribute',t('توزيع رصيد الوحدة على الأقساط','Distribute property balance'))+'</div></details>'+(selected.size?B('delete',t('حذف المحدد','Delete selected')+' ('+selected.size+')','trash'):'')+(beforeDelete?B('undo',t('تراجع','Undo'),'undo'):'');
- const scheduleHead='<div class="sectionhead schedule-head'+(good?' schedule-topbar':'')+'"><div class="schedule-title"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2><span class="muted">'+t('من','From')+' '+dateNum(fullDate(p.start,p.startDay))+'</span></div><div class="section-actions">'+scheduleActions+'</div></div>';
- const scheduleBody='<div class="schedule-layout"><div class="schedule-table-col">'+summaryHtml+'<div class="tablewrap" tabindex="0" role="region" aria-label="'+t('جدول الدفعات','Payment schedule')+'">'+table(s)+(paymentRows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div><div class="schedule-vscroll" id="scheduleVScroll" aria-hidden="true"><div class="schedule-vscroll-thumb"></div></div><div class="schedule-row-tools" id="scheduleRowTools" aria-hidden="true"><button type="button" class="schedule-float-btn" data-float-add aria-label="'+t('إضافة دفعة جديدة','Add a new payment')+'" title="'+t('إضافة دفعة جديدة','Add a new payment')+'">'+icon('plus',12)+'</button><button type="button" class="schedule-float-btn" data-float-edit aria-label="'+t('تعديل الدفعة','Edit payment')+'" title="'+t('تعديل الدفعة','Edit payment')+'">'+icon('pen',11)+'</button></div></div></div>';
+ const scheduleActions='<details class="pop schedule-options"><summary class="schedule-options-btn" aria-label="'+t('خيارات الجدول','Schedule options')+'" title="'+t('خيارات الجدول','Schedule options')+'">'+icon('list')+'</summary><div class="menu">'+B('addRow',t('إضافة','Add'),'plus')+B('selectInst',t('تحديد الأقساط فقط','Select installments'))+B('clear',t('مسح الجدول','Clear schedule'))+B('restore',t('استعادة جميع الدفعات','Restore all payments'))+B('redistribute',t('توزيع رصيد الوحدة على الأقساط','Distribute property balance'))+'</div></details>'+(selected.size?B('delete',t('حذف المحدد','Delete selected')+' ('+selected.size+')','trash'):'')+(beforeDelete?B('undo',t('تراجع','Undo'),'undo'):'');
+ const scheduleHead='<div class="sectionhead schedule-head"><div class="schedule-title"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2></div><div class="section-actions">'+scheduleActions+'</div></div>';
+ const tableCol='<div class="schedule-table-col"><div class="tablewrap" tabindex="0" role="region" aria-label="'+t('جدول الدفعات','Payment schedule')+'">'+table(s)+(paymentRows.length?'':'<div class="empty">'+t('الجدول فارغ','Empty schedule')+'</div>')+'</div><div class="schedule-vscroll" id="scheduleVScroll" aria-hidden="true"><div class="schedule-vscroll-thumb"></div></div><div class="schedule-row-tools" id="scheduleRowTools" aria-hidden="true"><button type="button" class="schedule-float-btn" data-float-add aria-label="'+t('إضافة دفعة جديدة','Add a new payment')+'" title="'+t('إضافة دفعة جديدة','Add a new payment')+'">'+icon('plus',12)+'</button><button type="button" class="schedule-float-btn" data-float-edit aria-label="'+t('تعديل الدفعة','Edit payment')+'" title="'+t('تعديل الدفعة','Edit payment')+'">'+icon('pen',11)+'</button></div></div>';
+ const moduleHtml='<div class="schedule-module">'+scheduleHead+summaryHtml+tableCol+'</div>';
  const selectionHtml=selRows.length?'<div class="schedule-selection"><span class="sel-item"><span class="sel-label">'+t('الدفعات المحددة','Selected payments')+':</span><b>'+paymentCountText(selRows.length)+'</b></span><span class="sel-item"><span class="sel-label">'+t('إجمالي المحدد','Selected total')+':</span><b>'+money(selValue)+' '+curr()+'</b></span></div>':'';
- return title+hero(s)+'<div class="workspace">'+editor(s)+'<section>'+scheduleHead+(!good?'<p class="error">'+error+'</p>':scheduleBody+selectionHtml)+'</section></div>';
+ return title+hero(s)+'<div class="workspace">'+editor(s)+'<section>'+(good?moduleHtml+selectionHtml:scheduleHead+'<p class="error">'+error+'</p>')+'</section></div>';
 }
 function feeLabel(s){const meta=[p.feeMode==='rate'?fmtPct(p.fee)+'%':'',p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller')].filter(Boolean).join(' · ');return names.fee()+(meta?' ('+meta+')':'')+' · '+fmtMoney(s.commission/100)+' '+curr()}
 function compare(){
