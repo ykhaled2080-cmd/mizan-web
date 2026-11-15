@@ -136,7 +136,6 @@ html[dir=rtl] .mini-field select{background-position:left 7px center}
 .cash-charge-row:last-child{border-bottom:0}
 .cash-commission-row .cash-charge-name{font-weight:600;color:var(--green)}
 .cash-charge-row.is-commission .cash-charge-name{font-weight:600;color:var(--green)}
-.cash-charge-row.is-commission.has-rule{margin-top:3px;padding-top:9px;border-top:1px solid var(--rule)}
 .cash-charge-desc{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0}
 .cash-charge-name{font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
 .cash-charge-due{font-size:11.5px;color:var(--sub);white-space:nowrap}
@@ -596,7 +595,7 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-icon-btn:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
 .summary-info{padding:0 14px 8px}
 .summary-info .summary-note{margin:0;font-size:10.5px;line-height:1.5;color:var(--side-muted)}
-.summary-classification{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:0 26px;padding:10px 14px 11px;background:transparent}
+.summary-classification{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:0 18px;padding:10px 12px 11px;background:transparent;align-items:start}
 .summary-classification.summary-one{grid-template-columns:1fr}
 .schedule-summary .rail-head{margin-bottom:1px}
 .schedule-summary .rail-head h3{font-size:11.5px;letter-spacing:0}
@@ -608,7 +607,6 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-summary .extra-meta{white-space:nowrap}
 .schedule-summary .extra-dash{color:var(--side-muted)}
 .schedule-summary .extra-commission .extra-name{color:var(--green)}
-.schedule-summary .extra-commission.has-rule{margin-top:3px;padding-top:4px;border-top:1px solid var(--rule)}
 .schedule-table-col{padding-right:0}
 .schedule-table-col .tablewrap{border:0;border-radius:0;max-height:556px;background:var(--surface)}
 .schedule-selection{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 28px;padding:9px 14px 0;color:var(--side-muted);font-size:12px;line-height:1.6}
@@ -660,7 +658,8 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 /* 1.0.32: balanced RTL payment columns: checkbox | type | date | value | balance. */
 @media(min-width:761px){
 .schedule-grid{min-width:0}
-.schedule-table-col .tablewrap{padding-right:16px}
+.schedule-table-col .tablewrap.has-vscroll{padding-right:16px}
+.schedule-table-col.has-vscroll::before{content:'';position:absolute;top:0;right:0;width:16px;height:var(--schedule-head-h,36px);background:var(--tint);pointer-events:none;z-index:4}
 .schedule-grid col.col-check{width:42px}
 .schedule-grid col.col-type{width:23%}
 .schedule-grid col.col-date{width:23%}
@@ -679,3 +678,19 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:16px;height:16px;margin:0}
 .schedule-grid td.cell-type{white-space:normal;overflow-wrap:anywhere}
 }
+
+/* 1.0.34: compact six-field offer terms group. */
+.terms-title-wrap{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.terms-chevron{display:inline-grid;place-items:center;width:24px;height:24px;min-width:24px;padding:0;border:1px solid var(--rule);border-radius:5px;background:var(--surface);color:var(--green);line-height:1;cursor:pointer}
+.terms-chevron svg{transition:transform .15s ease}
+.terms-chevron[aria-expanded="true"] svg{transform:rotate(180deg)}
+.terms-chevron:hover{background:var(--tint)}
+.terms-core{padding-top:2px}
+.terms-core[hidden]{display:none}
+.core-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+.core-grid .field{min-width:0}
+.core-grid .field input,.core-grid .field select{height:34px}
+.increase-inline .increase-row{display:flex;align-items:flex-end;gap:8px;width:100%}
+.increase-inline .increase-row .field{flex:1 1 auto;width:auto;max-width:none;min-width:0}
+.increase-inline .increase-row .btn{flex:0 0 auto;min-width:68px;height:34px;white-space:nowrap}
+@media(max-width:760px){.core-grid{grid-template-columns:1fr 1fr;gap:10px 10px}.terms-title-wrap{gap:4px}}

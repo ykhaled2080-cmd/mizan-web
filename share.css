@@ -915,7 +915,8 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 
 /* 1.0.27 brokerage commission inside additional-charges group */
 .pdf-group .pdf-charge.pdf-charge-commission{grid-column:1/-1}
-.pdf-charge-commission.has-rule{border-top:1px solid #D8E2DB;margin-top:2px;padding-top:4px}
+.pdf-charge-commission.has-rule{margin-top:2px;padding-top:0;border-top:0}
+.pdf-charge-commission.has-rule .lbl{display:inline-block;max-width:100%;border-top:1px solid #D8E2DB;padding-top:4px;margin-top:2px}
 .pdf-charge-commission .lbl{font-weight:700}
 
 /* 1.0.29 role-driven PDF typography, grouped sections and editable dividers. */
@@ -1013,3 +1014,5 @@ body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-se
 .share-preset-save:hover{background:var(--tint);color:var(--green)}
 @media(max-width:760px){.share-preset-picker select{max-width:105px}}
 
+
+.pdf-page [data-text-id].pdf-text-selected{outline:1px dashed rgba(25,75,61,.72);outline-offset:2px;border-radius:1px}
