@@ -923,3 +923,7 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-color-save:hover{background:var(--tint)}
 
 .pdf-page .pdf-table td.num,.pdf-page .pdf-table td.type-cell .type{font-weight:400!important}
+
+/* 1.0.24 PDF total reconciliation note */
+.pdf-table tfoot .pdf-total-note td{font-size:9px;font-weight:500;line-height:1.5;color:#8a5a2b;border-top:0;padding:2px 8px 6px;text-align:start;white-space:normal}
+.pdf-schedule-total-note{font-size:9.5px;line-height:1.5;color:#8a5a2b;margin-top:3px;text-align:start}

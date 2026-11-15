@@ -578,3 +578,32 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .rail-rule{height:1px;background:var(--rule);margin-top:2px}
 .rail-commission{gap:5px}
 .rail-commission span{color:var(--side-ink);font-weight:600;line-height:1.55}
+
+/* 1.0.24: integrated payment summary above the table, wider table. */
+.schedule-layout{display:block}
+.schedule-table-col{padding-right:0}
+.schedule-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 28px;padding:14px 16px 15px;background:var(--surface);border:1px solid var(--rule);border-bottom:0;border-radius:9px 9px 0 0}
+.schedule-summary .side-block{min-width:0}
+.schedule-summary .rail-head{margin-bottom:2px}
+.schedule-summary .rail-head h3{font-size:12px;letter-spacing:0}
+.schedule-summary .rail-line{font-size:12px;line-height:1.65}
+.schedule-summary .rail-primary b{font-size:14.5px}
+.schedule-summary .side-lines .extra-line{font-size:12px;line-height:1.65}
+.schedule-summary .side-lines .extra-amount{font-size:12.5px}
+.schedule-summary .summary-commission{padding-top:1px}
+.schedule-summary .summary-info{grid-column:1/-1;padding-top:8px;border-top:1px solid var(--rule)}
+.schedule-table-col .tablewrap{border-top:1px solid var(--rule);border-radius:0 0 9px 9px;max-height:556px}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:42px;padding-inline:16px 2px}
+.increase-term{margin-top:9px}
+.titleline h1{font-size:clamp(24px,2.2vw,32px)}
+.titleline .plan-title{margin-inline-start:12px}
+.hero .kicker{font-weight:700;color:#d8e8d9}
+.hero .big{font-weight:700}
+.hero .metrics div,.hero .metrics span{font-weight:700}
+@media(min-width:761px){.schedule-grid{min-width:560px}}
+@media(max-width:760px){
+.schedule-summary{grid-template-columns:1fr 1fr;padding:12px;border-radius:8px 8px 0 0}
+.schedule-table-col .tablewrap{border-radius:0 0 8px 8px}
+}
+@media(max-width:560px){.schedule-summary{grid-template-columns:1fr}}
+

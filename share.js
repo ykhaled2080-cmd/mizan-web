@@ -278,8 +278,8 @@
     const extraDateCond=e=>e.dueMode==='date'&&e.due?t('بتاريخ','on')+' '+data.f.date(e.due):'';
     const inst=s.rows.filter(r=>r.type==='installment'&&r.value>0);
     const values=[...new Set(inst.map(r=>r.value))];
-    let termMonths=0;
-    if(!s.cash&&inst.length){
+    let termMonths=s.termMonths||0;
+    if(!s.cash&&!termMonths&&inst.length){
       const last=inst[inst.length-1].date;
       const term=(Number(String(last).slice(0,4))-Number(String(p.start||'').slice(0,4)))*12+(Number(String(last).slice(5,7))-Number(String(p.start||'').slice(5,7)));
       termMonths=Number.isFinite(term)&&term>0?term:Math.round((+p.years||0)*12);
@@ -323,10 +323,9 @@
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const includedRows=(s.includedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
     const excludedRows=(s.excludedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount,due:x.due&&x.dueMode==='date'?t('بتاريخ','on')+' '+data.f.date(x.due):''}));
-    const priceRows=[...includedRows,...excludedRows];
-    const includedHtml=priceRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+priceRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-    const excludedHtml='';
-    const extrasHtml=charges.length?sectionTitle(t('السعر لا يشمل · مستحقات إضافية','Price does not include · Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
+    const includedHtml=includedRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+includedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+    const excludedHtml=excludedRows.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-excluded-title')+'<div class="pdf-charges">'+excludedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(x.name)+(x.due?' · '+esc(x.due):'')+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+    const extrasHtml=charges.length?sectionTitle(t('مستحقات إضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const feeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
     const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
     const feeMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
@@ -353,16 +352,16 @@
         const due=e.label==='maintenance'?maintenanceLabel:extraDateCond(e);
         cashCharges.push({label,due,amount:e.amount});
       }
-      if(s.commission&&p.payer==='buyer'){
-        const feeMeta=[p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'',t('المشتري','Buyer')].filter(Boolean).join(' · ');
-        cashCharges.push({label:names.fee()+(feeMeta?' ('+feeMeta+')':''),due:t('عند التعاقد','at contract'),amount:s.commission});
-      }
       const dueBdi=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
-      const cashChargesHtml=cashCharges.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+c.label+(c.due?' · '+dueBdi(c.due):'')+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
+      const cashChargesHtml=cashCharges.length?sectionTitle(t('مستحقات إضافية','Additional charges'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge"><span class="lbl">'+c.label+(c.due?' · '+dueBdi(c.due):'')+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
+      const cashFeeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
+      const cashFeePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
+      const cashFeeMeta=[cashFeePayer,cashFeeRate?'('+cashFeeRate+')':''].filter(Boolean).join(' ');
+      const cashCommissionHtml=s.commission?sectionTitle(t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),'pdf-cash-fee-title')+'<div class="pdf-charges"><div class="pdf-charge"><span class="lbl">'+t('المبلغ','Amount')+'</span><b class="val">'+amount(s.commission)+'</b></div></div>':'';
       const cashTotal='<div class="pdf-price-block pdf-cash-total"><span class="lbl">'+cashTotalLabel+'</span><b class="amt">'+amount(s.price)+'</b></div>';
       const cashIncluded=s.includes.length?sectionTitle(t('السعر يشمل','Price includes'),'pdf-cash-included-title')+'<div class="pdf-cash-included-list">'+includedText+'</div>':'';
-      const cashExcluded=(s.excludedItems||[]).length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-cash-excluded-title')+'<div class="pdf-charges">'+s.excludedItems.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-      return heading+identity+cashTotal+cashIncluded+cashExcluded+cashChargesHtml+legalHtml+scheduleHeading;
+      const cashExcluded=(s.excludedItems||[]).length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-cash-excluded-title')+'<div class="pdf-charges">'+s.excludedItems.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
+      return heading+identity+cashTotal+cashIncluded+cashExcluded+cashChargesHtml+cashCommissionHtml+legalHtml+scheduleHeading;
     }
     const support=[];
     if(legalHtml)support.push(legalHtml);
@@ -427,6 +426,21 @@
       await Promise.all([400,600,700].map(weight=>document.fonts.load(weight+' 14px "IBM Plex Sans Arabic"','ميزان Mizan')));
     }
     const pages=[];
+    const pdfRows=summaryOnly||s.cash?[]:s.rows.filter(row=>['down','delivery','installment','payment'].includes(row.type)&&!(row.custom&&row.value===0));
+    const pdfSum=pdfRows.reduce((sum,row)=>sum+row.value,0);
+    const footerMismatch=!summaryOnly&&!s.cash&&!s.selectedOnly&&pdfSum!==s.price;
+    const totalLabel=s.selectedOnly?(lang==='ar'?'إجمالي المحدد':'Selected total'):(lang==='ar'?'الإجمالي':'Total');
+    const mismatchText=!footerMismatch?'':(()=>{
+      const reasons=[];
+      const hiddenCount=(snapshot.hidden||[]).length;
+      if(hiddenCount)reasons.push((lang==='ar'?'صفوف أساسية مخفية لا تدخل في مجموع الجدول: ':'Hidden principal rows excluded from the table total: ')+hiddenCount);
+      if(s.gap>0)reasons.push((lang==='ar'?'مبلغ غير مجدول خارج الجدول: ':'Unscheduled amount outside the table: ')+f.intl.format(s.gap/100)+' '+data.curr);
+      if(s.reconcile)reasons.push((lang==='ar'?'فرق تسوية التقريب المتبقي: ':'Remaining rounding reconciliation: ')+f.intl.format(Math.abs(s.reconcile)/100)+' '+data.curr);
+      if(s.overAllocated)reasons.push(lang==='ar'?'المخصص للأقساط يتجاوز رصيد الوحدة':'Installment allocation exceeds the property balance');
+      const diff=pdfSum-s.price;
+      reasons.push((lang==='ar'?'الفرق بين مجموع الصفوف وسعر الوحدة: ':'Difference between displayed rows and unit price: ')+(diff>0?'+':'')+f.intl.format(diff/100)+' '+data.curr);
+      return reasons.join(' · ');
+    })();
     if(summaryOnly){
       const page=makePage(lang,data,false,layout,true);
       root.appendChild(page);pages.push(page);
@@ -436,7 +450,7 @@
     }else{
       let page=makePage(lang,data,false,layout,false),body=page.querySelector('[data-pdf-body]'),count=0;
       root.appendChild(page);
-      for(const r of s.rows.filter(row=>['down','delivery','installment','payment'].includes(row.type)&&!(row.custom&&row.value===0))){
+      for(const r of pdfRows){
         const row=pdfRow(lang,r,data,layout);
         body.appendChild(row);
         if(row.getBoundingClientRect().bottom>page.getBoundingClientRect().bottom-64&&count>0){
@@ -461,13 +475,25 @@
           if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
           const tr=document.createElement('tr');
           tr.className='pdf-total-row';
-          tr.innerHTML='<td class="type-cell total-label">'+(lang==='ar'?'الإجمالي':'Total')+'</td><td class="num total-amount"><bdi dir="ltr">'+f.intl.format(s.price/100)+'</bdi> '+data.curr+'</td><td></td><td></td>';
+          tr.innerHTML='<td class="type-cell total-label">'+totalLabel+'</td><td class="num total-amount"><bdi dir="ltr">'+f.intl.format(pdfSum/100)+'</bdi> '+data.curr+'</td><td></td><td></td>';
           tfoot.appendChild(tr);
+          if(footerMismatch&&mismatchText){
+           const note=document.createElement('tr');
+           note.className='pdf-total-note';
+           note.innerHTML='<td colspan="4">'+esc(mismatchText)+'</td>';
+           tfoot.appendChild(note);
+          }
         }else{
           const total=document.createElement('div');
           total.className='pdf-schedule-total';
-          total.innerHTML='<span>'+(lang==='ar'?'الإجمالي':'Total')+'</span><b><bdi dir="ltr">'+f.intl.format(s.price/100)+'</bdi> '+data.curr+'</b>';
+          total.innerHTML='<span>'+totalLabel+'</span><b><bdi dir="ltr">'+f.intl.format(pdfSum/100)+'</bdi> '+data.curr+'</b>';
           schedule.appendChild(total);
+          if(footerMismatch&&mismatchText){
+           const note=document.createElement('div');
+           note.className='pdf-schedule-total-note';
+           note.textContent=mismatchText;
+           schedule.appendChild(note);
+          }
         }
       }
     }

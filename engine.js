@@ -74,6 +74,7 @@ function normalizeOffer(input) {
   }
   o.split = o.maintenanceDateMode === 'split';
   if (!['handover', 'date', 'none'].includes(o.deliveryDateMode)) o.deliveryDateMode = 'handover';
+  o.termMonths = Number.isFinite(+o.termMonths) ? Math.max(0, Math.min(600, Math.round(+o.termMonths))) : 0;
 
   o.start = isMonth(o.start) ? o.start : (isDate(o.start) ? String(o.start).slice(0, 7) : new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
   o.handover = isMonth(o.handover) ? o.handover : (isDate(o.handover) ? String(o.handover).slice(0, 7) : monthAfter(o.start, 36));
@@ -132,7 +133,8 @@ function schedule(input) {
   const maintenanceExtra = p.maintenanceState === 'extra' ? atRate(p.maintenance) : 0;
   const commission = p.feeMode === 'amount' ? inputPounds(p.fee) : atRate(p.fee);
   const financed = cash ? 0 : price - down - delivery;
-  const planCount = cash ? 0 : Math.ceil((+p.years || 0) * 12 / (+p.period || 1));
+  const termMonths = cash ? 0 : (+p.termMonths > 0 ? +p.termMonths : Math.ceil((+p.years || 0) * 12));
+  const planCount = cash ? 0 : Math.ceil(termMonths / (+p.period || 1));
   const startDate = fullDate(p.start, p.startDay);
   const handoverDate = fullDate(p.handover, p.handoverDay);
   const deliveryDate = !cash && p.deliveryDateMode === 'date' && p.deliveryDate
@@ -174,7 +176,7 @@ function schedule(input) {
       if (maintenanceExtra && !maintenanceSplit) add('maintenance', maintenanceDate, 'maintenance', maintenanceExtra);
       if (commission && p.payer === 'buyer') add('fee', startDate, 'fee', commission);
       for (let i = 1; i <= planCount; i++) {
-        const date = fullDate(monthAfter(p.start, Math.min(i * (+p.period || 1), (+p.years || 0) * 12)), p.startDay);
+        const date = fullDate(monthAfter(p.start, Math.min(i * (+p.period || 1), termMonths)), p.startDay);
         if (installmentBudget > 0) add('i' + i, date, 'installment', part(installmentBudget, i, planCount), { generated: true });
         const splitCount = Math.min(planCount, Math.ceil(12 / (+p.period || 1)) * 2);
         if (maintenanceExtra && maintenanceSplit && i <= splitCount) add('m' + i, date, 'maintenance', part(maintenanceExtra, i, splitCount), { maintenanceSplit: true });
@@ -343,7 +345,7 @@ function schedule(input) {
     maintenanceDueMode: p.maintenanceDateMode,
     maintenanceDate,
     deliveryDate,
-    commission, financed, count, planCount, rows: active, total, gap,
+    commission, financed, count, planCount, termMonths, rows: active, total, gap,
     extras, includes, includedItems, excludedItems, extrasTotal, remainingUnit,
     customPrincipal, installmentBudget, overAllocated, reconcile,
     downPct: price ? down / price * 100 : 0,
