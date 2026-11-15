@@ -1730,7 +1730,7 @@ let DOC_STYLE_COMMITTED=JSON.stringify(mergeDocStyle(DOC_STYLE));
       if(e.shiftKey||e.key==='y'||e.key==='Y')redoDivider();else undoDivider();
       return;
     }
-    if(ctrl&&(e.key==='v'||e.key==='V')&&S.dividerClipboard){
+    if(ctrl&&(e.key==='v'||e.key==='V')&&S.dividerClipboard&&S.dividerSelected){
       e.preventDefault();pasteDivider();return;
     }
     const info=S.dividerSelected?dividerInfo(S.dividerSelected):null;

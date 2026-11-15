@@ -694,3 +694,5 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .increase-inline .increase-row .field{flex:1 1 auto;width:auto;max-width:none;min-width:0}
 .increase-inline .increase-row .btn{flex:0 0 auto;min-width:68px;height:34px;white-space:nowrap}
 @media(max-width:760px){.core-grid{grid-template-columns:1fr 1fr;gap:10px 10px}.terms-title-wrap{gap:4px}}
+
+.increase-inline:not([open]) .increase-row{display:none}
