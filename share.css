@@ -929,5 +929,4 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-schedule-total-note{font-size:9.5px;line-height:1.5;color:#8a5a2b;margin-top:3px;text-align:start}
 
 /* 1.0.27 brokerage commission inside additional-charges group */
-.pdf-charge-commission{border-top:1px solid #d2dcd5;margin-top:3px;padding-top:4px}
 .pdf-charge-commission .lbl{font-weight:600}

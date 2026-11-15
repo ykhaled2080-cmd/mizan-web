@@ -262,7 +262,9 @@
     const t=(ar,en)=>lang==='ar'?ar:en;
     const title=data.s.cash?t('عرض كاش','Cash offer'):t('عرض سداد تقديري','Estimated payment offer');
     const heading='<div class="pdf-brandline"><h1 class="pdf-title">'+title+'</h1><img src="assets/logo-approved.png" alt="Mizan"></div>';
-    const scheduleHeading=(data.s.cash||summaryOnly)?'':'<div class="pdf-sectionhead"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2></div>';
+    const paymentCount=(data.s&&Array.isArray(data.s.rows)?data.s.rows.filter(r=>['down','delivery','installment','payment'].includes(r.type)).length:0);
+    const paymentCountText=paymentCount===1?t('دفعة واحدة','one payment'):paymentCount===2?t('دفعتان','two payments'):paymentCount>=3&&paymentCount<=10?paymentCount+' '+t('دفعات','payments'):paymentCount+' '+t('دفعة','payments');
+    const scheduleHeading=(data.s.cash||summaryOnly)?'':'<div class="pdf-sectionhead"><h2>'+t('جدول الدفعات','Payment schedule')+'</h2><span>'+paymentCountText+'</span></div>';
     if(cont)return heading+scheduleHeading;
     const {s,p,names}=data;
     const cash=cents=>data.f.intl.format(cents/100);
@@ -331,7 +333,7 @@
     const excludedRows=(s.excludedItems||[]).map(x=>({name:(names[x.key]?names[x.key]():x.key),amount:x.amount,due:x.due&&x.dueMode==='date'?t('بتاريخ','on')+' '+data.f.date(x.due):''}));
     const includedHtml=includedRows.length?sectionTitle(t('السعر يشمل','Included in price'),'pdf-included-title')+'<div class="pdf-charges">'+includedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
     const excludedHtml=excludedRows.length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-excluded-title')+'<div class="pdf-charges">'+excludedRows.map(x=>'<div class="pdf-charge"><span class="lbl">'+dueJoin(esc(x.name),esc(x.due))+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
-    const extrasHtml=charges.length?sectionTitle(t('مستحقات إضافية','Additional charges'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
+    const extrasHtml=charges.length?sectionTitle(t('أموال إضافية','Additional amounts'))+'<div class="pdf-charges">'+charges.join('')+'</div>':'';
     const identity='<div class="pdf-identity"><div><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div><div><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div></div>';
     const includedText=(s.includedItems||[]).map(x=>esc(names[x.key]?names[x.key]():x.key)+(x.amount>0?' '+amount(x.amount):'')).join(' · ');
     const legalFinancial=p.legal&&p.legal.noDues?(s.cash&&!(s.extras.length||(s.commission&&p.payer==='buyer'))?t('لا توجد مستحقات مالية أخرى على الوحدة.','No other financial dues on the unit.'):t('لا توجد مستحقات مالية أخرى بخلاف المبالغ الموضحة أعلاه.','No other financial dues beyond the amounts shown above.')):'';
@@ -357,7 +359,7 @@
       const cashFeeMeta=[cashFeePayer,cashFeeRate?'('+cashFeeRate+')':''].filter(Boolean).join(' ');
       if(s.commission)cashCharges.push({label:t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),due:'',amount:s.commission,commission:true});
       const dueBdi=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
-      const cashChargesHtml=cashCharges.length?sectionTitle(t('مستحقات إضافية','Additional charges'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge'+(c.commission?' pdf-charge-commission':'')+'"><span class="lbl">'+dueJoin(c.label,dueBdi(c.due))+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
+      const cashChargesHtml=cashCharges.length?sectionTitle(t('أموال إضافية','Additional amounts'),'pdf-cash-charges-title')+'<div class="pdf-charges">'+cashCharges.map(c=>'<div class="pdf-charge'+(c.commission?' pdf-charge-commission':'')+'"><span class="lbl">'+dueJoin(c.label,dueBdi(c.due))+'</span><b class="val">'+amount(c.amount)+'</b></div>').join('')+'</div>':'';
       const cashTotal='<div class="pdf-price-block pdf-cash-total"><span class="lbl">'+cashTotalLabel+'</span><b class="amt">'+amount(s.price)+'</b></div>';
       const cashIncluded=s.includes.length?sectionTitle(t('السعر يشمل','Price includes'),'pdf-cash-included-title')+'<div class="pdf-cash-included-list">'+includedText+'</div>':'';
       const cashExcluded=(s.excludedItems||[]).length?sectionTitle(t('السعر لا يشمل','Price does not include'),'pdf-cash-excluded-title')+'<div class="pdf-charges">'+s.excludedItems.map(x=>'<div class="pdf-charge"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>').join('')+'</div>':'';
@@ -368,11 +370,11 @@
     if(s.gap&&!s.selectedOnly)support.push('<div class="pdf-support-line"><b>'+t('غير مجدول:','Unscheduled:')+'</b> '+amount(s.gap)+'</div>');
     return heading+identity+priceBlock+payGrid+includedHtml+excludedHtml+extrasHtml+(support.length?'<div class="pdf-support">'+support.join('')+'</div>':'')+scheduleHeading;
   }
-  function pdfTableShell(lang,layout,typeCount){
+  function pdfTableShell(lang,layout){
     const t=(ar,en)=>lang==='ar'?ar:en;
     if(layout==='vertical')return '<div class="pdf-list" data-pdf-body></div>';
     const arrow=lang==='ar'?'rtl':'ltr';
-    return '<table class="pdf-table" dir="'+arrow+'"><colgroup><col style="width:28%"><col style="width:28%"><col style="width:26%"><col style="width:18%"></colgroup><thead><tr><th>'+t('نوع الدفعة','Payment type')+(typeCount?' ('+typeCount+')':'')+'</th><th>'+t('القيمة','Amount')+'</th><th>'+t('رصيد الوحدة','Property balance')+'</th><th>'+t('تاريخ الدفعة','Payment date')+'</th></tr></thead><tbody data-pdf-body></tbody></table>';
+    return '<table class="pdf-table" dir="'+arrow+'"><colgroup><col style="width:28%"><col style="width:28%"><col style="width:26%"><col style="width:18%"></colgroup><thead><tr><th>'+t('نوع الدفعة','Payment type')+'</th><th>'+t('القيمة','Amount')+'</th><th>'+t('رصيد الوحدة','Property balance')+'</th><th>'+t('تاريخ الدفعة','Payment date')+'</th></tr></thead><tbody data-pdf-body></tbody></table>';
   }
   function pdfRow(lang,r,data,layout){
     const t=(ar,en)=>lang==='ar'?ar:en;
@@ -393,13 +395,12 @@
     const page=document.createElement('section');
     page.className='pdf-page'+(lang==='en'?' ltr':'')+(layout==='vertical'?' pdf-vertical':'');
     const watermark='<img class="pdf-watermark" src="assets/logo-watermark.png" alt="" aria-hidden="true" contenteditable="false">';
-    const typeCount=data.s&&Array.isArray(data.s.rows)?data.s.rows.filter(r=>['down','delivery','installment','payment'].includes(r.type)).length:0;
     if(data.s.cash||summaryOnly){
       page.innerHTML=watermark+pdfHeader(lang,data,cont,summaryOnly)+'<div class="pdf-folio"></div>';
     }else if(cont){
-      page.innerHTML=watermark+pdfHeader(lang,data,cont,summaryOnly)+'<div class="pdf-schedule">'+pdfTableShell(lang,layout,typeCount)+'</div><div class="pdf-folio"></div>';
+      page.innerHTML=watermark+pdfHeader(lang,data,cont,summaryOnly)+'<div class="pdf-schedule">'+pdfTableShell(lang,layout)+'</div><div class="pdf-folio"></div>';
     }else{
-      page.innerHTML=pdfHeader(lang,data,cont,summaryOnly)+'<div class="pdf-schedule"><div class="pdf-table-wrap">'+watermark+pdfTableShell(lang,layout,typeCount)+'</div></div><div class="pdf-folio"></div>';
+      page.innerHTML=pdfHeader(lang,data,cont,summaryOnly)+'<div class="pdf-schedule"><div class="pdf-table-wrap">'+watermark+pdfTableShell(lang,layout)+'</div></div><div class="pdf-folio"></div>';
     }
     page.lang=lang;page.dir=lang==='ar'?'rtl':'ltr';
     applyPdfStyle(page);
