@@ -1518,8 +1518,9 @@ document.addEventListener('click',e=>{
  const all=e.target.closest('[data-all]');
  if(!all)return;
  e.preventDefault();
- if(selected.size)selected.clear();
- else selected=new Set(schedule(p).rows.map(r=>r.id));
+ const rows=schedulePaymentRows(schedule(p));
+ const every=rows.length>0&&rows.every(r=>selected.has(r.id));
+ if(every)selected.clear();else selected=new Set(rows.map(r=>r.id));
  render();
 },true);
 document.addEventListener('keydown',e=>{

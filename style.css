@@ -613,6 +613,16 @@ html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
    internal columns or masonry tracks. */
 .summary-classification{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px;padding:12px 16px 13px 8px;background:transparent;align-items:start}
 .summary-classification.summary-three{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 320px}
+@media(min-width:641px){
+/* Shift the connected additional-charges block left by 28px and the
+   preceding "not included" group by 14px. The 2:1 ratio turns the two 28px
+   grid gaps into equal 42px visual gaps while keeping the sentence intact. */
+.summary-classification.summary-three>.rail-group:nth-child(2){transform:translateX(-14px)}
+.summary-classification.summary-three>.rail-group:nth-child(3){padding-inline-start:28px}
+}
+@media(min-width:641px) and (max-width:1100px){
+.summary-classification.summary-three>.rail-group:nth-child(3){width:min(100%,320px);justify-self:start}
+}
 .summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .summary-classification.summary-one{grid-template-columns:1fr}
 .summary-classification .rail-group{min-width:0}
@@ -622,7 +632,7 @@ html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-summary .side-lines .extra-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 5px;font-size:12px;line-height:1.65;padding:0}
 .schedule-summary .side-lines .extra-name{font-weight:600;color:var(--side-ink);flex:none}
 .schedule-summary .side-lines .extra-amount{font-size:11.8px;flex:none}
-.schedule-summary .extra-due{white-space:normal;margin-inline-start:auto;margin-inline-end:4px;text-align:left}
+.schedule-summary .extra-due{white-space:normal}
 .schedule-summary .extra-meta{white-space:nowrap}
 .schedule-summary .extra-dash{color:var(--side-muted)}
 .schedule-summary .extra-commission .extra-name{color:inherit}
@@ -658,7 +668,7 @@ html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-grid th.cell-value,.schedule-grid td.cell-value{text-align:center!important;direction:ltr!important;padding-left:20px;padding-right:4px}
 .terms-head h2{margin-inline-start:12px}
 }
-@media(max-width:1250px){
+@media(max-width:1100px){
 .summary-classification.summary-three{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 28px}
 .summary-classification.summary-three>.rail-group:nth-child(3){grid-column:1/-1}
 }
@@ -686,8 +696,8 @@ html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-grid col.col-balance{width:auto}
 .schedule-grid col.col-check{width:30px}
 .schedule-grid th,.schedule-grid td{padding:7px 10px}
-.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:12px 6px}
-.schedule-grid td.cell-type{text-align:start!important;white-space:normal;overflow-wrap:anywhere}
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:10px}
+.schedule-grid td.cell-type{white-space:normal;overflow-wrap:anywhere}
 .schedule-grid th.cell-date,.schedule-grid td.cell-date,
 .schedule-grid th.cell-value,.schedule-grid td.cell-value,
 .schedule-grid th.cell-balance,.schedule-grid td.cell-balance{text-align:center!important;padding-inline:10px}
@@ -696,12 +706,11 @@ html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-grid td.cell-value,.schedule-grid td.cell-balance{white-space:nowrap;direction:ltr!important}
 .schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:16px;height:16px;min-width:16px;min-height:16px;margin:0}
 .schedule-grid td.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
+.schedule-grid thead th.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
 .schedule-grid tbody tr:hover td.cell-check input[type=checkbox],
 .schedule-grid tbody tr:focus-within td.cell-check input[type=checkbox],
 .schedule-grid tbody tr:has(input[data-id]:checked) td.cell-check input[type=checkbox],
-.schedule-grid:has(thead th.cell-check:hover) tbody td.cell-check input[type=checkbox],
-.schedule-grid:has(thead th.cell-check:focus-within) tbody td.cell-check input[type=checkbox],
-.schedule-grid:has(tbody input[data-id]:checked) tbody td.cell-check input[type=checkbox]{opacity:1;pointer-events:auto}
+.schedule-grid:has(tbody input[data-id]:checked) thead th.cell-check input[type=checkbox]{opacity:1;pointer-events:auto}
 }
 
 /* 1.0.34: compact six-field offer terms group. */
