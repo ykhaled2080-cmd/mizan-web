@@ -296,7 +296,7 @@ html[dir=rtl] .row-type{background-position:left 5px center}
 @media(max-width:760px){.schedule-layout{display:flex;flex-direction:column;gap:12px}.schedule-side{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}.schedule-side .side-block:nth-child(3),.schedule-side .side-block:nth-child(4),.schedule-side .side-block:nth-child(5){grid-column:1/-1}}
 
 
-.titleline .actions .btn[data-act="save"],.titleline .actions .btn[data-act="wa-share"]{border:0!important;box-shadow:none!important}
+
 
 :root{--ui-font:"Segoe UI",Tahoma,Arial,sans-serif;--ui-heading-font:"Segoe UI",Tahoma,Arial,sans-serif;--ui-table-font:"Segoe UI",Tahoma,Arial,sans-serif;--ui-base-size:14px}
 html[data-font-custom] #app,html[data-font-custom] #header,html[data-font-custom] #mobilenav,html[data-font-custom] #app button,html[data-font-custom] #app input,html[data-font-custom] #app select,html[data-font-custom] #app textarea{font-family:var(--ui-font)!important}
@@ -552,32 +552,27 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-grid td.cell-value .money,.schedule-grid td.cell-balance .money{font-weight:400!important}
 
 
-/* 1.0.39: slim external scroll rail on the physical right of the table. The
-   rail sits outside the table in its own grid column; when the table does
-   not overflow the column collapses so no empty gutter remains. */
-.schedule-table-viewport{position:relative;min-width:0;display:grid;grid-template-columns:7px minmax(0,1fr);grid-template-areas:"rail table";column-gap:3px;align-items:stretch}
+/* 1.0.44: the rail is edge-aligned over the table's right padding. The data
+   grid keeps its full width and the header background reaches the edge. */
+.schedule-table-viewport{position:relative;min-width:0;display:block}
 .schedule-table-viewport::before{display:none;content:none}
 @media(min-width:761px){
-.schedule-table-viewport>.tablewrap{grid-area:table;width:100%;max-height:556px;padding:0;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+.schedule-table-viewport>.tablewrap{width:100%;max-height:556px;padding:0;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
 .schedule-table-viewport>.tablewrap::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
-html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px;grid-template-areas:"table rail"}
 }
-.schedule-table-viewport.no-scroll{grid-template-columns:minmax(0,1fr);grid-template-areas:"table";column-gap:0}
-html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(0,1fr);grid-template-areas:"table"}
-.schedule-vscroll{grid-area:rail;position:relative;align-self:stretch;width:7px;margin-top:var(--schedule-head-h,36px);z-index:6;background:transparent;touch-action:none;user-select:none;-webkit-user-select:none}
+.schedule-vscroll{position:absolute;top:var(--schedule-head-h,36px);bottom:0;right:0;width:7px;z-index:6;background:transparent;touch-action:none;user-select:none;-webkit-user-select:none}
+html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-vscroll::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:4px;transform:translateX(-50%);border-radius:999px;background:transparent;pointer-events:none}
 .schedule-vscroll:hover::before,.schedule-vscroll.dragging::before{background:rgba(20,97,79,.04)}
-.schedule-vscroll::after{content:'';position:absolute;top:0;bottom:0;left:-4px;right:-3px;background:transparent;pointer-events:auto;z-index:0}
+.schedule-vscroll::after{content:'';position:absolute;top:0;bottom:0;left:-7px;right:0;background:transparent;pointer-events:auto;z-index:0}
 .schedule-vscroll[hidden]{display:none}
 .schedule-vscroll-thumb{position:absolute;left:50%;top:0;width:4px;min-height:28px;border-radius:999px;background:rgba(74,106,92,.40);transform:translateX(-50%);transition:width .16s ease,background .16s ease,box-shadow .16s ease;will-change:top,height;z-index:1}
-.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{width:8px;background:rgba(74,106,92,.60)}
+.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{width:7px;background:rgba(74,106,92,.60)}
 [data-dark] .schedule-vscroll::before{background:transparent}
 [data-dark] .schedule-vscroll:hover::before,[data-dark] .schedule-vscroll.dragging::before{background:rgba(158,212,188,.07)}
 [data-dark] .schedule-vscroll-thumb{background:rgba(158,212,188,.38)}
 [data-dark] .schedule-vscroll:hover .schedule-vscroll-thumb,[data-dark] .schedule-vscroll.dragging .schedule-vscroll-thumb{background:rgba(158,212,188,.58)}
 @media(max-width:760px){
-.schedule-table-viewport{grid-template-columns:minmax(0,1fr);grid-template-areas:"table";column-gap:0}
-.schedule-table-viewport::before{display:none}
 .schedule-vscroll{display:none}
 }
 .schedule-table-col .tablewrap.drag-scroll{cursor:grabbing}
@@ -617,17 +612,17 @@ html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(
    (right), excluded (center), extras (left); no category is split into
    internal columns or masonry tracks. */
 .summary-classification{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px;padding:12px 16px 13px 8px;background:transparent;align-items:start}
-.summary-classification.summary-three{grid-template-columns:minmax(0,.78fr) minmax(0,.72fr) minmax(300px,1.5fr)}
+.summary-classification.summary-three{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 320px}
 .summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .summary-classification.summary-one{grid-template-columns:1fr}
 .summary-classification .rail-group{min-width:0}
 .summary-classification .side-lines{display:flex;flex-direction:column;gap:2px;min-width:0}
 .schedule-summary .rail-head{margin-bottom:1px}
 .schedule-summary .rail-head h3{font-size:11.5px;letter-spacing:0}
-.schedule-summary .side-lines .extra-line{display:block;font-size:12px;line-height:1.65;padding:0}
-.schedule-summary .side-lines .extra-name{font-weight:600;color:var(--side-ink)}
-.schedule-summary .side-lines .extra-amount{font-size:11.8px}
-.schedule-summary .extra-due{white-space:normal}
+.schedule-summary .side-lines .extra-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 5px;font-size:12px;line-height:1.65;padding:0}
+.schedule-summary .side-lines .extra-name{font-weight:600;color:var(--side-ink);flex:none}
+.schedule-summary .side-lines .extra-amount{font-size:11.8px;flex:none}
+.schedule-summary .extra-due{white-space:normal;margin-inline-start:auto;margin-inline-end:4px;text-align:left}
 .schedule-summary .extra-meta{white-space:nowrap}
 .schedule-summary .extra-dash{color:var(--side-muted)}
 .schedule-summary .extra-commission .extra-name{color:inherit}
@@ -647,15 +642,13 @@ html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(
 .increase-term{margin-top:9px}
 .titleline h1{font-size:clamp(24px,2.2vw,32px)}
 .titleline .plan-title{margin-inline-start:12px;position:relative;top:3px}
-.titleline .actions .btn[data-act="save"],
-.titleline .actions .btn[data-act="wa-share"]{display:inline-flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;align-self:center;min-height:var(--action-h)!important;height:var(--action-h)!important;max-height:var(--action-h);padding:0 14px;border-width:1px;border-radius:var(--action-radius);box-shadow:none!important;font-weight:600;line-height:1;vertical-align:middle;white-space:nowrap;appearance:none;-webkit-appearance:none}
-.titleline .actions .btn[data-act="save"] svg,
-.titleline .actions .btn[data-act="wa-share"] svg{display:block;width:var(--action-icon);height:var(--action-icon);flex:none}
-.titleline .actions .btn[data-act="save"]{border:1px solid var(--banner)!important;background:var(--banner);color:#f6faf3}
-.titleline .actions .btn[data-act="save"]:hover{filter:brightness(.94)}
-.titleline .actions .btn[data-act="wa-share"]{border:1px solid var(--rule)!important;background:var(--surface);color:var(--text)}
-.titleline .actions .btn[data-act="wa-share"]:hover{background:var(--tint)}
-.titleline .actions .btn[data-act="wa-share"]:active{background:var(--rule)}
+.titleline .actions .action-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;align-self:center;min-height:var(--action-h)!important;height:var(--action-h)!important;max-height:var(--action-h)!important;padding:0 14px;border-width:1px;border-style:solid;border-radius:var(--action-radius);box-shadow:none!important;font-weight:600;line-height:1;vertical-align:middle;white-space:nowrap;appearance:none;-webkit-appearance:none}
+.titleline .actions .action-btn svg{display:block;width:var(--action-icon);height:var(--action-icon);flex:none}
+.titleline .actions .action-btn[data-act="save"]{border-color:var(--banner);background:var(--banner);color:#f6faf3}
+.titleline .actions .action-btn[data-act="save"]:hover{filter:brightness(.94)}
+.titleline .actions .action-btn[data-act="wa-share"]{border-color:var(--rule);background:var(--surface);color:var(--text)}
+.titleline .actions .action-btn[data-act="wa-share"]:hover{background:var(--tint)}
+.titleline .actions .action-btn[data-act="wa-share"]:active{background:var(--rule)}
 .hero .kicker{font-weight:700;color:#d8e8d9}
 .hero .big{font-weight:700}
 .hero .metrics div,.hero .metrics span{font-weight:700}
@@ -665,7 +658,7 @@ html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(
 .schedule-grid th.cell-value,.schedule-grid td.cell-value{text-align:center!important;direction:ltr!important;padding-left:20px;padding-right:4px}
 .terms-head h2{margin-inline-start:12px}
 }
-@media(max-width:1300px){
+@media(max-width:1250px){
 .summary-classification.summary-three{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 28px}
 .summary-classification.summary-three>.rail-group:nth-child(3){grid-column:1/-1}
 }
@@ -682,26 +675,33 @@ html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(
 }
 
 
-/* 1.0.32: balanced RTL payment columns: checkbox | type | date | value | balance. */
+/* 1.0.44: RTL order is type | date | value | balance | checkbox. The
+   checkbox is the far-left column; the type column anchors the right edge. */
 @media(min-width:761px){
 .schedule-grid{min-width:0}
-.schedule-grid col.col-check{width:30px}
-.schedule-grid col.col-type{width:23%}
-.schedule-grid col.col-date{width:23%}
-.schedule-grid col.col-value{width:22%}
+.schedule-grid thead th{position:sticky;top:0;z-index:2}
+.schedule-grid col.col-type{width:20%}
+.schedule-grid col.col-date{width:24%}
+.schedule-grid col.col-value{width:23%}
 .schedule-grid col.col-balance{width:auto}
+.schedule-grid col.col-check{width:30px}
 .schedule-grid th,.schedule-grid td{padding:7px 10px}
-.schedule-grid th.cell-check,.schedule-grid td.cell-check{padding-inline:2px;text-align:start!important}
-.schedule-grid th.cell-type,.schedule-grid td.cell-type,
+.schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:12px 6px}
+.schedule-grid td.cell-type{text-align:start!important;white-space:normal;overflow-wrap:anywhere}
 .schedule-grid th.cell-date,.schedule-grid td.cell-date,
 .schedule-grid th.cell-value,.schedule-grid td.cell-value,
 .schedule-grid th.cell-balance,.schedule-grid td.cell-balance{text-align:center!important;padding-inline:10px}
-.schedule-grid th.cell-type,.schedule-grid th.cell-date,
-.schedule-grid th.cell-value,.schedule-grid th.cell-balance{direction:inherit!important}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:30px;padding-inline:2px;text-align:center!important}
 .schedule-grid td.cell-date{white-space:nowrap;direction:ltr!important}
 .schedule-grid td.cell-value,.schedule-grid td.cell-balance{white-space:nowrap;direction:ltr!important}
 .schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:16px;height:16px;min-width:16px;min-height:16px;margin:0}
-.schedule-grid td.cell-type{white-space:normal;overflow-wrap:anywhere}
+.schedule-grid td.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
+.schedule-grid tbody tr:hover td.cell-check input[type=checkbox],
+.schedule-grid tbody tr:focus-within td.cell-check input[type=checkbox],
+.schedule-grid tbody tr:has(input[data-id]:checked) td.cell-check input[type=checkbox],
+.schedule-grid:has(thead th.cell-check:hover) tbody td.cell-check input[type=checkbox],
+.schedule-grid:has(thead th.cell-check:focus-within) tbody td.cell-check input[type=checkbox],
+.schedule-grid:has(tbody input[data-id]:checked) tbody td.cell-check input[type=checkbox]{opacity:1;pointer-events:auto}
 }
 
 /* 1.0.34: compact six-field offer terms group. */
@@ -723,5 +723,7 @@ html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(
 .increase-inline:not([open]) .increase-row{display:none}
 
 @media(min-width:761px){
-.schedule-table-col .tablewrap{border-right:1px solid var(--rule)}
+.schedule-table-col .tablewrap{border-right:0}
+.schedule-table-viewport>.tablewrap{background:linear-gradient(to bottom,var(--tint) 0,var(--tint) var(--schedule-head-h,36px),var(--surface) var(--schedule-head-h,36px))}
+.schedule-grid .cell-edit .row-actions{display:none!important}
 }

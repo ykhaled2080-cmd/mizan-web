@@ -47,8 +47,8 @@ button,summary,a{-webkit-tap-highlight-color:transparent}
   .titleline .actions{width:100%;display:flex;gap:7px;flex-wrap:nowrap}
   .titleline .actions .btn,.titleline .actions .pop{flex:1 1 0;min-width:0}
   .titleline .actions .pop>summary{width:100%}
-  .titleline .actions .btn{min-height:42px;padding:6px 8px;font-size:12.5px;white-space:nowrap}
-  .titleline .actions .btn svg{width:16px;height:16px}
+  .titleline .actions .btn{min-height:var(--action-h);padding:0 8px;font-size:12.5px;white-space:nowrap}
+  .titleline .actions .btn svg{width:var(--action-icon);height:var(--action-icon)}
   .hero{border-radius:15px;padding:15px 16px 14px}
   .herogrid{grid-template-columns:1fr;gap:11px;align-items:stretch}
   .hero .kicker{font-size:11.5px}

@@ -1022,10 +1022,18 @@ body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-se
 }
 /* Compact document-preset picker (the full formatting panel is retired). */
 .share-preset-picker{display:inline-flex;align-items:center;gap:2px;min-width:0}
+.share-preset-tools{display:inline-flex;align-items:center;gap:2px;min-width:0}
+.share-preset-label{font-size:10px;color:var(--sub);white-space:nowrap}
+.share-preset-confirm{display:inline-flex;align-items:center;gap:3px;padding:3px 6px;font-size:10.5px;color:var(--green);white-space:nowrap}
+.share-preset-confirm:hover{background:var(--tint)}
+.share-style-settings{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.ds-compare-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;padding:7px 9px;border:1px solid var(--rule);border-radius:7px;background:var(--tint);font-size:11.5px;color:var(--sub)}
+.ds-compare-actions{display:inline-flex;gap:5px;flex:none}
+.ds-compare-bar .ds-btn{min-height:28px;padding:4px 8px;font-size:11px}
 .share-preset-picker select{height:26px;max-width:150px;padding:2px 6px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px}
 .share-preset-save{display:inline-grid;place-items:center;width:26px;height:26px;min-width:26px;padding:0;border:0;background:transparent;color:var(--sub)}
 .share-preset-save:hover{background:var(--tint);color:var(--green)}
-@media(max-width:760px){.share-preset-picker select{max-width:105px}}
+@media(max-width:760px){.share-preset-picker select{max-width:105px}.share-preset-label{display:none}.share-preset-confirm span{display:none}}
 
 
 .pdf-page [data-text-id].pdf-text-selected{outline:1px dashed rgba(25,75,61,.72);outline-offset:2px;border-radius:1px}

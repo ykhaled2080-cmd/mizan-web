@@ -162,6 +162,10 @@ const LEGACY_BUILTIN_IDS=new Set(['main','classic','balanced','minimal','contras
 const DOC_STYLE_MIGRATION_KEY='mizan.docStyleMigration';
 const DOC_STYLE_ARCHIVE_KEY='mizan.docStyleArchive';
 const DOC_PRESETS_ARCHIVE_KEY='mizan.docPresetsArchive';
+const DOC_COMPARE_KEY='mizan.docPresetCompare';
+const LEGACY_PRESET_ID='v9-legacy';
+function docCompareMode(){try{return localStorage.getItem(DOC_COMPARE_KEY)!=='0'}catch{return true}}
+function setDocCompareMode(on){try{localStorage.setItem(DOC_COMPARE_KEY,on?'1':'0')}catch{}}
 /* Bump only when the canonical Main design or its migration rules change. */
 const DOC_STYLE_MIGRATION_VERSION=3;
 
@@ -227,11 +231,17 @@ function mergeDocStyle(saved){
  if(!saved||typeof saved!=='object')return base;
  return applyDocStyleSource(base,saved,{includeOffsets:false});
 }
-let DOC_BUILTIN_CACHE=null;
+function docLegacyStyle(){
+ const style=docDefaultStyle();
+ style.activePreset=LEGACY_PRESET_ID;
+ if(style.dividers&&style.dividers.brand)style.dividers.brand.offset=0;
+ return style;
+}
 function docBuiltinPresets(){
- if(DOC_BUILTIN_CACHE)return DOC_BUILTIN_CACHE.map(p=>({id:p.id,name:p.name,builtin:true,style:mergeDocStyle(p.style)}));
- DOC_BUILTIN_CACHE=[{id:MAIN_PRESET_ID,name:MAIN_PRESET_NAME,builtin:true,style:docDefaultStyle()}];
- return DOC_BUILTIN_CACHE.map(p=>({id:p.id,name:p.name,builtin:true,style:mergeDocStyle(p.style)}));
+ return [
+  {id:MAIN_PRESET_ID,name:MAIN_PRESET_NAME,builtin:true,style:docDefaultStyle()},
+  {id:LEGACY_PRESET_ID,name:tt('V9 (السابق)','V9 (Previous)'),builtin:true,compareOnly:true,style:docLegacyStyle()}
+ ].map(p=>({...p,style:mergeDocStyle(p.style)}));
 }
 function docStyleMigrationVersion(){
  try{return +localStorage.getItem(DOC_STYLE_MIGRATION_KEY)||0}catch{return 0}
@@ -2085,13 +2095,25 @@ let DOC_STYLE_VERSION=0;
   function docPresetPickerHtml(){
     const presets=docPresetList(),active=DOC_STYLE.activePreset||'';
     const current=!active||!presets.some(p=>p.id===active)?'<option value="">'+tt('النمط الحالي','Current style')+'</option>':'';
-    return current+presets.map(p=>'<option value="'+p.id+'" '+(p.id===active?'selected':'')+'>'+esc(p.name)+(p.builtin?'':' · '+tt('مخصص','Custom'))+'</option>').join('')+'<option value="__style">'+tt('تنسيق المستند…','Document style…')+'</option>';
+    return current+presets.map(p=>'<option value="'+p.id+'" '+(p.id===active?'selected':'')+'>'+esc(p.name)+(p.compareOnly?' · '+tt('مقارنة','compare'):(p.builtin?'':' · '+tt('مخصص','Custom')))+'</option>').join('')+'<option value="__style">'+tt('تنسيق المستند…','Document style…')+'</option>';
   }
   function refreshPresetPicker(){
     const sel=document.querySelector('[data-doc-preset-select]');if(!sel)return;
     const active=DOC_STYLE.activePreset||'';
     sel.innerHTML=docPresetPickerHtml();
     sel.value=docPresetList().some(p=>p.id===active)?active:'';
+  }
+  function docPresetToolsHtml(){
+    if(!docCompareMode()){
+      return '<button type="button" class="share-toggle share-style-settings" data-share-act="open-doc-style" title="'+tt('تنسيق المستند وإدارة القوالب','Document style and presets')+'">'+icon('tools',14)+tt('تنسيق المستند','Document style')+'</button>';
+    }
+    return '<span class="share-preset-picker"><span class="share-preset-label">'+tt('القالب','Preset')+'</span><select data-doc-preset-select aria-label="'+tt('قالب المستند','Document preset')+'">'+docPresetPickerHtml()+'</select><button type="button" class="share-toggle share-preset-confirm" data-share-act="confirm-doc-preset" title="'+tt('تثبيت القالب الحالي','Confirm current template')+'" aria-label="'+tt('تثبيت القالب الحالي','Confirm current template')+'">'+icon('check',13)+'<span>'+tt('تثبيت','Confirm')+'</span></button><button type="button" class="share-toggle share-preset-save" data-share-act="save-current-preset" title="'+tt('حفظ التصميم الحالي كقالب','Save current style as preset')+'" aria-label="'+tt('حفظ التصميم الحالي كقالب','Save current style as preset')+'">'+icon('save',13)+'</button><button type="button" class="share-toggle share-preset-save" data-share-act="export-template" title="'+tt('تصدير القالب','Export template')+'" aria-label="'+tt('تصدير القالب','Export template')+'">'+icon('download',13)+'</button><button type="button" class="share-toggle share-preset-save" data-share-act="import-template" title="'+tt('استيراد قالب','Import template')+'" aria-label="'+tt('استيراد قالب','Import template')+'">'+icon('upload',13)+'</button></span>';
+  }
+  function refreshDocPresetTools(){
+    const host=document.querySelector('[data-doc-preset-tools]');
+    if(host)host.innerHTML=docPresetToolsHtml();
+    const sel=document.querySelector('[data-doc-preset-select]');
+    if(sel){const active=DOC_STYLE.activePreset||'';sel.value=docPresetList().some(p=>p.id===active)?active:''}
   }
   function docSelectedPresetId(){const list=docPresetList();const id=S.docPresetSel||DOC_STYLE.activePreset;return list.some(p=>p.id===id)?id:list[0].id}
   function roleStyleAttr(role){const font=String(role.font||DOC_FONT_MAIN).replace(/"/g,'&quot;');return 'font-family:'+font+';font-size:'+(+role.size||12)+'px;font-weight:'+(+role.weight||400)+';color:'+role.color}
@@ -2114,17 +2136,20 @@ let DOC_STYLE_VERSION=0;
     const sizeOptions=DOC_ROLE_SIZES.map(n=>'<option value="'+n+'" '+(Math.abs(+role.size-n)<.01?'selected':'')+'>'+n+'</option>').join('');
     const weightOptions=[[400,tt('عادي','Regular')],[500,tt('متوسط','Medium')],[600,tt('نصف عريض','Semi-bold')],[700,tt('عريض','Bold')]].map(([value,label])=>'<option value="'+value+'" '+(+role.weight===value?'selected':'')+'>'+label+'</option>').join('');
     const currentOption=selectedId?'':'<option value="" selected>'+tt('النمط الحالي','Current style')+'</option>';
-    const presetOptions=currentOption+presets.map(p=>'<option value="'+p.id+'" '+(p.id===selectedId?'selected':'')+'>'+esc(p.name)+(p.builtin?'':' · '+tt('مخصص','Custom'))+'</option>').join('');
+    const presetOptions=currentOption+presets.map(p=>'<option value="'+p.id+'" '+(p.id===selectedId?'selected':'')+'>'+esc(p.name)+(p.compareOnly?' · '+tt('مقارنة','compare'):(p.builtin?'':' · '+tt('مخصص','Custom')))+'</option>').join('');
     const roleOptions=Object.entries(DOC_ROLE_DEFS).map(([key,def])=>'<option value="'+key+'" '+(key===roleKey?'selected':'')+'>'+def.label+'</option>').join('');
     const dividerOptions=Object.entries(DOC_DIVIDER_DEFS).map(([key,def])=>'<option value="'+key+'" '+(key===dividerKey?'selected':'')+'>'+def.label+'</option>').join('');
     const pv=preview.roles||DOC_STYLE.roles;
     const sample='<div class="ds-sample"><b style="'+roleStyleAttr(pv.title)+'">'+tt('عرض سداد تقديري','Estimated payment offer')+'</b><span style="'+roleStyleAttr(pv.main)+'">'+tt('الملخص المالي','Financial summary')+'</span><div class="ds-sample-line"><span style="'+roleStyleAttr(pv.label)+'">'+tt('سعر الوحدة','Unit price')+'</span><b style="'+roleStyleAttr(pv.value)+'">5,000,000 ج.م</b></div><b class="ds-sample-total" style="'+roleStyleAttr(pv.total)+'">'+tt('إجمالي العرض','Offer total')+' · 5,000,000 ج.م</b></div>';
-    return '<div class="ds-head"><b>'+tt('تنسيق المستند','Document style')+'</b><button type="button" class="pdf-fb-close" data-ds-act="close" aria-label="'+tt('إغلاق','Close')+'">×</button></div>'+
+    const compareBar=docCompareMode()
+      ?'<div class="ds-compare-bar"><span>'+tt('وضع المقارنة مفعّل: جرّب القوالب ثم ثبّت النمط النهائي.','Comparison mode: try presets, then confirm the final style.')+'</span><span class="ds-compare-actions"><button type="button" class="ds-btn" data-ds-act="apply-legacy">'+tt('V9 السابق','Previous V9')+'</button><button type="button" class="ds-btn primary" data-ds-act="confirm-preset">'+tt('تثبيت القالب','Confirm template')+'</button></span></div>'
+      :'<div class="ds-compare-bar"><span>'+tt('تبديل القوالب مخفي من شريط المشاركة اليومي.','Preset switching is hidden from the daily Share bar.')+'</span><button type="button" class="ds-btn" data-ds-act="show-presets">'+tt('إظهار القوالب','Show presets')+'</button></div>';
+    return '<div class="ds-head"><b>'+tt('تنسيق المستند','Document style')+'</b><button type="button" class="pdf-fb-close" data-ds-act="close" aria-label="'+tt('إغلاق','Close')+'">×</button></div>'+compareBar+
       '<div class="ds-grid"><div class="ds-col">'+
         '<div class="ds-block"><div class="ds-block-title">'+tt('القالب','Preset')+'</div>'+
           '<div class="ds-row"><select data-ds-preset class="ds-grow" aria-label="'+tt('القالب','Preset')+'">'+presetOptions+'</select><button type="button" class="ds-btn primary" data-ds-act="apply-preset" '+(!selectedId?'disabled':'')+'>'+tt('تطبيق','Apply')+'</button></div>'+
           sample+
-          '<div class="ds-actions"><button type="button" class="ds-btn" data-ds-act="restore-defaults">'+tt('استعادة الأصل','Restore original')+'</button></div>'+
+          '<div class="ds-actions"><button type="button" class="ds-btn" data-ds-act="restore-defaults">'+tt('استعادة الأصل','Restore original')+'</button><button type="button" class="ds-btn" data-share-act="export-template">'+tt('تصدير','Export')+'</button><button type="button" class="ds-btn" data-share-act="import-template">'+tt('استيراد','Import')+'</button></div>'+
         '</div>'+
         '<div class="ds-block"><div class="ds-block-title">'+tt('الخط','Typography')+'</div>'+
           '<label class="ds-field"><span>'+tt('الدور','Role')+'</span><select data-ds-role>'+roleOptions+'</select></label>'+
@@ -2195,6 +2220,22 @@ let DOC_STYLE_VERSION=0;
     S.textSelected='';document.querySelectorAll('.pdf-text-selected').forEach(x=>x.classList.remove('pdf-text-selected'));
     commitDocStyle();applyDividerStyles(document);refreshPresetPicker();A.note(tt('تم تطبيق النمط','Preset applied'));
     rebuildStylePreview();
+  }
+  function confirmDocPreset(){
+    const id=S.docPresetSel||DOC_STYLE.activePreset||'';
+    const preset=id?docPresetById(id):null;
+    if(preset){DOC_STYLE=mergeDocStyle(preset.style);DOC_STYLE.activePreset=id;S.docPresetSel=id}
+    setDocCompareMode(false);
+    commitDocStyle();
+    refreshDocPresetTools();
+    if(S.docStyleOpen)renderDocStylePanel();
+    A.note(tt('تم تثبيت القالب النهائي','Final template confirmed'));
+  }
+  function showDocPresets(){
+    setDocCompareMode(true);
+    refreshDocPresetTools();
+    if(S.docStyleOpen)renderDocStylePanel();
+    A.note(tt('تم إظهار القوالب للمقارنة','Preset comparison enabled'));
   }
   function restoreDocDefaults(){
     DOC_STYLE=docDefaultStyle();DOC_STYLE.activePreset=MAIN_PRESET_ID;S.docPresetSel=MAIN_PRESET_ID;S.docPresetEditId='';
@@ -2344,6 +2385,9 @@ let DOC_STYLE_VERSION=0;
     const a=act.dataset.dsAct;
     if(a==='close'){hideDocStylePanel();return}
     if(a==='apply-preset'){applyDocPreset(S.docPresetSel);return}
+    if(a==='apply-legacy'){applyDocPreset(LEGACY_PRESET_ID);renderDocStylePanel();return}
+    if(a==='confirm-preset'){confirmDocPreset();return}
+    if(a==='show-presets'){showDocPresets();return}
     if(a==='restore-defaults'){restoreDocDefaults();return}
     if(a==='reset-role'){resetDocRole();return}
     if(a==='reset-divider'){resetDocDivider();return}
@@ -3204,7 +3248,7 @@ let DOC_STYLE_VERSION=0;
     const copyLabel=S.textMode==='horizontal'?tt('نسخ أفقي','Copy horizontal'):tt('نسخ رأسي','Copy vertical');
     const fileLabel=S.pdfLayout==='horizontal'?tt('ملف أفقي','File horizontal'):tt('ملف رأسي','File vertical');
     const fileMenu='<div class="share-layout-menu" role="menu" aria-label="'+tt('شكل ملف PDF','PDF file layout')+'"><button type="button" data-file-layout="horizontal" class="'+(S.pdfLayout==='horizontal'?'on':'')+'">'+tt('ملف أفقي','File horizontal')+'</button><button type="button" data-file-layout="vertical" class="'+(S.pdfLayout==='vertical'?'on':'')+'">'+tt('ملف رأسي','File vertical')+'</button></div>';
-    return '<div class="share-controls"><button type="button" class="share-toggle" data-share-act="toggle-language">'+(docLang()==='ar'?'العربية':'EN')+'</button><span class="share-layout-wrap"><button type="button" class="share-toggle share-layout-btn" data-share-act="toggle-layout" title="'+tt('كليك شمال: نسخ فقط · كليك يمين: شكل الملف','Left click: copy only · Right click: file layout')+'">'+copyLabel+'</button><button type="button" class="share-layout-caret" data-share-act="layout-menu" aria-haspopup="menu" aria-expanded="false" title="'+fileLabel+'">▾</button>'+fileMenu+'</span><span class="share-preset-picker"><select data-doc-preset-select aria-label="'+tt('قالب المستند','Document preset')+'">'+docPresetPickerHtml()+'</select><button type="button" class="share-toggle share-preset-save" data-share-act="save-current-preset" title="'+tt('حفظ التصميم الحالي كقالب','Save current style as preset')+'" aria-label="'+tt('حفظ التصميم الحالي كقالب','Save current style as preset')+'">'+icon('save',13)+'</button><button type="button" class="share-toggle share-preset-save" data-share-act="export-template" title="'+tt('تصدير القالب','Export template')+'" aria-label="'+tt('تصدير القالب','Export template')+'">'+icon('download',13)+'</button><button type="button" class="share-toggle share-preset-save" data-share-act="import-template" title="'+tt('استيراد قالب','Import template')+'" aria-label="'+tt('استيراد قالب','Import template')+'">'+icon('upload',13)+'</button></span><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button><button type="button" class="share-zoom-btn" data-share-act="zoom-toggle" title="'+tt('ملاءمة الصفحة أو الرجوع إلى 100%','Fit page or return to 100%')+'">'+zoom+'%</button></div>';
+    return '<div class="share-controls"><button type="button" class="share-toggle" data-share-act="toggle-language">'+(docLang()==='ar'?'العربية':'EN')+'</button><span class="share-layout-wrap"><button type="button" class="share-toggle share-layout-btn" data-share-act="toggle-layout" title="'+tt('كليك شمال: نسخ فقط · كليك يمين: شكل الملف','Left click: copy only · Right click: file layout')+'">'+copyLabel+'</button><button type="button" class="share-layout-caret" data-share-act="layout-menu" aria-haspopup="menu" aria-expanded="false" title="'+fileLabel+'">▾</button>'+fileMenu+'</span><span class="share-preset-tools" data-doc-preset-tools>'+docPresetToolsHtml()+'</span><button type="button" class="share-toggle share-notes-btn" data-share-act="notes">'+icon('note',14)+tt('مقدمة وخاتمة','Intro & closing')+'</button><button type="button" class="share-zoom-btn" data-share-act="zoom-toggle" title="'+tt('ملاءمة الصفحة أو الرجوع إلى 100%','Fit page or return to 100%')+'">'+zoom+'%</button></div>';
   }
   function footHtml(){
     if(S.result){
@@ -4419,6 +4463,8 @@ let DOC_STYLE_VERSION=0;
     const a=act.dataset.shareAct;
     if(a==='font-tools'){showPdfFontBar();return}
     if(a==='save-current-preset'){saveCurrentAsPreset();return}
+    if(a==='confirm-doc-preset'){confirmDocPreset();return}
+    if(a==='open-doc-style'){showDocStylePanel();return}
     if(a==='export-template'){exportDocTemplate();return}
     if(a==='import-template'){importDocTemplate();return}
     if(a==='notes'){S.notesOpen=!S.notesOpen;notesMount();return}
