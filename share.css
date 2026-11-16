@@ -1034,20 +1034,25 @@ body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-se
 .doc-style-panel{position:fixed;inset:8px 8px calc(8px + env(safe-area-inset-bottom,0px));left:auto;transform:none;width:auto;max-height:78dvh}
 .ds-grid{grid-template-columns:1fr}
 }
-/* Compact document-preset picker (the full formatting panel is retired). */
-.share-preset-picker{display:inline-flex;align-items:center;gap:2px;min-width:0}
-.share-preset-tools{display:inline-flex;align-items:center;gap:2px;min-width:0}
-.share-preset-label{font-size:10px;color:var(--sub);white-space:nowrap}
-.share-preset-confirm{display:inline-flex;align-items:center;gap:3px;padding:3px 6px;font-size:10.5px;color:var(--green);white-space:nowrap}
-.share-preset-confirm:hover{background:var(--tint)}
-.share-style-settings{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.ds-compare-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;padding:7px 9px;border:1px solid var(--rule);border-radius:7px;background:var(--tint);font-size:11.5px;color:var(--sub)}
-.ds-compare-actions{display:inline-flex;gap:5px;flex:none}
-.ds-compare-bar .ds-btn{min-height:28px;padding:4px 8px;font-size:11px}
-.share-preset-picker select{height:26px;max-width:150px;padding:2px 6px;border:1px solid var(--rule);border-radius:5px;background:var(--field);color:var(--text);font-size:10.5px}
-.share-preset-save{display:inline-grid;place-items:center;width:26px;height:26px;min-width:26px;padding:0;border:0;background:transparent;color:var(--sub)}
-.share-preset-save:hover{background:var(--tint);color:var(--green)}
-@media(max-width:760px){.share-preset-picker select{max-width:105px}.share-preset-label{display:none}.share-preset-confirm span{display:none}}
+/* One compact preset button: template list, save, update, delete, export and import. */
+.share-preset-tools{display:inline-flex;align-items:center;min-width:0}
+.share-preset-picker{position:relative;display:inline-flex;align-items:center;min-width:0}
+.share-preset-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;font-size:11px;color:var(--sub);white-space:nowrap}
+.share-preset-btn i{font-style:normal;font-size:9px;line-height:1;opacity:.7}
+.share-preset-menu{display:none;position:absolute;bottom:calc(100% + 8px);inset-inline-end:0;width:min(262px,88vw);max-height:min(60vh,430px);overflow:auto;padding:6px;border:1px solid var(--rule);border-radius:10px;background:var(--surface);box-shadow:0 14px 38px #11322933;z-index:40}
+.share-preset-picker.open .share-preset-menu{display:block}
+.share-preset-menu-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 7px 6px;border-bottom:1px solid var(--rule);margin-bottom:4px;font-size:10px;color:var(--sub)}
+.share-preset-menu-head b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text)}
+.share-preset-menu-list{display:grid;gap:1px}
+.share-preset-item,.share-preset-action{display:flex;align-items:center;justify-content:space-between;gap:7px;width:100%;min-height:30px;padding:6px 8px;border:0;border-radius:6px;background:transparent;color:var(--text);font-size:11.5px;text-align:start;white-space:nowrap;cursor:pointer}
+.share-preset-item span,.share-preset-action span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.share-preset-item:hover,.share-preset-action:hover{background:var(--tint)}
+.share-preset-item.on{background:var(--tint);color:var(--green);font-weight:600}
+.share-preset-item svg{flex:none;color:var(--green)}
+.share-preset-menu-actions{display:grid;gap:1px;margin-top:4px;padding-top:4px;border-top:1px solid var(--rule)}
+.share-preset-action{justify-content:flex-start;color:var(--sub)}
+.share-preset-action svg{flex:none;color:var(--green);opacity:.9}
+@media(max-width:760px){.share-preset-btn{padding:3px 5px;font-size:10.5px}.share-preset-menu{width:min(250px,90vw)}}
 
 
 .pdf-page [data-text-id].pdf-text-selected{outline:1px dashed rgba(25,75,61,.72);outline-offset:2px;border-radius:1px}
