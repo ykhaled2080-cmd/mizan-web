@@ -13,6 +13,30 @@ const ITEM_META = {
 };
 const ITEM_KEYS = ['garage', 'storage', 'utilities'];
 
+/* One authoritative item-status descriptor for the editor, summaries, PDF,
+   previews and copied text. A due date is exposed only while the item is a
+   real additional charge; included/excluded dates stay stored but inert. */
+const ITEM_STATE_COPY = {
+  unspecified: { ar: 'غير محدد', en: 'Not specified' },
+  included: { ar: 'شامل السعر', en: 'Included in price' },
+  excluded: { ar: 'غير شامل السعر', en: 'Excluded from price' },
+  extra: { ar: 'تكلفة إضافية', en: 'Additional charge' }
+};
+function itemStateLabel(state, lang) {
+  const copy = ITEM_STATE_COPY[state] || ITEM_STATE_COPY.unspecified;
+  return lang === 'ar' ? copy.ar : copy.en;
+}
+function itemStatus(item) {
+  const state = item && ['unspecified', 'included', 'excluded', 'extra'].includes(item.state) ? item.state : 'unspecified';
+  const extra = state === 'extra';
+  return {
+    state,
+    active: state !== 'unspecified',
+    due: extra && item && item.due ? fullDate(item.due, item.day) : '',
+    dueMode: extra && item && item.due ? 'date' : ''
+  };
+}
+
 function emptyItems() {
   return {
     garage: { state: 'unspecified', amount: 0, due: '', day: '' },
@@ -316,9 +340,10 @@ function schedule(input) {
   });
   for (const key of ITEM_KEYS) {
     const item = p.items[key];
-    if (!item || item.state !== 'extra') continue;
+    const status = itemStatus(item);
+    if (status.state !== 'extra') continue;
     const amount = itemAmountCents(item);
-    if (amount) extras.push({ key, label: key, amount, due: item.due ? fullDate(item.due, item.day) : handoverDate, dueMode: item.due ? 'date' : 'handover' });
+    if (amount) extras.push({ key, label: key, amount, due: status.due || handoverDate, dueMode: status.due ? 'date' : 'handover' });
   }
 
   const includes = [];
@@ -328,8 +353,11 @@ function schedule(input) {
   const excludedItems = [];
   for (const key of ITEM_KEYS) {
     const item = p.items[key];
-    if (!item || item.state !== 'excluded') continue;
-    excludedItems.push({ key, label: key, amount: itemAmountCents(item), due: item.due ? fullDate(item.due, item.day) : '', dueMode: item.due ? 'date' : '' });
+    const status = itemStatus(item);
+    if (status.state !== 'excluded') continue;
+    /* Excluded rows never expose a due date even if one was entered while the
+       item was previously an additional charge. */
+    excludedItems.push({ key, label: key, amount: itemAmountCents(item), due: '', dueMode: '' });
   }
 
   const extrasTotal = extras.reduce((sum, item) => sum + (item.excluded ? 0 : item.amount), 0);
