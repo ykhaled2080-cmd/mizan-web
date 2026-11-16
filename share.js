@@ -174,7 +174,7 @@ function mainDocStyleSource(){
 }
 function applyDocStyleSource(base,saved,opts){
  const includeOffsets=!!(opts&&opts.includeOffsets);
- const style={activePreset:typeof saved.activePreset==='string'?saved.activePreset:base.activePreset,roles:{},dividers:{},extraDividers:[],textOffsets:includeOffsets?{...base.textOffsets}:{}};
+ const style={activePreset:typeof saved.activePreset==='string'?saved.activePreset:base.activePreset,summaryLayout:['grid','vertical','inline'].includes(saved.summaryLayout)?saved.summaryLayout:(base.summaryLayout||'grid'),roles:{},dividers:{},extraDividers:[],textOffsets:includeOffsets?{...base.textOffsets}:{}};
  for(const key of Object.keys(DOC_ROLE_DEFS)){
   style.roles[key]={...base.roles[key]};
   const src=saved.roles&&saved.roles[key];
@@ -219,7 +219,7 @@ function applyDocStyleSource(base,saved,opts){
  return style;
 }
 function docDefaultStyle(){
- const base={activePreset:MAIN_PRESET_ID,roles:docRoles(DOC_FONT_CLASSIC),dividers:docDividers(),extraDividers:[],textOffsets:{}};
+ const base={activePreset:MAIN_PRESET_ID,summaryLayout:'grid',roles:docRoles(DOC_FONT_CLASSIC),dividers:docDividers(),extraDividers:[],textOffsets:{}};
  const raw=mainDocStyleSource();
  const style=raw?applyDocStyleSource(base,raw,{includeOffsets:true}):base;
  style.activePreset=MAIN_PRESET_ID;
@@ -231,7 +231,13 @@ function mergeDocStyle(saved){
  return applyDocStyleSource(base,saved,{includeOffsets:false});
 }
 function docBuiltinPresets(){
- return [{id:MAIN_PRESET_ID,name:MAIN_PRESET_NAME,builtin:true,style:mergeDocStyle(docDefaultStyle())}];
+ const base=docDefaultStyle();
+ const make=(id,name,summaryLayout)=>({id,name,builtin:true,style:mergeDocStyle({...base,summaryLayout})});
+ return [
+  make(MAIN_PRESET_ID,MAIN_PRESET_NAME,'grid'),
+  make('mizan-vertical',tt('MIZAN — بنود رأسية','MIZAN — Vertical items'),'vertical'),
+  make('mizan-inline',tt('MIZAN — بنود أفقية','MIZAN — Horizontal items'),'inline')
+ ];
 }
 function docStyleMigrationVersion(){
  try{return +localStorage.getItem(DOC_STYLE_MIGRATION_KEY)||0}catch{return 0}
@@ -992,6 +998,7 @@ let DOC_STYLE_VERSION=0;
   }
   function applyPdfStyle(page){
     assignPdfTextIds(page);
+    page.dataset.summaryLayout=DOC_STYLE.summaryLayout||'grid';
     page.style.setProperty('--pdf-font-title',fontStack(FIXED_PDF_STYLE.title));
     page.style.setProperty('--pdf-font-sub',fontStack(FIXED_PDF_STYLE.sub));
     page.style.setProperty('--pdf-font-body',fontStack(FIXED_PDF_STYLE.body));
@@ -1027,6 +1034,14 @@ let DOC_STYLE_VERSION=0;
     if(spec.side==='bottom')lineY=bottom;
     else if(spec.side==='center')lineY=top+(bottom-top)/2;
     lineY+=+spec.shift||0;
+    /* The commission rule is intentionally a short marker next to its label,
+       never a full-row divider. It is also skipped entirely when no other
+       additional-charge item precedes the commission. */
+    if(host==='commission'){
+      const short=42;
+      const x=page.dir==='rtl'?(rect.right-pageRect.left)/scale-short:(rect.left-pageRect.left)/scale;
+      return {x,width:short,y:(lineY-pageRect.top)/scale};
+    }
     return {x:(rect.left-pageRect.left)/scale,width:rect.width/scale,y:(lineY-pageRect.top)/scale};
   }
   function dividerHandle(layer,id,extra){
@@ -1204,7 +1219,8 @@ let DOC_STYLE_VERSION=0;
     const feePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
     const feeMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
     const feeTitle=t('عمولة الوساطة','Brokerage commission')+(feeMeta?' - '+feeMeta:'');
-    if(s.commission)extraCharges.push('<div class="pdf-charge pdf-charge-commission'+(extraCharges.length?' has-rule':'')+'" data-charge-key="commission"><span class="lbl">'+feeTitle+'</span><b class="val">'+amount(s.commission)+'</b></div>');
+    const hasExtraItems=extraCharges.length>0;
+    if(s.commission)extraCharges.push('<div class="pdf-charge pdf-charge-commission'+(hasExtraItems?' has-rule':'')+'" data-charge-key="commission"><span class="lbl">'+feeTitle+'</span><b class="val">'+amount(s.commission)+'</b></div>');
     const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent" aria-hidden="true"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const pdfGroup=(title,items,cls)=>items.length?'<section class="pdf-group '+(cls||'')+'">'+sectionTitle(title,cls)+'<div class="pdf-charges">'+items.join('')+'</div></section>':'';
     const includedRows=(s.includedItems||[]).map(x=>({key:x.key,name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
@@ -1213,7 +1229,8 @@ let DOC_STYLE_VERSION=0;
     const excludedRows=(s.excludedItems||[]).map(x=>({key:x.key,name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
     const includedGroup=pdfGroup(t('السعر يشمل','Included in price'),includedRows.map(x=>'<div class="pdf-charge" data-charge-key="'+x.key+'"><span class="lbl">'+esc(x.name)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-included-title');
     const excludedGroup=pdfGroup(t('السعر لا يشمل','Price does not include'),excludedRows.map(x=>'<div class="pdf-charge" data-charge-key="'+x.key+'"><span class="lbl">'+esc(x.name)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-excluded-title');
-    const extrasGroup=pdfGroup(t('مستحقات إضافية','Additional charges'),extraCharges,'pdf-extras-title');
+    const extrasTitle=hasExtraItems?t('مستحقات إضافية','Additional charges'):t('أموال إضافية','Additional money');
+    const extrasGroup=pdfGroup(extrasTitle,extraCharges,'pdf-extras-title'+(hasExtraItems?'':' pdf-extras-money'));
     const pdfGroups=[includedGroup,excludedGroup,extrasGroup].filter(Boolean);
     const groupsHtml=pdfGroups.length?'<div class="pdf-groups pdf-groups-'+pdfGroups.length+'">'+pdfGroups.join('')+'</div>':'';
     const identity='<div class="pdf-identity"><div data-identity="client"><span>'+t('اسم العميل','Client')+'</span><b>'+esc(p.client||non)+'</b></div><div data-identity="unit"><span>'+t('الوحدة','Unit')+'</span><b>'+esc(p.unit||non)+'</b></div></div>';
@@ -1239,11 +1256,12 @@ let DOC_STYLE_VERSION=0;
       const cashFeeRate=p.feeMode==='rate'?data.f.pct.format(s.commissionPct)+'%':'';
       const cashFeePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
       const cashFeeMeta=[cashFeePayer,cashFeeRate?'('+cashFeeRate+')':''].filter(Boolean).join(' ');
-      if(s.commission)cashCharges.push({key:'commission',label:t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),due:'',amount:s.commission,commission:true,hasRule:cashCharges.length>0});
+      const cashHasExtraItems=cashCharges.length>0;
+      if(s.commission)cashCharges.push({key:'commission',label:t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),due:'',amount:s.commission,commission:true,hasRule:cashHasExtraItems});
       const cashExtrasItems=cashCharges.map(c=>'<div class="pdf-charge'+(c.commission?' pdf-charge-commission':'')+(c.hasRule?' has-rule':'')+'" data-charge-key="'+c.key+'"><span class="lbl">'+dueJoin(c.label,c.due)+'</span><b class="val">'+amount(c.amount)+'</b></div>');
       const cashIncluded=pdfGroup(t('السعر يشمل','Price includes'),['<div class="pdf-cash-included-list">'+includedText+'</div>'],'pdf-cash-included-title');
       const cashExcluded=pdfGroup(t('السعر لا يشمل','Price does not include'),(s.excludedItems||[]).map(x=>'<div class="pdf-charge" data-charge-key="'+x.key+'"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-cash-excluded-title');
-      const cashExtras=pdfGroup(t('مستحقات إضافية','Additional charges'),cashExtrasItems,'pdf-cash-charges-title');
+      const cashExtras=pdfGroup(cashHasExtraItems?t('مستحقات إضافية','Additional charges'):t('أموال إضافية','Additional money'),cashExtrasItems,'pdf-cash-charges-title'+(cashHasExtraItems?'':' pdf-extras-money'));
       const cashGroups=[cashIncluded,cashExcluded,cashExtras].filter(Boolean);
       const cashGroupsHtml=cashGroups.length?'<div class="pdf-groups pdf-groups-'+cashGroups.length+'">'+cashGroups.join('')+'</div>':'';
       const cashTotal='<div class="pdf-price-block pdf-cash-total"><span class="lbl">'+cashTotalLabel+'</span><b class="amt">'+amount(s.price)+'</b></div>';

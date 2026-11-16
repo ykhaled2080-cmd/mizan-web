@@ -644,6 +644,8 @@ html[dir="ltr"] .schedule-vscroll::after{left:-7px;right:0}
 .schedule-selection .sel-label{color:var(--side-ink);font-weight:600}
 .schedule-selection b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .schedule-grid th.cell-check,.schedule-grid td.cell-check{width:30px;padding-inline:2px}
+/* Row checkboxes are hidden on every viewport; clicking the row still selects. */
+.schedule-grid td.cell-check input[type=checkbox]{opacity:0!important;pointer-events:none!important}
 .increase-inline{margin-top:9px;padding:0;border:0;background:transparent}
 .increase-inline>summary{display:inline-flex;align-items:center;gap:5px;width:auto;padding:2px 0;border:0;background:none;color:var(--green);font-size:12px;font-weight:600;cursor:pointer;list-style:none}
 .increase-inline>summary::-webkit-details-marker{display:none}
@@ -707,11 +709,10 @@ html[dir="ltr"] .schedule-vscroll::after{left:-7px;right:0}
 .schedule-grid td.cell-date{white-space:nowrap;direction:ltr!important}
 .schedule-grid td.cell-value,.schedule-grid td.cell-balance{white-space:nowrap;direction:ltr!important}
 .schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:14px;height:14px;min-width:14px;min-height:14px;margin:0}
-.schedule-grid td.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
+/* Row checkboxes stay hidden in every state; the row itself still selects.
+   Only the header checkbox appears, and only while rows are selected. */
+.schedule-grid td.cell-check input[type=checkbox]{opacity:0!important;pointer-events:none!important}
 .schedule-grid thead th.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
-.schedule-grid tbody tr:hover td.cell-check input[type=checkbox],
-.schedule-grid tbody tr:focus-within td.cell-check input[type=checkbox],
-.schedule-grid tbody tr:has(input[data-id]:checked) td.cell-check input[type=checkbox],
 .schedule-grid:has(tbody input[data-id]:checked) thead th.cell-check input[type=checkbox]{opacity:1;pointer-events:auto}
 }
 .schedule-grid th.cell-check input,.schedule-grid td.cell-check input{display:block;margin:0 auto;transform:translateX(calc(-1 * var(--check-shift,0px)));transition:opacity .12s ease,transform .16s ease}

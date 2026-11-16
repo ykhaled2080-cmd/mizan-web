@@ -915,8 +915,8 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 
 /* 1.0.27 brokerage commission inside additional-charges group */
 .pdf-group .pdf-charge.pdf-charge-commission{grid-column:1/-1}
-.pdf-charge-commission.has-rule{margin-top:2px;padding-top:0;border-top:0}
-.pdf-charge-commission.has-rule .lbl{display:inline-block;max-width:100%;border-top:1px solid #D8E2DB;padding-top:4px;margin-top:2px}
+.pdf-charge-commission.has-rule{margin-top:8px;padding-top:0;border-top:0}
+.pdf-charge-commission.has-rule .lbl{display:inline-block;max-width:100%;padding-top:5px;margin-top:0}
 .pdf-page .pdf-charge.pdf-charge-commission .val{font-weight:700}
 
 /* 1.0.29 role-driven PDF typography, grouped sections and editable dividers. */
@@ -937,6 +937,17 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-group .pdf-charges{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:2px 20px;margin-bottom:2px}
 .pdf-group .pdf-charge{max-width:none;padding:2px 0;border-bottom:0}
 .pdf-group .pdf-charge .lbl{min-width:0;overflow-wrap:anywhere}
+/* Optional summary layouts. Only the three pricing groups are affected. */
+.pdf-page[data-summary-layout="vertical"] .pdf-group .pdf-charges{display:block;grid-template-columns:none;gap:0;margin-bottom:2px}
+.pdf-page[data-summary-layout="vertical"] .pdf-group .pdf-charge{display:flex;align-items:baseline;justify-content:space-between;gap:16px;width:100%;padding:3px 0}
+.pdf-page[data-summary-layout="vertical"] .pdf-group .pdf-charge .lbl{display:block;flex:1 1 auto;min-width:0;text-align:start}
+.pdf-page[data-summary-layout="vertical"] .pdf-group .pdf-charge .val{display:block;flex:0 0 auto;margin:0;text-align:end;white-space:nowrap}
+.pdf-page[data-summary-layout="vertical"] .pdf-group .pdf-charge.pdf-charge-commission{display:flex}
+.pdf-page[data-summary-layout="inline"] .pdf-group .pdf-charges{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px 20px;margin-bottom:2px}
+.pdf-page[data-summary-layout="inline"] .pdf-group .pdf-charge{flex:0 1 auto;max-width:100%;min-width:0;padding:2px 0}
+.pdf-page[data-summary-layout="inline"] .pdf-group .pdf-charge .lbl{display:block}
+.pdf-page[data-summary-layout="inline"] .pdf-group .pdf-charge .val{display:block;margin-top:1px}
+.pdf-page[data-summary-layout="inline"] .pdf-group .pdf-charge.pdf-charge-commission{flex:1 0 100%;grid-column:auto}
 .pdf-page .pdf-price-block,.pdf-page .pdf-pay-item{position:relative;border-bottom:0!important}
 .pdf-page .pdf-price-block,.pdf-page .pdf-pay-grid,.pdf-page .pdf-pay-item{z-index:auto}
 .pdf-page .pdf-pay-grid{margin-bottom:4px}
