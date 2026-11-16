@@ -61,7 +61,7 @@ const DOC_FONT_CLASSIC='Arial,Helvetica,sans-serif';
 const DOC_ROLE_DEFS={
  title:{label:'عنوان المستند',size:26,weight:700,color:'#17483B'},
  main:{label:'العناوين الرئيسية',size:13,weight:700,color:'#215646'},
- sub:{label:'العناوين الفرعية',size:13,weight:700,color:'#215646'},
+ sub:{label:'العناوين الفرعية',size:13,weight:700,color:'#19483B'},
  label:{label:'عناوين الحقول',size:13,weight:700,color:'#293B33'},
  value:{label:'القيم والنصوص',size:13,weight:700,color:'#173F33'},
  unit:{label:'قيمة سعر الوحدة',size:20,weight:400,color:'#21362E'},
@@ -69,7 +69,7 @@ const DOC_ROLE_DEFS={
  total:{label:'الإجماليات',size:17,weight:700,color:'#173F33'}
 };
 const DOC_DIVIDER_DEFS={
- brand:{label:'فاصل رأس المستند',visible:true,offset:0,thickness:1,color:'#D8E2DB',length:100},
+ brand:{label:'فاصل رأس المستند',visible:true,offset:0,thickness:1,color:'#194B3D',length:100},
  identity:{label:'فاصل بيانات العميل والوحدة',visible:true,offset:0,thickness:1,color:'#D8E2DB',length:100},
  price:{label:'فاصل سعر الوحدة',visible:true,offset:2,thickness:1,color:'#D8E2DB',length:100},
  down:{label:'فاصل مقدم التعاقد',visible:true,offset:2,thickness:1,color:'#D8E2DB',length:100},
@@ -84,9 +84,9 @@ const DOC_DIVIDER_DEFS={
  folio:{label:'فاصل تذييل الصفحة',visible:true,offset:0,thickness:1,color:'#D8E2DB',length:100}
 };
 const DOC_DIVIDER_ANCHORS={
- brand:{selector:'.pdf-brandline',side:'bottom'},
- identity:{selector:'.pdf-identity',side:'bottom'},
- price:{selector:'[data-divider-host="price"],.pdf-price-block:not(.pdf-cash-total)',side:'bottom',shift:-11},
+ brand:{selector:'.pdf-brandline',side:'bottom',union:'.pdf-brandline>*'},
+ identity:{selector:'.pdf-identity',side:'bottom',union:'.pdf-identity>div'},
+ price:{selector:'[data-divider-host="price"],.pdf-price-block:not(.pdf-cash-total)',side:'bottom',shift:-11,union:'.pdf-price-block:not(.pdf-cash-total) .lbl,.pdf-price-block:not(.pdf-cash-total) .amt'},
  down:{selector:'[data-divider-host="down"],.pdf-pay-down',side:'bottom',shift:-11},
  plan:{selector:'[data-divider-host="plan"],.pdf-pay-plan',side:'bottom',shift:-11},
  delivery:{selector:'[data-divider-host="delivery"],.pdf-pay-delivery',side:'bottom',shift:-11},
@@ -102,12 +102,16 @@ function docRoles(font){return Object.fromEntries(Object.entries(DOC_ROLE_DEFS).
 function docDividers(){return Object.fromEntries(Object.entries(DOC_DIVIDER_DEFS).map(([key,def])=>[key,{...def,opacity:def.opacity??1}]));}
 const LEGACY_DIVIDER_COLORS=new Set(['#d2dcd5','#e4ebe1','#dfe7e1','#194b3d']);
 /* Old releases used several near-identical greens and a 1.5px brand rule.
-   Normalize only those known built-in defaults; any other explicit color or
-   thickness remains the user's individual override. */
+   The brand rule keeps its stronger green; other standard dividers normalize
+   to one quiet tone. Any other explicit color is the user's own override. */
 function normalizeDividerConfig(cfg,key){
  if(!cfg||typeof cfg!=='object')return cfg;
  const color=String(cfg.color||'').toLowerCase();
- if(LEGACY_DIVIDER_COLORS.has(color))cfg.color='#D8E2DB';
+ if(key==='brand'){
+  if(color==='#d8e2db'||LEGACY_DIVIDER_COLORS.has(color))cfg.color='#194B3D';
+ }else if(LEGACY_DIVIDER_COLORS.has(color)){
+  cfg.color='#D8E2DB';
+ }
  if(key==='brand'&&Math.abs(+cfg.thickness-1.5)<0.001)cfg.thickness=1;
  if(!Number.isFinite(+cfg.opacity))cfg.opacity=1;
  return cfg;
@@ -564,16 +568,26 @@ let DOC_STYLE_VERSION=0;
       [...tr.children].forEach((td,ci)=>set(td,'table-total-'+ri+'-'+ci));
     });
   }
+  /* A section heading is a row: accent + title + remaining rule. The saved
+     offset belongs to that unit so its divider and marker can never stay
+     behind while only the glyphs move. */
+  function pdfTextOffsetTarget(el){
+    if(el&&el.matches&&el.matches('.pdf-section-title h3'))return el.closest('.pdf-section-title')||el;
+    return el;
+  }
   function applyPdfTextOffsets(page){
     const offsets=DOC_STYLE.textOffsets||{};
     page.querySelectorAll('.pdf-has-moved-text').forEach(el=>el.classList.remove('pdf-has-moved-text'));
     page.querySelectorAll('[data-text-id]').forEach(el=>{
       const id=el.dataset.textAnchor||el.dataset.textId;
+      const target=pdfTextOffsetTarget(el);
+      if(target!==el)el.style.removeProperty('translate');
       const v=+offsets[id];
       const moved=Number.isFinite(v)&&Math.abs(v)>=0.1;
-      if(moved)el.style.translate='0 '+v+'px';
-      else el.style.removeProperty('translate');
+      if(moved)target.style.translate='0 '+v+'px';
+      else target.style.removeProperty('translate');
       el.classList.toggle('pdf-text-moved',moved);
+      if(target!==el)target.classList.toggle('pdf-text-moved',moved);
       if(moved){
         const cell=el.closest('td,th');
         if(cell)cell.classList.add('pdf-has-moved-text');
@@ -624,6 +638,7 @@ let DOC_STYLE_VERSION=0;
     return changed;
   }
   const REFLOW_KEY='mizan.pdfReflow';
+  const PDF_LAYOUT_VERSION=2;
   function reflowHash(text){
     let h=2166136261;
     for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}
@@ -632,6 +647,162 @@ let DOC_STYLE_VERSION=0;
   function pdfReflowSignature(){return reflowHash(S.signature||buildSignature())}
   function readReflowState(){try{return JSON.parse(localStorage.getItem(REFLOW_KEY)||'null')||null}catch{return null}}
   function writeReflowState(state){try{localStorage.setItem(REFLOW_KEY,JSON.stringify(state))}catch{}}
+  function pdfLayoutScale(page){
+    const r=page&&page.getBoundingClientRect();
+    return r&&r.width>0?r.width/794:1;
+  }
+  function pdfRectUnion(elements){
+    const rects=(elements||[]).map(el=>el&&el.getBoundingClientRect()).filter(r=>r&&r.width&&r.height);
+    if(!rects.length)return null;
+    return {
+      top:Math.min(...rects.map(r=>r.top)),
+      bottom:Math.max(...rects.map(r=>r.bottom)),
+      left:Math.min(...rects.map(r=>r.left)),
+      right:Math.max(...rects.map(r=>r.right))
+    };
+  }
+  function pdfSectionItems(title){
+    const group=title&&title.closest?title.closest('.pdf-group'):null;
+    if(group){
+      const charges=[...group.querySelectorAll('.pdf-charge')];
+      if(charges.length)return charges;
+      const list=group.querySelector('.pdf-cash-included-list');
+      return list?[list]:[];
+    }
+    const items=[];
+    let node=title?title.nextElementSibling:null;
+    while(node){
+      if(node.classList&&node.classList.contains('pdf-section-title'))break;
+      if(node.matches&&node.matches('.pdf-legal-line,.pdf-support-line,.pdf-cash-included-list'))items.push(node);
+      node=node.nextElementSibling;
+    }
+    return items;
+  }
+  function pdfSetTextOffset(el,value,offsets){
+    const id=el&&(el.dataset.textAnchor||el.dataset.textId);
+    if(!id)return false;
+    const next=Math.max(-1123,Math.min(1123,Math.round((+value||0)*10)/10));
+    if(Math.abs(next)>=0.1)offsets[id]=next;
+    else delete offsets[id];
+    const target=pdfTextOffsetTarget(el);
+    const moved=Math.abs(next)>=0.1;
+    if(moved)target.style.translate='0 '+next+'px';
+    else target.style.removeProperty('translate');
+    el.classList.toggle('pdf-text-moved',moved);
+    if(target!==el)target.classList.toggle('pdf-text-moved',moved);
+    return true;
+  }
+  /* Keep a heading, its marker/rule and its first entry in a readable order.
+     The outlier offset is the one corrected; the other manual positions stay. */
+  function normalizeSectionGaps(page){
+    const offsets=DOC_STYLE.textOffsets||(DOC_STYLE.textOffsets={});
+    const scale=pdfLayoutScale(page);
+    let changed=false;
+    page.querySelectorAll('.pdf-section-title').forEach(title=>{
+      const h3=title.querySelector('h3');
+      const id=h3&&(h3.dataset.textAnchor||h3.dataset.textId);
+      if(!id)return;
+      const items=pdfSectionItems(title);
+      if(!items.length)return;
+      const itemRects=items.map(el=>({el,rect:el.getBoundingClientRect()})).filter(x=>x.rect.width&&x.rect.height);
+      if(!itemRects.length)return;
+      const titleRect=title.getBoundingClientRect();
+      let topItem=itemRects[0];
+      for(const item of itemRects)if(item.rect.top<topItem.rect.top)topItem=item;
+      const gap=(topItem.rect.top-titleRect.bottom)/scale;
+      if(gap>=3&&gap<=20)return;
+      const desired=gap<3?4:16;
+      const delta=desired-gap;
+      const titleOffset=+offsets[id]||0;
+      const topItems=itemRects.filter(x=>Math.abs(x.rect.top-topItem.rect.top)<2).map(x=>x.el);
+      const topOffsets=topItems.map(el=>+offsets[el.dataset.textAnchor||el.dataset.textId]||0);
+      const itemOffset=topOffsets.length?Math.min(...topOffsets):0;
+      if(Math.abs(titleOffset)>=Math.abs(itemOffset)){
+        if(pdfSetTextOffset(h3,titleOffset-delta,offsets))changed=true;
+      }else{
+        topItems.forEach((el,i)=>{
+          if(pdfSetTextOffset(el,topOffsets[i]+delta,offsets))changed=true;
+        });
+      }
+    });
+    return changed;
+  }
+  function pdfBlockContent(block){
+    if(!block)return[];
+    if(block.matches('.pdf-identity'))return[...block.children].filter(el=>el.tagName==='DIV');
+    if(block.matches('.pdf-price-block'))return[...block.querySelectorAll('.lbl,.amt')];
+    if(block.matches('.pdf-pay-grid'))return[...block.querySelectorAll('.pdf-pay-item')];
+    if(block.matches('.pdf-group')){
+      const out=[];
+      const title=block.querySelector('.pdf-section-title');
+      if(title)out.push(title);
+      out.push(...block.querySelectorAll('.pdf-charge,.pdf-cash-included-list'));
+      return out;
+    }
+    if(block.matches('.pdf-support')){
+      const out=[];
+      const title=block.querySelector('.pdf-section-title');
+      if(title)out.push(title);
+      out.push(...block.querySelectorAll('.pdf-legal-line,.pdf-support-line'));
+      return out;
+    }
+    return[...block.querySelectorAll('[data-text-id]')];
+  }
+  function pdfResetFlowPads(block){
+    if(!block)return;
+    const cs=getComputedStyle(block);
+    if(block.dataset.pdfBasePadTop===undefined)block.dataset.pdfBasePadTop=String(parseFloat(cs.paddingTop)||0);
+    if(block.dataset.pdfBasePadBottom===undefined)block.dataset.pdfBasePadBottom=String(parseFloat(cs.paddingBottom)||0);
+    block.style.paddingTop=(+block.dataset.pdfBasePadTop||0)+'px';
+    block.style.paddingBottom=(+block.dataset.pdfBasePadBottom||0)+'px';
+  }
+  /* Transforms do not grow a section's layout box. Add the missing space to the
+     section itself so moved text can never sit on the next heading or table. */
+  function compensatePdfFlow(page){
+    const blocks=[...page.querySelectorAll('.pdf-identity,.pdf-price-block,.pdf-pay-grid,.pdf-group,.pdf-support')];
+    if(!blocks.length)return false;
+    const scale=pdfLayoutScale(page);
+    let changed=false;
+    blocks.forEach(pdfResetFlowPads);
+    blocks.forEach(block=>{
+      const content=pdfBlockContent(block);
+      const union=pdfRectUnion(content);
+      if(!union)return;
+      const rect=block.getBoundingClientRect();
+      const baseTop=+block.dataset.pdfBasePadTop||0;
+      const extra=(rect.top+baseTop*scale-union.top)/scale;
+      if(extra>0.5){
+        block.style.paddingTop=(baseTop+Math.ceil(extra*10)/10)+'px';
+        changed=true;
+      }
+    });
+    blocks.forEach(block=>{
+      const content=pdfBlockContent(block);
+      const union=pdfRectUnion(content);
+      if(!union)return;
+      const rect=block.getBoundingClientRect();
+      const baseBottom=+block.dataset.pdfBasePadBottom||0;
+      const extra=(union.bottom-(rect.bottom-baseBottom*scale))/scale;
+      if(extra>0.5){
+        block.style.paddingBottom=(baseBottom+Math.ceil(extra*10)/10)+'px';
+        changed=true;
+      }
+    });
+    return changed;
+  }
+  function normalizePdfGeometry(pages,opts){
+    const list=(pages||[]).filter(page=>page&&page.isConnected);
+    let changed=false;
+    list.forEach(page=>{if(normalizeSectionGaps(page))changed=true});
+    list.forEach(page=>{if(compensatePdfFlow(page))changed=true});
+    if(resolvePdfTextCollisions(list))changed=true;
+    if(changed){
+      list.forEach(page=>normalizeSectionGaps(page));
+      list.forEach(page=>compensatePdfFlow(page));
+      writeDocStyle(DOC_STYLE,{bump:false});
+    }
+    return changed;
+  }
   function resolvePdfTextCollisions(pages){
     const offsets=DOC_STYLE.textOffsets||{};
     let changed=false;
@@ -640,7 +811,7 @@ let DOC_STYLE_VERSION=0;
       const pageRect=page.getBoundingClientRect();
       if(!pageRect.width||!pageRect.height)continue;
       const scale=pageRect.width/794||1;
-      const items=[...page.querySelectorAll('[data-text-id]')].map(el=>({el,id:el.dataset.textAnchor||el.dataset.textId}));
+      const items=[...page.querySelectorAll('[data-text-id]')].map(el=>{const target=pdfTextOffsetTarget(el);return{el,target,id:el.dataset.textAnchor||el.dataset.textId}});
       const moved=items.filter(x=>{
         const v=+offsets[x.id];
         return Number.isFinite(v)&&Math.abs(v)>=0.1;
@@ -649,11 +820,11 @@ let DOC_STYLE_VERSION=0;
       for(let pass=0;pass<5;pass++){
         let shifted=false;
         for(const m of moved){
-          let mr=m.el.getBoundingClientRect();
+          let mr=m.target.getBoundingClientRect();
           if(!mr.width||!mr.height)continue;
           for(const o of items){
             if(o===m||m.el.contains(o.el)||o.el.contains(m.el))continue;
-            const or=o.el.getBoundingClientRect();
+            const or=o.target.getBoundingClientRect();
             if(!or.width||!or.height)continue;
             const xOverlap=Math.min(mr.right,or.right)-Math.max(mr.left,or.left);
             const yOverlap=Math.min(mr.bottom,or.bottom)-Math.max(mr.top,or.top);
@@ -671,15 +842,16 @@ let DOC_STYLE_VERSION=0;
               const predictedBottom=mr.bottom+(next-current)*scale;
               if(predictedTop<pageRect.top+1||predictedBottom>pageRect.bottom-1)continue;
               offsets[m.id]=next;
-              m.el.style.translate='0 '+next+'px';
+              m.target.style.translate='0 '+next+'px';
               m.el.classList.add('pdf-text-moved');
+              if(m.target!==m.el)m.target.classList.add('pdf-text-moved');
               const cell=m.el.closest('td,th');
               if(cell)cell.classList.add('pdf-has-moved-text');
               changed=true;shifted=true;applied=true;
               break;
             }
             if(applied){
-              mr=m.el.getBoundingClientRect();
+              mr=m.target.getBoundingClientRect();
               break;
             }
           }
@@ -690,18 +862,22 @@ let DOC_STYLE_VERSION=0;
     if(changed)writeDocStyle(DOC_STYLE,{bump:false});
     return changed;
   }
-  function maybeReflowPdf(pages,migrated){
+  function maybeReflowPdf(pages,migrated,prepared){
     if(offersMode())return;
     const signature=pdfReflowSignature();
     const state=readReflowState();
-    if(!state||!state.signature){
-      writeReflowState({signature,updated:Date.now()});
-      return;
+    const needs=!state||!state.signature||state.layoutVersion!==PDF_LAYOUT_VERSION||state.signature!==signature||migrated;
+    if(!needs)return;
+    /* When each sheet was normalized before its payment rows were added,
+       running the geometry solver again after pagination could move the table
+       into the footer. Only refresh styles in that case. */
+    if(prepared){
+      pages.forEach(applyPdfStyle);
+    }else{
+      const changed=normalizePdfGeometry(pages,{force:true});
+      if(changed)pages.forEach(applyPdfStyle);
     }
-    if(state.signature===signature&&!migrated)return;
-    const changed=resolvePdfTextCollisions(pages);
-    if(changed)pages.forEach(applyPdfStyle);
-    writeReflowState({signature,updated:Date.now()});
+    writeReflowState({signature,layoutVersion:PDF_LAYOUT_VERSION,updated:Date.now()});
   }
   function waitForImages(root){
     return Promise.all([...root.querySelectorAll('img')].map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=img.onerror=res})));
@@ -758,9 +934,17 @@ let DOC_STYLE_VERSION=0;
     const pageRect=page.getBoundingClientRect(),rect=el.getBoundingClientRect();
     if(!pageRect.width||!rect.width)return null;
     const scale=pageRect.width/794||1;
-    let lineY=rect.top;
-    if(spec.side==='bottom')lineY=rect.bottom;
-    else if(spec.side==='center')lineY=rect.top+rect.height/2;
+    let top=rect.top,bottom=rect.bottom;
+    if(spec.union){
+      const parts=[...page.querySelectorAll(spec.union)].map(x=>x.getBoundingClientRect()).filter(x=>x.width&&x.height);
+      if(parts.length){
+        top=Math.min(...parts.map(x=>x.top));
+        bottom=Math.max(...parts.map(x=>x.bottom));
+      }
+    }
+    let lineY=top;
+    if(spec.side==='bottom')lineY=bottom;
+    else if(spec.side==='center')lineY=top+(bottom-top)/2;
     lineY+=+spec.shift||0;
     return {x:(rect.left-pageRect.left)/scale,width:rect.width/scale,y:(lineY-pageRect.top)/scale};
   }
@@ -869,14 +1053,21 @@ let DOC_STYLE_VERSION=0;
     const pct=n=>n>0?' ('+data.f.pct.format(n)+'%)':'';
     const non=t('غير محدد','Not specified');
     const amount=cents=>'<bdi dir="ltr">'+cash(cents)+'</bdi> '+data.curr;
-    const dueJoin=(base,due)=>due?base+(/^(عند|خلال)/.test(due)||/^(at|over)\b/i.test(due)?' ':' – ')+'<span class="pdf-due">'+due+'</span>':base;
+    const dateBdi=month=>'<bdi dir="ltr">'+data.f.date(month)+'</bdi>';
+    const dueJoin=(base,due)=>{
+      if(!due)return base;
+      const plain=String(due).replace(/<[^>]+>/g,'').trim();
+      const phrase=/^(عند|خلال|بتاريخ)/.test(plain)||/^(at|over|on)(\b|\s)/i.test(plain);
+      return base+(phrase?' ':' – ')+'<span class="pdf-due">'+due+'</span>';
+    };
     const handoverDate=p.handover?fullDate(p.handover,p.handoverDay):'';
     const deliveryShown=p.deliveryDateMode==='date'&&p.deliveryDate?fullDate(p.deliveryDate,p.deliveryDay):handoverDate;
-    const deliveryLabel=p.deliveryDateMode==='none'?'':(deliveryShown?t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(deliveryShown):'');
+    const deliveryLabel=p.deliveryDateMode==='none'?'':(deliveryShown?'<span class="pdf-date-phrase">'+(p.deliveryDateMode==='date'&&p.deliveryDate?t('بتاريخ','on'):t('عند الاستلام بتاريخ','at handover on'))+' '+dateBdi(deliveryShown)+'</span>':'');
     const maintenanceDate=p.maintenanceDate?fullDate(p.maintenanceDate,p.maintenanceDay):'';
-    const maintenanceShown=p.maintenanceDateMode==='date'&&p.maintenanceDate?maintenanceDate:handoverDate;
-    const maintenanceLabel=p.maintenanceDateMode==='none'?'':(p.maintenanceDateMode==='split'?t('خلال أول سنتين','Over first two years'):(maintenanceShown?(maintenanceDate&&p.maintenanceDateMode==='date'&&String(maintenanceShown).slice(0,7)!==String(handoverDate).slice(0,7)?t('بتاريخ','on')+' '+data.f.date(maintenanceShown):t('عند الاستلام بتاريخ','at handover on')+' '+data.f.date(maintenanceShown)):''));
-    const extraDateCond=e=>e.dueMode==='date'&&e.due?t('بتاريخ','on')+' '+data.f.date(e.due):'';
+    const maintenanceIndependent=p.maintenanceDateMode==='date'&&!!p.maintenanceDate;
+    const maintenanceShown=maintenanceIndependent?maintenanceDate:handoverDate;
+    const maintenanceLabel=p.maintenanceDateMode==='none'?'':(p.maintenanceDateMode==='split'?'<span class="pdf-date-phrase">'+t('خلال أول سنتين','Over first two years')+'</span>':(maintenanceShown?'<span class="pdf-date-phrase">'+(maintenanceIndependent?t('بتاريخ','on'):t('عند الاستلام بتاريخ','at handover on'))+' '+dateBdi(maintenanceShown)+'</span>':''));
+    const extraDateCond=e=>e.dueMode==='date'&&e.due?'<span class="pdf-date-phrase">'+t('بتاريخ','on')+' '+dateBdi(e.due)+'</span>':'';
     const inst=s.rows.filter(r=>r.type==='installment'&&r.value>0);
     const values=[...new Set(inst.map(r=>r.value))];
     let termMonths=s.termMonths||0;
@@ -926,7 +1117,7 @@ let DOC_STYLE_VERSION=0;
     const feeMeta=[feePayer,feeRate?'('+feeRate+')':''].filter(Boolean).join(' ');
     const feeTitle=t('عمولة الوساطة','Brokerage commission')+(feeMeta?' - '+feeMeta:'');
     if(s.commission)extraCharges.push('<div class="pdf-charge pdf-charge-commission'+(extraCharges.length?' has-rule':'')+'" data-charge-key="commission"><span class="lbl">'+feeTitle+'</span><b class="val">'+amount(s.commission)+'</b></div>');
-    const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><h3>'+title+'</h3><span class="rule"></span></div>';
+    const sectionTitle=(title,cls)=>'<div class="pdf-section-title '+(cls||'')+'"><span class="accent" aria-hidden="true"></span><h3>'+title+'</h3><span class="rule"></span></div>';
     const pdfGroup=(title,items,cls)=>items.length?'<section class="pdf-group '+(cls||'')+'">'+sectionTitle(title,cls)+'<div class="pdf-charges">'+items.join('')+'</div></section>':'';
     const includedRows=(s.includedItems||[]).map(x=>({key:x.key,name:(names[x.key]?names[x.key]():x.key),amount:x.amount}));
     /* Excluded rows deliberately have no due date. The stored date on the item
@@ -961,8 +1152,7 @@ let DOC_STYLE_VERSION=0;
       const cashFeePayer=p.payer==='buyer'?t('المشتري','Buyer'):t('البائع','Seller');
       const cashFeeMeta=[cashFeePayer,cashFeeRate?'('+cashFeeRate+')':''].filter(Boolean).join(' ');
       if(s.commission)cashCharges.push({key:'commission',label:t('عمولة الوساطة','Brokerage commission')+(cashFeeMeta?' - '+cashFeeMeta:''),due:'',amount:s.commission,commission:true,hasRule:cashCharges.length>0});
-      const dueBdi=due=>esc(due).replace(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/\d{4})/g,'<bdi dir="ltr">$1</bdi>');
-      const cashExtrasItems=cashCharges.map(c=>'<div class="pdf-charge'+(c.commission?' pdf-charge-commission':'')+(c.hasRule?' has-rule':'')+'" data-charge-key="'+c.key+'"><span class="lbl">'+dueJoin(c.label,dueBdi(c.due))+'</span><b class="val">'+amount(c.amount)+'</b></div>');
+      const cashExtrasItems=cashCharges.map(c=>'<div class="pdf-charge'+(c.commission?' pdf-charge-commission':'')+(c.hasRule?' has-rule':'')+'" data-charge-key="'+c.key+'"><span class="lbl">'+dueJoin(c.label,c.due)+'</span><b class="val">'+amount(c.amount)+'</b></div>');
       const cashIncluded=pdfGroup(t('السعر يشمل','Price includes'),['<div class="pdf-cash-included-list">'+includedText+'</div>'],'pdf-cash-included-title');
       const cashExcluded=pdfGroup(t('السعر لا يشمل','Price does not include'),(s.excludedItems||[]).map(x=>'<div class="pdf-charge" data-charge-key="'+x.key+'"><span class="lbl">'+esc(names[x.key]?names[x.key]():x.key)+'</span><b class="val">'+(x.amount>0?amount(x.amount):'')+'</b></div>'),'pdf-cash-excluded-title');
       const cashExtras=pdfGroup(t('مستحقات إضافية','Additional charges'),cashExtrasItems,'pdf-cash-charges-title');
@@ -1050,22 +1240,33 @@ let DOC_STYLE_VERSION=0;
       reasons.push((lang==='ar'?'الفرق بين مجموع الصفوف وسعر الوحدة: ':'Difference between displayed rows and unit price: ')+(diff>0?'+':'')+f.intl.format(diff/100)+' '+data.curr);
       return reasons.join(' · ');
     })();
+    let migrated=false,prepared=false;
+    const preparePage=sheet=>{
+      if(!sheet||offersMode())return;
+      if(migratePdfTextOffsets([sheet]))migrated=true;
+      /* Migration changes the ids in DOC_STYLE; commit them to this sheet
+         before geometry is measured, otherwise the solver sees un-offset text. */
+      applyPdfStyle(sheet);
+      normalizePdfGeometry([sheet],{force:true});
+      applyPdfStyle(sheet);
+      prepared=true;
+    };
     if(summaryOnly){
       const page=makePage(lang,data,false,layout,true);
-      root.appendChild(page);pages.push(page);
+      root.appendChild(page);pages.push(page);preparePage(page);
     }else if(s.cash){
       const page=makePage(lang,data,false,layout,false);
-      root.appendChild(page);pages.push(page);
+      root.appendChild(page);pages.push(page);preparePage(page);
     }else{
       let page=makePage(lang,data,false,layout,false),body=page.querySelector('[data-pdf-body]'),count=0;
-      root.appendChild(page);
+      root.appendChild(page);preparePage(page);
       for(const r of pdfRows){
         const row=pdfRow(lang,r,data,layout);
         body.appendChild(row);
         if(row.getBoundingClientRect().bottom>page.getBoundingClientRect().bottom-64&&count>0){
           body.removeChild(row);
           pages.push(page);
-          page=makePage(lang,data,true,layout,false);root.appendChild(page);body=page.querySelector('[data-pdf-body]');body.appendChild(row);count=1;
+          page=makePage(lang,data,true,layout,false);root.appendChild(page);body=page.querySelector('[data-pdf-body]');preparePage(page);body.appendChild(row);count=1;
         }else count++;
       }
       pages.push(page);
@@ -1113,11 +1314,9 @@ let DOC_STYLE_VERSION=0;
       setTimeout(fin,140);
     });
     pages.forEach(applyPdfStyle);
-    const migrated=migratePdfTextOffsets(pages);
-    if(migrated)pages.forEach(applyPdfTextOffsets);
     await Promise.all(pages.map(waitForImages));
     positionWatermarks(pages);
-    maybeReflowPdf(pages,migrated);
+    maybeReflowPdf(pages,migrated,prepared);
     return {pages,s,data};
   }
   async function buildPdf(signature,token){
@@ -1446,6 +1645,7 @@ let DOC_STYLE_VERSION=0;
     // can never leak viewport coordinates into the saved/exported document.
     canonicalRefreshDividers(source);
     const clone=source.cloneNode(true);
+    clone.dataset.contentSig=pdfReflowSignature();
     clone.removeAttribute('contenteditable');
     clone.querySelectorAll('[contenteditable]').forEach(x=>x.removeAttribute('contenteditable'));
     clone.querySelectorAll('.pdf-divider.selected').forEach(x=>x.classList.remove('selected'));
@@ -1500,12 +1700,37 @@ let DOC_STYLE_VERSION=0;
       if(type&&date&&head.firstElementChild===date)head.insertBefore(type,date);
     });
   }
+  function ensureSectionAccent(page){
+    page.querySelectorAll('.pdf-section-title').forEach(title=>{
+      const accents=[...title.children].filter(el=>el.classList&&el.classList.contains('accent'));
+      let accent=accents[0];
+      if(!accent){
+        accent=document.createElement('span');
+        accent.className='accent';
+        accent.setAttribute('aria-hidden','true');
+      }
+      title.insertBefore(accent,title.firstChild);
+      accents.slice(1).forEach(el=>el.remove());
+    });
+  }
+  function stripInactiveItemDates(page){
+    page.querySelectorAll('.pdf-group.pdf-included-title .pdf-charge .lbl,.pdf-group.pdf-excluded-title .pdf-charge .lbl,.pdf-group.pdf-cash-included-title .pdf-charge .lbl,.pdf-group.pdf-cash-excluded-title .pdf-charge .lbl').forEach(label=>{
+      label.querySelectorAll('.pdf-due').forEach(due=>{
+        const prev=due.previousSibling;
+        due.remove();
+        if(prev&&prev.nodeType===3)prev.nodeValue=prev.nodeValue.replace(/\s*[–—-]\s*$/,'');
+      });
+      label.normalize();
+    });
+  }
   function upgradeStoredPageHtml(html){
     try{
       const wrap=document.createElement('div');wrap.innerHTML=html;
       const page=wrap.querySelector('.pdf-page');
       if(!page)return html;
       upgradePdfTableOrder(page);
+      ensureSectionAccent(page);
+      stripInactiveItemDates(page);
       const price=page.querySelector('.pdf-price-block');
       if(price)price.dataset.dividerHost='price';
       const payHosts=[['.pdf-pay-down','down'],['.pdf-pay-plan','plan'],['.pdf-pay-delivery','delivery'],['.pdf-pay-installment','installment']];
@@ -1520,10 +1745,35 @@ let DOC_STYLE_VERSION=0;
       return page.outerHTML;
     }catch{return html}
   }
+  function pageChargeKeys(page,cls){
+    const group=page.querySelector('.pdf-group.'+cls);
+    if(!group)return[];
+    return [...group.querySelectorAll('.pdf-charge')].map(x=>x.dataset.chargeKey||'').filter(Boolean).sort();
+  }
+  function storedPageMatchesSchedule(page){
+    /* Continuation pages contain only the compact brand header and the table;
+       the edit key already binds their rows to the current content signature. */
+    if(!page.querySelector('.pdf-group'))return true;
+    const s=activeSchedule();
+    const expected={
+      included:(s.includedItems||[]).map(x=>x.key).filter(Boolean).sort(),
+      excluded:(s.excludedItems||[]).map(x=>x.key).filter(Boolean).sort(),
+      extras:(s.extras||[]).map(x=>String(x.label)).filter(Boolean).concat(s.commission?['commission']:[]).sort()
+    };
+    const actual={
+      included:pageChargeKeys(page,'pdf-included-title').length?pageChargeKeys(page,'pdf-included-title'):pageChargeKeys(page,'pdf-cash-included-title'),
+      excluded:pageChargeKeys(page,'pdf-excluded-title').length?pageChargeKeys(page,'pdf-excluded-title'):pageChargeKeys(page,'pdf-cash-excluded-title'),
+      extras:pageChargeKeys(page,'pdf-extras-title').length?pageChargeKeys(page,'pdf-extras-title'):pageChargeKeys(page,'pdf-cash-charges-title')
+    };
+    /* Cash offers render the included list as one text block, not item rows. */
+    if(page.querySelector('.pdf-cash-included-list'))actual.included=expected.included;
+    return ['included','excluded','extras'].every(k=>actual[k].join('|')===expected[k].join('|'));
+  }
   async function applyStoredPageEdits(built){
     try{
       const pages=readPageEdits()[pageEditKey()];
       if(!Array.isArray(pages))return;
+      const contentSig=pdfReflowSignature();
       const temp=document.createElement('div');
       temp.style.cssText='position:fixed;left:-12000px;top:0;width:794px;z-index:-1;background:#fff;';
       document.body.appendChild(temp);
@@ -1533,7 +1783,11 @@ let DOC_STYLE_VERSION=0;
           temp.innerHTML=upgradeStoredPageHtml(pages[i]);
           const page=temp.querySelector('.pdf-page');
           if(!page)continue;
+          if(page.dataset.contentSig&&page.dataset.contentSig!==contentSig)continue;
+          if(!storedPageMatchesSchedule(page))continue;
           await waitForImages(page);
+          normalizePdfGeometry([page],{force:true});
+          applyPdfStyle(page);
           positionWatermark(page,i===0);
           built.pages[i].html=page.outerHTML;
           built.pages[i].rasterDirty=true;
@@ -1779,6 +2033,13 @@ let DOC_STYLE_VERSION=0;
     if(S.built){flushEditablePages();S.built.vectorPdf=null}
     S.lastPageInputAt=0;
   }
+  function rebuildStylePreview(){
+    if(!S.open||S.tab==='text')return;
+    resetBuilt();
+    S.signature=buildSignature();
+    renderAll();
+    ensureBuilt();
+  }
   function applyDocPreset(id){
     const preset=docPresetById(id);if(!preset)return;
     DOC_STYLE=mergeDocStyle(preset.style);DOC_STYLE.activePreset=id;S.docPresetSel=id;
@@ -1786,12 +2047,14 @@ let DOC_STYLE_VERSION=0;
     S.dividerSelected='';
     S.textSelected='';document.querySelectorAll('.pdf-text-selected').forEach(x=>x.classList.remove('pdf-text-selected'));
     commitDocStyle();applyDividerStyles(document);refreshPresetPicker();A.note(tt('تم تطبيق النمط','Preset applied'));
+    rebuildStylePreview();
   }
   function restoreDocDefaults(){
     DOC_STYLE=docDefaultStyle();DOC_STYLE.activePreset='classic';S.docPresetSel='classic';S.docPresetEditId='';
     S.dividerSelected='';
     S.textSelected='';document.querySelectorAll('.pdf-text-selected').forEach(x=>x.classList.remove('pdf-text-selected'));
     commitDocStyle();applyDividerStyles(document);refreshPresetPicker();A.note(tt('تمت استعادة التنسيق الأصلي','Original styling restored'));
+    rebuildStylePreview();
   }
   function resetDocRole(){
     const key=S.docRoleSel||'main';
@@ -2065,8 +2328,9 @@ let DOC_STYLE_VERSION=0;
     S.textSelected=id;S.dividerSelected='';setDividerSelectedClass('');
     const page=el.closest('.pdf-page');
     const scale=pdfPageScale(el)||1;
+    const target=pdfTextOffsetTarget(el);
     const startY=e.clientY,startOffset=+((DOC_STYLE.textOffsets||{})[id])||0;
-    const pageRect=page.getBoundingClientRect(),elRect=el.getBoundingClientRect();
+    const pageRect=page.getBoundingClientRect(),elRect=target.getBoundingClientRect();
     const baseTop=elRect.top-startOffset*scale,baseBottom=elRect.bottom-startOffset*scale;
     // The page is the only vertical boundary. No row, section or collision clamps.
     const topLogical=(baseTop-pageRect.top)/scale,bottomLogical=(baseBottom-pageRect.top)/scale;
@@ -2082,8 +2346,9 @@ let DOC_STYLE_VERSION=0;
       next=Math.round(next*10)/10;
       DOC_STYLE.textOffsets=DOC_STYLE.textOffsets||{};
       DOC_STYLE.textOffsets[id]=next;
-      el.style.translate='0 '+next+'px';
+      target.style.translate='0 '+next+'px';
       el.classList.add('pdf-text-moved');
+      if(target!==el)target.classList.add('pdf-text-moved');
       const cell=el.closest('td,th');
       if(cell)cell.classList.add('pdf-has-moved-text');
     };
@@ -4123,7 +4388,25 @@ let DOC_STYLE_VERSION=0;
   window.addEventListener('resize',()=>{if(S.open&&S.zoomMode==='fit'&&S.tab!=='text')setTimeout(fitZoom,120)});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')writeDocStyle(DOC_STYLE)});
   window.addEventListener('beforeunload',()=>writeDocStyle(DOC_STYLE));
-  window.MizanShare={open,close,shareOffers,
+  let shareSyncRaf=0;
+  function syncShareOffer(){
+    if(!S.open||offersMode())return false;
+    const sig=buildSignature();
+    if(sig===S.signature)return false;
+    if(shareSyncRaf){cancelAnimationFrame(shareSyncRaf);shareSyncRaf=0}
+    S.signature=sig;S.lastSignature='';S.selectedPages.clear();S.crops=[];S.pdfOffers.clear();
+    if(S.pv)closePreview(true);
+    resetBuilt();
+    S.text=buildShareText();
+    renderAll();
+    if(S.tab!=='text')ensureBuilt();
+    return true;
+  }
+  window.addEventListener('mizan:offer-change',()=>{
+    if(!S.open||offersMode()||shareSyncRaf)return;
+    shareSyncRaf=requestAnimationFrame(()=>{shareSyncRaf=0;syncShareOffer()});
+  });
+  window.MizanShare={open,close,shareOffers,sync:syncShareOffer,
     get built(){return S.built},
     build:()=>ensureBuilt(),
     pdfBlob:async()=>{flushEditablePages();return vectorPdfBlob()},

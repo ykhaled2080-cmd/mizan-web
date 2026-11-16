@@ -116,12 +116,10 @@ function maintenanceDueText(src,due){
  if(!src)return '';
  if(src.maintenanceDateMode==='none')return '';
  if(src.maintenanceDateMode==='split')return t('خلال أول سنتين','over first two years');
+ if(src.maintenanceDateMode==='date'&&due)return t('بتاريخ','on')+' '+dateNum(due);
  const handover=fullDate(src.handover,src.handoverDay);
- const shown=src.maintenanceDateMode==='date'&&due?due:handover;
- if(!shown)return '';
- return String(shown).slice(0,7)===String(handover).slice(0,7)
-  ? t('عند الاستلام بتاريخ','at handover on')+' '+dateNum(shown)
-  : t('بتاريخ','on')+' '+dateNum(shown);
+ if(!handover)return '';
+ return t('عند الاستلام بتاريخ','at handover on')+' '+dateNum(handover);
 }
 const B=(act,label,ic='',cls='')=>'<button type="button" class="btn '+cls+'" data-act="'+act+'">'+(ic?icon(ic):'')+label+'</button>';
 const textField=(key,label,value=p[key],type='text',wide=false)=>'<label class="field '+(wide?'wide':'')+'"><span>'+label+'</span><input data-key="'+key+'" type="'+type+'" '+(type==='text'?'':'dir="ltr"')+' value="'+esc(value)+'"></label>';
@@ -332,7 +330,7 @@ const schedulePaymentRows=s=>(s&&Array.isArray(s.rows)?s.rows:[]).filter(r=>SCHE
 function table(s,printed=false){
  const rows=printed?s.rows:schedulePaymentRows(s);
  const headCols=[[t('نوع الدفعة','Payment type'),'type'],[t('تاريخ الدفعة','Payment date'),'date'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']];
- const cols=printed?'':'<colgroup><col class="col-check" style="width:42px"><col class="col-type" style="width:23%"><col class="col-date" style="width:23%"><col class="col-value" style="width:22%"><col class="col-balance" style="width:27%"></colgroup>';
+ const cols=printed?'':'<colgroup><col class="col-check" style="width:34px"><col class="col-type" style="width:23%"><col class="col-date" style="width:23%"><col class="col-value" style="width:22%"><col class="col-balance" style="width:27%"></colgroup>';
  const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
  const allChecked=rows.length&&rows.every(r=>selected.has(r.id));
  const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(allChecked?'checked':'')+'></th>':'';
@@ -424,7 +422,7 @@ function calculator(){
  const metaText=meta=>{
   let text=String(meta||'').trim();
   if(!text)return '';
-  text=text.replace(/^عند الاستلام بتاريخ /,'عند\u00A0الاستلام بتاريخ\u00A0')
+  text=text.replace(/^عند الاستلام بتاريخ /,'عند\u00A0الاستلام\u00A0بتاريخ\u00A0')
    .replace(/^عند التعاقد/,'عند\u00A0التعاقد')
    .replace(/^عند التسليم/,'عند\u00A0التسليم')
    .replace(/^بتاريخ /,'بتاريخ\u00A0')
@@ -432,7 +430,7 @@ function calculator(){
    .replace(/^at handover on /,'at\u00A0handover on\u00A0')
    .replace(/^over first two years/,'over\u00A0first\u00A0two\u00A0years')
    .replace(/^on /,'on\u00A0');
-  const phrase=/^(عند|خلال|بدون)/.test(text)||/^(at|over|no)\b/i.test(text);
+  const phrase=/^(عند|خلال|بدون|بتاريخ)/.test(text)||/^(at|over|no|on)\b/i.test(text);
   if(phrase)return '<span class="extra-due">'+esc(text)+'</span>';
   return '<span class="extra-meta"><span class="extra-dash">–</span> <span class="extra-due">'+esc(text)+'</span></span>';
  };
@@ -703,7 +701,10 @@ function refreshTerms(){
 }
 function note(msg){const n=$('#notice');n.textContent=msg;n.style.display='block';clearTimeout(note.timer);note.timer=setTimeout(()=>n.style.display='none',2800)}
 function animate(){if(!matchMedia('(prefers-reduced-motion: reduce)').matches)A.animate([{opacity:.65,transform:'translateY(3px)'},{opacity:1,transform:'none'}],{duration:150})}
-function persist(){write('draft',p)}
+function persist(){
+ write('draft',p);
+ try{window.dispatchEvent(new CustomEvent('mizan:offer-change'))}catch{}
+}
 function num(v){return Number(String(v).trim().replace(/[٠-٩]/g,c=>c.charCodeAt(0)-1632).replace(/[۰-۹]/g,c=>c.charCodeAt(0)-1776).replace(/[,٬\s]/g,'').replace('٫','.'))}
 const invalid=()=>note(t('تحقق من القيمة المدخلة','Check the entered value'));
 function directedText(text,language){
@@ -784,7 +785,7 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
  const fixedValue=fixedPlan?(instValues.length===1?inst[0].value:baseValues[0]):lastValue;
  const minValue=instValues.length?instValues[0]:0,maxValue=instValues.length?instValues[instValues.length-1]:0;
  const summary=[];
- const dueJoin=(base,due)=>due?base+(/^بتاريخ/.test(due)||/^on\b/i.test(due)?' – ':' ')+due:base;
+ const dueJoin=(base,due)=>due?base+' '+due:base;
  const includes=Array.isArray(s.includes)?s.includes:[];
  if(s.cash){
   const totalLabel=src.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total');
