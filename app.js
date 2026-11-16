@@ -540,13 +540,21 @@ function render(){
 }
 function scheduleTableWrap(){return document.querySelector('.schedule-table-col .tablewrap')}
 function scheduleVScroll(){return document.getElementById('scheduleVScroll')}
+function updateCheckboxShift(){
+ const wrap=scheduleTableWrap(),viewport=wrap&&wrap.closest('.schedule-table-viewport');
+ if(!viewport)return;
+ const type=wrap.querySelector('.schedule-grid thead th.cell-type');
+ const typeW=type?type.getBoundingClientRect().width:0;
+ const shift=viewport.classList.contains('has-rail')&&typeW>0?Math.max(0,Math.min(30,(typeW-90)/2)):0;
+ viewport.style.setProperty('--check-shift',shift.toFixed(1)+'px');
+}
 function updateScheduleVScroll(){
  const wrap=scheduleTableWrap(),track=scheduleVScroll(),thumb=track&&track.querySelector('.schedule-vscroll-thumb');
  if(!wrap||!track||!thumb)return;
  const viewport=wrap.closest('.schedule-table-viewport')||wrap.parentElement;
  const setHidden=hidden=>{
   track.hidden=hidden;
-  if(viewport)viewport.classList.toggle('has-rail',!hidden);
+  if(viewport){viewport.classList.toggle('has-rail',!hidden);if(hidden)viewport.style.setProperty('--check-shift','0px')}
  };
  if(matchMedia('(max-width:760px)').matches){setHidden(true);return}
  const head=wrap.querySelector('.schedule-grid thead th');
@@ -561,6 +569,7 @@ function updateScheduleVScroll(){
  thumb.style.height=h+'px';
  const travel=Math.max(0,th-h);
  thumb.style.top=(wrap.scrollTop/max*travel)+'px';
+ updateCheckboxShift();
 }
 function updateScheduleScrollButtons(){
  const wrap=scheduleTableWrap();if(!wrap)return;
