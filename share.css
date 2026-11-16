@@ -1045,3 +1045,28 @@ body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-se
 .pdf-page .pdf-table tbody td.type-cell .type{font-size:13px!important}
 
 .pdf-page>.pdf-watermark.wm-first{width:53%;max-height:120px;opacity:.075}
+
+/* Total currency group: currency on the physical left, amount on the right. */
+.pdf-page .pdf-total-money{display:inline-block;direction:ltr;unicode-bidi:isolate;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pdf-page .pdf-total-currency{display:inline;font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color);direction:ltr;unicode-bidi:isolate}
+.pdf-page .pdf-table tfoot .pdf-total-currency{font-family:var(--doc-secondary-font);font-size:var(--doc-secondary-size);font-weight:var(--doc-secondary-weight);color:var(--doc-secondary-color)}
+
+/* Clearing a value must leave its field box in place. */
+.pdf-page .pdf-identity b:empty,
+.pdf-page .pdf-identity span:empty,
+.pdf-page .pdf-price-block .lbl:empty,
+.pdf-page .pdf-price-block .amt:empty,
+.pdf-page .pdf-pay-item .lbl:empty,
+.pdf-page .pdf-pay-item .val:empty,
+.pdf-page .pdf-charge .lbl:empty,
+.pdf-page .pdf-charge .val:empty,
+.pdf-page .pdf-legal-line:empty{min-height:1.35em}
+.pdf-page .pdf-identity b:empty::after,
+.pdf-page .pdf-identity span:empty::after,
+.pdf-page .pdf-price-block .lbl:empty::after,
+.pdf-page .pdf-price-block .amt:empty::after,
+.pdf-page .pdf-pay-item .lbl:empty::after,
+.pdf-page .pdf-pay-item .val:empty::after,
+.pdf-page .pdf-charge .lbl:empty::after,
+.pdf-page .pdf-charge .val:empty::after,
+.pdf-page .pdf-legal-line:empty::after{content:"\200B"}

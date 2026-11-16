@@ -116,70 +116,41 @@ function normalizeDividerConfig(cfg,key){
  if(!Number.isFinite(+cfg.opacity))cfg.opacity=1;
  return cfg;
 }
-function docDefaultStyle(){return {activePreset:'classic',roles:docRoles(DOC_FONT_CLASSIC),dividers:docDividers(),extraDividers:[],textOffsets:{}};}
-function presetRoles(font,values){
- const roles=docRoles(font);
- for(const [key,value] of Object.entries(values))Object.assign(roles[key],value);
- return roles;
+const MAIN_PRESET_ID='main';
+const MAIN_PRESET_NAME='Main';
+const LEGACY_BUILTIN_IDS=new Set(['classic','balanced','minimal','contrast','soft']);
+const DOC_STYLE_MIGRATION_KEY='mizan.docStyleMigration';
+const DOC_STYLE_ARCHIVE_KEY='mizan.docStyleArchive';
+const DOC_PRESETS_ARCHIVE_KEY='mizan.docPresetsArchive';
+/* Bump only when the canonical Main design or its migration rules change. */
+const DOC_STYLE_MIGRATION_VERSION=2;
+
+function mainDocStyleSource(){
+ const raw=typeof window!=='undefined'?window.MIZAN_MAIN_DOC_STYLE:null;
+ return raw&&typeof raw==='object'?raw:null;
 }
-let DOC_BUILTIN_CACHE=null;
-function docBuiltinPresets(){
- if(DOC_BUILTIN_CACHE)return DOC_BUILTIN_CACHE.map(p=>({id:p.id,name:p.name,builtin:true,style:mergeDocStyle(p.style)}));
- const classic=docDefaultStyle();
- const balanced={activePreset:'balanced',roles:presetRoles(DOC_FONT_MAIN,{
-  title:{size:24,weight:600,color:'#164a3d'},main:{size:16,weight:600,color:'#164a3d'},
-  sub:{size:13,weight:500,color:'#285a4b'},label:{size:11.5,weight:500,color:'#45564f'},
-  value:{size:12.5,weight:500,color:'#263d34'},secondary:{size:10.5,weight:400,color:'#6f8078'},
-  total:{size:16,weight:600,color:'#145b47'}
- }),dividers:docDividers(),extraDividers:[]};
- const minimal={activePreset:'minimal',roles:presetRoles(DOC_FONT_MAIN,{
-  title:{size:23,weight:600,color:'#263832'},main:{size:15,weight:500,color:'#263832'},
-  sub:{size:12.5,weight:500,color:'#3a4c45'},label:{size:11,weight:400,color:'#53615a'},
-  value:{size:12,weight:400,color:'#263832'},secondary:{size:10,weight:400,color:'#7a8580'},
-  total:{size:15,weight:600,color:'#1d5746'}
- }),dividers:docDividers(),extraDividers:[]};
- const contrast={activePreset:'contrast',roles:presetRoles(DOC_FONT_MAIN,{
-  title:{size:24,weight:600,color:'#123f33'},main:{size:16,weight:600,color:'#123f33'},
-  sub:{size:13,weight:600,color:'#244f41'},label:{size:11.5,weight:500,color:'#394941'},
-  value:{size:12.5,weight:500,color:'#172e26'},secondary:{size:10.5,weight:400,color:'#66766c'},
-  total:{size:16,weight:600,color:'#0f5943'}
- }),dividers:docDividers(),extraDividers:[]};
- const soft={activePreset:'soft',roles:presetRoles(DOC_FONT_MAIN,{
-  title:{size:24,weight:600,color:'#285a49'},main:{size:16,weight:600,color:'#285a49'},
-  sub:{size:13,weight:500,color:'#52705f'},label:{size:11.5,weight:400,color:'#596b61'},
-  value:{size:12.5,weight:500,color:'#34463c'},secondary:{size:10.5,weight:400,color:'#7c8b80'},
-  total:{size:16,weight:600,color:'#28664f'}
- }),dividers:docDividers(),extraDividers:[]};
- DOC_BUILTIN_CACHE=[
-  {id:'classic',name:'MIZAN Classic',builtin:true,style:classic},
-  {id:'balanced',name:'Mizan Balanced',builtin:true,style:balanced},
-  {id:'minimal',name:'Editorial Minimal',builtin:true,style:minimal},
-  {id:'contrast',name:'Professional Contrast',builtin:true,style:contrast},
-  {id:'soft',name:'Soft Green',builtin:true,style:soft}
- ];
- return DOC_BUILTIN_CACHE.map(p=>({id:p.id,name:p.name,builtin:true,style:mergeDocStyle(p.style)}));
-}
-function mergeDocStyle(saved){
- const base=docDefaultStyle();
- if(!saved||typeof saved!=='object')return base;
- const style={activePreset:typeof saved.activePreset==='string'?saved.activePreset:base.activePreset,roles:docRoles(DOC_FONT_CLASSIC),dividers:docDividers(),extraDividers:[],textOffsets:{}};
+function applyDocStyleSource(base,saved,opts){
+ const includeOffsets=!!(opts&&opts.includeOffsets);
+ const style={activePreset:typeof saved.activePreset==='string'?saved.activePreset:base.activePreset,roles:{},dividers:{},extraDividers:[],textOffsets:includeOffsets?{...base.textOffsets}:{}};
  for(const key of Object.keys(DOC_ROLE_DEFS)){
+  style.roles[key]={...base.roles[key]};
   const src=saved.roles&&saved.roles[key];
   if(src&&typeof src==='object'){
-   style.roles[key].font=typeof src.font==='string'&&src.font?src.font:style.roles[key].font;
-   style.roles[key].size=Number.isFinite(+src.size)?Math.max(7,Math.min(48,+src.size)):style.roles[key].size;
-   style.roles[key].weight=[400,500,600,700].includes(+src.weight)?+src.weight:style.roles[key].weight;
-   style.roles[key].color=/^#[0-9a-f]{6}$/i.test(src.color||'')?src.color:style.roles[key].color;
+   if(typeof src.font==='string'&&src.font)style.roles[key].font=src.font;
+   if(Number.isFinite(+src.size))style.roles[key].size=Math.max(7,Math.min(48,+src.size));
+   if([400,500,600,700].includes(+src.weight))style.roles[key].weight=+src.weight;
+   if(/^#[0-9a-f]{6}$/i.test(src.color||''))style.roles[key].color=src.color;
   }
  }
  for(const key of Object.keys(DOC_DIVIDER_DEFS)){
+  style.dividers[key]={...base.dividers[key]};
   const src=saved.dividers&&saved.dividers[key];
   if(src&&typeof src==='object'){
    style.dividers[key].visible=!!src.visible;
-   style.dividers[key].offset=Number.isFinite(+src.offset)?+src.offset:style.dividers[key].offset;
-   style.dividers[key].thickness=Number.isFinite(+src.thickness)?Math.max(.5,Math.min(4,+src.thickness)):style.dividers[key].thickness;
-   style.dividers[key].color=/^#[0-9a-f]{6}$/i.test(src.color||'')?src.color:style.dividers[key].color;
-   style.dividers[key].length=Number.isFinite(+src.length)?Math.max(0,Math.min(100,+src.length)):style.dividers[key].length;
+   if(Number.isFinite(+src.offset))style.dividers[key].offset=+src.offset;
+   if(Number.isFinite(+src.thickness))style.dividers[key].thickness=Math.max(.5,Math.min(4,+src.thickness));
+   if(/^#[0-9a-f]{6}$/i.test(src.color||''))style.dividers[key].color=src.color;
+   if(Number.isFinite(+src.length))style.dividers[key].length=Math.max(0,Math.min(100,+src.length));
    style.dividers[key].opacity=Number.isFinite(+src.opacity)?Math.max(0,Math.min(1,+src.opacity)):1;
    normalizeDividerConfig(style.dividers[key],key);
   }
@@ -204,7 +175,73 @@ function mergeDocStyle(saved){
  }
  return style;
 }
-function readDocStyle(){try{return mergeDocStyle(JSON.parse(localStorage.getItem(DOC_STYLE_KEY)||'null'))}catch{return docDefaultStyle()}}
+function docDefaultStyle(){
+ const base={activePreset:MAIN_PRESET_ID,roles:docRoles(DOC_FONT_CLASSIC),dividers:docDividers(),extraDividers:[],textOffsets:{}};
+ const raw=mainDocStyleSource();
+ const style=raw?applyDocStyleSource(base,raw,{includeOffsets:true}):base;
+ style.activePreset=MAIN_PRESET_ID;
+ return style;
+}
+function mergeDocStyle(saved){
+ const base=docDefaultStyle();
+ if(!saved||typeof saved!=='object')return base;
+ return applyDocStyleSource(base,saved,{includeOffsets:false});
+}
+let DOC_BUILTIN_CACHE=null;
+function docBuiltinPresets(){
+ if(DOC_BUILTIN_CACHE)return DOC_BUILTIN_CACHE.map(p=>({id:p.id,name:p.name,builtin:true,style:mergeDocStyle(p.style)}));
+ DOC_BUILTIN_CACHE=[{id:MAIN_PRESET_ID,name:MAIN_PRESET_NAME,builtin:true,style:docDefaultStyle()}];
+ return DOC_BUILTIN_CACHE.map(p=>({id:p.id,name:p.name,builtin:true,style:mergeDocStyle(p.style)}));
+}
+function docStyleMigrationVersion(){
+ try{return +localStorage.getItem(DOC_STYLE_MIGRATION_KEY)||0}catch{return 0}
+}
+function archiveDocStyle(raw,version,withPresets){
+ try{
+  const list=JSON.parse(localStorage.getItem(DOC_STYLE_ARCHIVE_KEY)||'[]');
+  list.push({at:new Date().toISOString(),migrationVersion:version,activePreset:raw&&typeof raw.activePreset==='string'?raw.activePreset:'',style:raw||null});
+  while(list.length>5)list.shift();
+  localStorage.setItem(DOC_STYLE_ARCHIVE_KEY,JSON.stringify(list));
+ }catch{}
+ if(withPresets){
+  try{
+   const presets=JSON.parse(localStorage.getItem(DOC_PRESETS_KEY)||'[]');
+   const list=JSON.parse(localStorage.getItem(DOC_PRESETS_ARCHIVE_KEY)||'[]');
+   list.push({at:new Date().toISOString(),migrationVersion:version,presets:Array.isArray(presets)?presets:[]});
+   while(list.length>3)list.shift();
+   localStorage.setItem(DOC_PRESETS_ARCHIVE_KEY,JSON.stringify(list));
+  }catch{}
+ }
+}
+function writeRawDocStyle(style){
+ try{localStorage.setItem(DOC_STYLE_KEY,JSON.stringify(style));return true}catch{return false}
+}
+function readDocStyle(){
+ let raw=null;
+ try{raw=JSON.parse(localStorage.getItem(DOC_STYLE_KEY)||'null')}catch{raw=null}
+ const version=docStyleMigrationVersion();
+ if(version<DOC_STYLE_MIGRATION_VERSION){
+  if(raw)archiveDocStyle(raw,version,true);
+  const main=docDefaultStyle();main.activePreset=MAIN_PRESET_ID;
+  const saved=writeRawDocStyle(main);
+  if(saved){try{localStorage.setItem(DOC_STYLE_MIGRATION_KEY,String(DOC_STYLE_MIGRATION_VERSION))}catch{}}
+  return main;
+ }
+ if(!raw){
+  const main=docDefaultStyle();main.activePreset=MAIN_PRESET_ID;
+  writeRawDocStyle(main);
+  return main;
+ }
+ /* A stale write from an old cache revision must not resurrect a retired
+    shipped preset after migration. */
+ if(raw.activePreset&&LEGACY_BUILTIN_IDS.has(raw.activePreset)){
+  archiveDocStyle(raw,version);
+  const main=docDefaultStyle();main.activePreset=MAIN_PRESET_ID;
+  writeRawDocStyle(main);
+  return main;
+ }
+ return mergeDocStyle(raw);
+}
 function writeDocStyle(style,opts){try{localStorage.setItem(DOC_STYLE_KEY,JSON.stringify(mergeDocStyle(style)));if(!opts||opts.bump!==false)DOC_STYLE_VERSION++;return true}catch{return false}}
 function sanitizeCustomDocPresets(list){
  const seen=new Set();
@@ -1221,6 +1258,7 @@ let DOC_STYLE_VERSION=0;
     };
     const freqMap={1:lang==='ar'?'شهري':'Monthly',3:lang==='ar'?'ربع سنوي':'Quarterly',6:lang==='ar'?'نصف سنوي':'Semiannual',12:lang==='ar'?'سنوي':'Annual'};
     const data={s,p:snapshot,f,names,curr:lang==='ar'?'ج.م':'EGP',freq:()=>({label:freqMap[snapshot.period]||''})};
+    const totalMoney=cents=>'<span class="pdf-total-money" dir="ltr"><span class="pdf-total-currency">'+data.curr+'</span> <bdi>'+f.intl.format(cents/100)+'</bdi></span>';
     if(document.fonts){
       await Promise.all([400,600,700].map(weight=>document.fonts.load(weight+' 14px "IBM Plex Sans Arabic"','ميزان Mizan')));
     }
@@ -1286,7 +1324,7 @@ let DOC_STYLE_VERSION=0;
           if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot)}
           const tr=document.createElement('tr');
           tr.className='pdf-total-row';
-          tr.innerHTML='<td class="type-cell total-label">'+totalLabel+'</td><td class="date"></td><td class="num total-amount"><bdi dir="ltr">'+f.intl.format(pdfSum/100)+'</bdi> '+data.curr+'</td><td></td>';
+          tr.innerHTML='<td class="type-cell total-label">'+totalLabel+'</td><td class="date"></td><td class="num total-amount">'+totalMoney(pdfSum)+'</td><td></td>';
           tfoot.appendChild(tr);
           if(footerMismatch&&mismatchText){
            const note=document.createElement('tr');
@@ -1297,7 +1335,7 @@ let DOC_STYLE_VERSION=0;
         }else{
           const total=document.createElement('div');
           total.className='pdf-schedule-total';
-          total.innerHTML='<span>'+totalLabel+'</span><b><bdi dir="ltr">'+f.intl.format(pdfSum/100)+'</bdi> '+data.curr+'</b>';
+          total.innerHTML='<span>'+totalLabel+'</span><b>'+totalMoney(pdfSum)+'</b>';
           schedule.appendChild(total);
           if(footerMismatch&&mismatchText){
            const note=document.createElement('div');
@@ -1737,6 +1775,19 @@ let DOC_STYLE_VERSION=0;
       accents.slice(1).forEach(el=>el.remove());
     });
   }
+  function upgradeStoredTotalCurrency(page){
+    const upgrade=el=>{
+      if(!el||el.querySelector('.pdf-total-money'))return;
+      const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
+      const m=text.match(/-?\d[\d.,]*/);
+      if(!m)return;
+      const number=m[0];
+      const currency=text.replace(number,'').replace(/[–—-]/g,'').trim()||'ج.م';
+      el.innerHTML='<span class="pdf-total-money" dir="ltr"><span class="pdf-total-currency">'+esc(currency)+'</span> <bdi>'+esc(number)+'</bdi></span>';
+    };
+    page.querySelectorAll('.pdf-table tfoot .num.total-amount,.pdf-table tfoot .total-amount').forEach(upgrade);
+    page.querySelectorAll('.pdf-schedule-total b').forEach(upgrade);
+  }
   function stripInactiveItemDates(page){
     page.querySelectorAll('.pdf-group.pdf-included-title .pdf-charge .lbl,.pdf-group.pdf-excluded-title .pdf-charge .lbl,.pdf-group.pdf-cash-included-title .pdf-charge .lbl,.pdf-group.pdf-cash-excluded-title .pdf-charge .lbl').forEach(label=>{
       label.querySelectorAll('.pdf-due').forEach(due=>{
@@ -1755,6 +1806,7 @@ let DOC_STYLE_VERSION=0;
       upgradePdfTableOrder(page);
       ensureSectionAccent(page);
       stripInactiveItemDates(page);
+      upgradeStoredTotalCurrency(page);
       const price=page.querySelector('.pdf-price-block');
       if(price)price.dataset.dividerHost='price';
       const payHosts=[['.pdf-pay-down','down'],['.pdf-pay-plan','plan'],['.pdf-pay-delivery','delivery'],['.pdf-pay-installment','installment']];
@@ -2091,7 +2143,7 @@ let DOC_STYLE_VERSION=0;
     rebuildStylePreview();
   }
   function restoreDocDefaults(){
-    DOC_STYLE=docDefaultStyle();DOC_STYLE.activePreset='classic';S.docPresetSel='classic';S.docPresetEditId='';
+    DOC_STYLE=docDefaultStyle();DOC_STYLE.activePreset=MAIN_PRESET_ID;S.docPresetSel=MAIN_PRESET_ID;S.docPresetEditId='';
     S.dividerSelected='';
     S.textSelected='';document.querySelectorAll('.pdf-text-selected').forEach(x=>x.classList.remove('pdf-text-selected'));
     commitDocStyle();applyDividerStyles(document);refreshPresetPicker();A.note(tt('تمت استعادة التنسيق الأصلي','Original styling restored'));
@@ -2099,12 +2151,12 @@ let DOC_STYLE_VERSION=0;
   }
   function resetDocRole(){
     const key=S.docRoleSel||'main';
-    DOC_STYLE.roles[key]=docRoles(DOC_FONT_MAIN)[key];
+    DOC_STYLE.roles[key]={...docDefaultStyle().roles[key]};
     commitDocStyle();renderDocStylePanel();
   }
   function resetDocDivider(){
     const key=S.docDividerSel||'price';
-    DOC_STYLE.dividers[key]={...docDividers()[key]};
+    DOC_STYLE.dividers[key]={...docDefaultStyle().dividers[key]};
     markDocStyleCustom();
     commitDocStyle();applyDividerStyles(document);renderDocStylePanel();
   }
@@ -2525,6 +2577,38 @@ let DOC_STYLE_VERSION=0;
       return;
     }
   });
+  document.addEventListener('beforeinput',e=>{
+    const host=e.target.closest&&e.target.closest('.pdf-page-host[contenteditable]');
+    if(!host||!/^delete/.test(e.inputType||''))return;
+    const sel=window.getSelection();
+    if(!sel||!sel.rangeCount)return;
+    const range=sel.getRangeAt(0);
+    if(range.collapsed)return;
+    const fields=[...host.querySelectorAll('[data-text-id]')].filter(el=>{
+      try{return range.intersectsNode(el)}catch{return false}
+    });
+    const startEl=range.startContainer.nodeType===1?range.startContainer:range.startContainer.parentElement;
+    const startField=startEl&&startEl.closest?startEl.closest('[data-text-id]'):null;
+    const field=startField&&host.contains(startField)?startField:fields[0];
+    let structural=fields.length>1;
+    if(!structural&&field){
+      const children=[...field.children].filter(el=>{
+        try{return range.intersectsNode(el)}catch{return false}
+      });
+      structural=children.length>1;
+    }
+    if(!structural)return;
+    const value=field&&(field.querySelector('.val,.amt,:scope>b,:scope>.lbl'));
+    e.preventDefault();
+    if(!value)return;
+    /* A selection crossing field boxes must never merge or remove the boxes
+       themselves. Clear the value content and let native undo handle it. */
+    const safe=document.createRange();
+    safe.selectNodeContents(value);
+    sel.removeAllRanges();
+    sel.addRange(safe);
+    try{document.execCommand('delete')}catch{}
+  },true);
   document.addEventListener('input',e=>{
     const host=e.target.closest&&e.target.closest('.pdf-page-host[contenteditable]');
     if(!host)return;

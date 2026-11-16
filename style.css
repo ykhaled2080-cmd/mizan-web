@@ -555,7 +555,7 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 /* 1.0.39: slim external scroll rail on the physical right of the table. The
    rail occupies a small reserved gutter so appearing/disappearing never
    reflows the table or the sticky header. */
-.schedule-table-viewport{position:relative;min-width:0;display:grid;grid-template-columns:7px minmax(0,1fr);grid-template-areas:"rail table";align-items:stretch}
+.schedule-table-viewport{position:relative;min-width:0;display:grid;grid-template-columns:7px minmax(0,1fr);grid-template-areas:"rail table";column-gap:3px;align-items:stretch}
 .schedule-table-viewport::before{display:none;content:none}
 @media(min-width:761px){
 .schedule-table-viewport>.tablewrap{grid-area:table;width:100%;max-height:556px;padding:0;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
@@ -573,7 +573,7 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 [data-dark] .schedule-vscroll-thumb{background:rgba(158,212,188,.38)}
 [data-dark] .schedule-vscroll:hover .schedule-vscroll-thumb,[data-dark] .schedule-vscroll.dragging .schedule-vscroll-thumb{background:rgba(158,212,188,.58)}
 @media(max-width:760px){
-.schedule-table-viewport{grid-template-columns:minmax(0,1fr);grid-template-areas:"table"}
+.schedule-table-viewport{grid-template-columns:minmax(0,1fr);grid-template-areas:"table";column-gap:0}
 .schedule-table-viewport::before{display:none}
 .schedule-vscroll{display:none}
 }
@@ -614,7 +614,7 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
    (right), excluded (center), extras (left); no category is split into
    internal columns or masonry tracks. */
 .summary-classification{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px;padding:12px 16px 13px;background:transparent;align-items:start}
-.summary-classification.summary-three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.summary-classification.summary-three{grid-template-columns:minmax(0,.78fr) minmax(0,.72fr) minmax(0,1.5fr)}
 .summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .summary-classification.summary-one{grid-template-columns:1fr}
 .summary-classification .rail-group{min-width:0}
@@ -634,7 +634,7 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 .schedule-selection .sel-item{display:inline-flex;align-items:baseline;gap:5px}
 .schedule-selection .sel-label{color:var(--side-ink);font-weight:600}
 .schedule-selection b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:34px;padding-inline:5px 2px}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:30px;padding-inline:2px}
 .increase-inline{margin-top:9px;padding:0;border:0;background:transparent}
 .increase-inline>summary{display:inline-flex;align-items:center;gap:5px;width:auto;padding:2px 0;border:0;background:none;color:var(--green);font-size:12px;font-weight:600;cursor:pointer;list-style:none}
 .increase-inline>summary::-webkit-details-marker{display:none}
@@ -645,9 +645,9 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 .titleline h1{font-size:clamp(24px,2.2vw,32px)}
 .titleline .plan-title{margin-inline-start:12px;position:relative;top:3px}
 .titleline .actions .btn[data-act="save"],
-.titleline .actions .btn[data-act="wa-share"]{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--action-h)!important;height:var(--action-h)!important;max-height:var(--action-h);padding:0 14px;border-radius:var(--action-radius);box-shadow:none!important;font-weight:600;line-height:1}
+.titleline .actions .btn[data-act="wa-share"]{display:inline-flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;align-self:center;min-height:var(--action-h)!important;height:var(--action-h)!important;max-height:var(--action-h);padding:0 14px;border-width:1px;border-radius:var(--action-radius);box-shadow:none!important;font-weight:600;line-height:1;vertical-align:middle;white-space:nowrap;appearance:none;-webkit-appearance:none}
 .titleline .actions .btn[data-act="save"] svg,
-.titleline .actions .btn[data-act="wa-share"] svg{width:var(--action-icon);height:var(--action-icon);flex:none}
+.titleline .actions .btn[data-act="wa-share"] svg{display:block;width:var(--action-icon);height:var(--action-icon);flex:none}
 .titleline .actions .btn[data-act="save"]{border:1px solid var(--banner)!important;background:var(--banner);color:#f6faf3}
 .titleline .actions .btn[data-act="save"]:hover{filter:brightness(.94)}
 .titleline .actions .btn[data-act="wa-share"]{border:1px solid var(--rule)!important;background:var(--surface);color:var(--text)}
@@ -662,7 +662,7 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 .schedule-grid th.cell-value,.schedule-grid td.cell-value{text-align:center!important;direction:ltr!important;padding-left:20px;padding-right:4px}
 .terms-head h2{margin-inline-start:12px}
 }
-@media(max-width:1100px){
+@media(max-width:1300px){
 .summary-classification.summary-three{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 28px}
 .summary-classification.summary-three>.rail-group:nth-child(3){grid-column:1/-1}
 }
@@ -682,13 +682,13 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 /* 1.0.32: balanced RTL payment columns: checkbox | type | date | value | balance. */
 @media(min-width:761px){
 .schedule-grid{min-width:0}
-.schedule-grid col.col-check{width:34px}
+.schedule-grid col.col-check{width:30px}
 .schedule-grid col.col-type{width:23%}
 .schedule-grid col.col-date{width:23%}
 .schedule-grid col.col-value{width:22%}
 .schedule-grid col.col-balance{width:27%}
 .schedule-grid th,.schedule-grid td{padding:7px 10px}
-.schedule-grid th.cell-check,.schedule-grid td.cell-check{padding-inline:5px 2px;text-align:center!important}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{padding-inline:2px;text-align:start!important}
 .schedule-grid th.cell-type,.schedule-grid td.cell-type,
 .schedule-grid th.cell-date,.schedule-grid td.cell-date,
 .schedule-grid th.cell-value,.schedule-grid td.cell-value,

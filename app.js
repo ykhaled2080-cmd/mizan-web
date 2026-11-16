@@ -330,7 +330,7 @@ const schedulePaymentRows=s=>(s&&Array.isArray(s.rows)?s.rows:[]).filter(r=>SCHE
 function table(s,printed=false){
  const rows=printed?s.rows:schedulePaymentRows(s);
  const headCols=[[t('نوع الدفعة','Payment type'),'type'],[t('تاريخ الدفعة','Payment date'),'date'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']];
- const cols=printed?'':'<colgroup><col class="col-check" style="width:34px"><col class="col-type" style="width:23%"><col class="col-date" style="width:23%"><col class="col-value" style="width:22%"><col class="col-balance" style="width:27%"></colgroup>';
+ const cols=printed?'':'<colgroup><col class="col-check" style="width:30px"><col class="col-type" style="width:23%"><col class="col-date" style="width:23%"><col class="col-value" style="width:22%"><col class="col-balance" style="width:27%"></colgroup>';
  const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
  const allChecked=rows.length&&rows.every(r=>selected.has(r.id));
  const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(allChecked?'checked':'')+'></th>':'';
