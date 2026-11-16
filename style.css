@@ -564,7 +564,8 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-vscroll::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:4px;transform:translateX(-50%);border-radius:999px;background:transparent;pointer-events:none}
 .schedule-vscroll:hover::before,.schedule-vscroll.dragging::before{background:rgba(20,97,79,.04)}
-.schedule-vscroll::after{content:'';position:absolute;top:0;bottom:0;left:-7px;right:0;background:transparent;pointer-events:auto;z-index:0}
+.schedule-vscroll::after{content:'';position:absolute;top:0;bottom:0;left:0;right:-7px;background:transparent;pointer-events:auto;z-index:0}
+html[dir="ltr"] .schedule-vscroll::after{left:-7px;right:0}
 .schedule-vscroll[hidden]{display:none}
 .schedule-vscroll-thumb{position:absolute;left:50%;top:0;width:4px;min-height:28px;border-radius:999px;background:rgba(74,106,92,.40);transform:translateX(-50%);transition:width .16s ease,background .16s ease,box-shadow .16s ease;will-change:top,height;z-index:1}
 .schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{width:7px;background:rgba(74,106,92,.60)}
@@ -694,17 +695,17 @@ html[dir="ltr"] .schedule-vscroll{right:auto;left:0}
 .schedule-grid col.col-date{width:24%}
 .schedule-grid col.col-value{width:23%}
 .schedule-grid col.col-balance{width:auto}
-.schedule-grid col.col-check{width:30px}
+.schedule-grid col.col-check{width:28px}
 .schedule-grid th,.schedule-grid td{padding:7px 10px}
 .schedule-grid th.cell-type,.schedule-grid td.cell-type{text-align:center!important;padding-inline:10px}
 .schedule-grid td.cell-type{white-space:normal;overflow-wrap:anywhere}
 .schedule-grid th.cell-date,.schedule-grid td.cell-date,
 .schedule-grid th.cell-value,.schedule-grid td.cell-value,
 .schedule-grid th.cell-balance,.schedule-grid td.cell-balance{text-align:center!important;padding-inline:10px}
-.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:30px;padding-inline:2px 6px;text-align:center!important;vertical-align:middle!important;line-height:1}
+.schedule-grid th.cell-check,.schedule-grid td.cell-check{width:28px;padding-inline:2px;text-align:center!important;vertical-align:middle!important;line-height:1}
 .schedule-grid td.cell-date{white-space:nowrap;direction:ltr!important}
 .schedule-grid td.cell-value,.schedule-grid td.cell-balance{white-space:nowrap;direction:ltr!important}
-.schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:16px;height:16px;min-width:16px;min-height:16px;margin:0}
+.schedule-grid th.cell-check input,.schedule-grid td.cell-check input{width:14px;height:14px;min-width:14px;min-height:14px;margin:0}
 .schedule-grid td.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
 .schedule-grid thead th.cell-check input[type=checkbox]{opacity:0;pointer-events:none;transition:opacity .12s ease}
 .schedule-grid tbody tr:hover td.cell-check input[type=checkbox],

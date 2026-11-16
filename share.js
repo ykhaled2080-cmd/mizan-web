@@ -163,11 +163,10 @@ const DOC_STYLE_MIGRATION_KEY='mizan.docStyleMigration';
 const DOC_STYLE_ARCHIVE_KEY='mizan.docStyleArchive';
 const DOC_PRESETS_ARCHIVE_KEY='mizan.docPresetsArchive';
 const DOC_COMPARE_KEY='mizan.docPresetCompare';
-const LEGACY_PRESET_ID='v9-legacy';
 function docCompareMode(){try{return localStorage.getItem(DOC_COMPARE_KEY)!=='0'}catch{return true}}
 function setDocCompareMode(on){try{localStorage.setItem(DOC_COMPARE_KEY,on?'1':'0')}catch{}}
 /* Bump only when the canonical Main design or its migration rules change. */
-const DOC_STYLE_MIGRATION_VERSION=3;
+const DOC_STYLE_MIGRATION_VERSION=4;
 
 function mainDocStyleSource(){
  const raw=typeof window!=='undefined'?window.MIZAN_MAIN_DOC_STYLE:null;
@@ -231,17 +230,8 @@ function mergeDocStyle(saved){
  if(!saved||typeof saved!=='object')return base;
  return applyDocStyleSource(base,saved,{includeOffsets:false});
 }
-function docLegacyStyle(){
- const style=docDefaultStyle();
- style.activePreset=LEGACY_PRESET_ID;
- if(style.dividers&&style.dividers.brand)style.dividers.brand.offset=0;
- return style;
-}
 function docBuiltinPresets(){
- return [
-  {id:MAIN_PRESET_ID,name:MAIN_PRESET_NAME,builtin:true,style:docDefaultStyle()},
-  {id:LEGACY_PRESET_ID,name:tt('V9 (السابق)','V9 (Previous)'),builtin:true,compareOnly:true,style:docLegacyStyle()}
- ].map(p=>({...p,style:mergeDocStyle(p.style)}));
+ return [{id:MAIN_PRESET_ID,name:MAIN_PRESET_NAME,builtin:true,style:mergeDocStyle(docDefaultStyle())}];
 }
 function docStyleMigrationVersion(){
  try{return +localStorage.getItem(DOC_STYLE_MIGRATION_KEY)||0}catch{return 0}
@@ -272,6 +262,10 @@ function readDocStyle(){
  const version=docStyleMigrationVersion();
  if(version<DOC_STYLE_MIGRATION_VERSION){
   if(raw)archiveDocStyle(raw,version,true);
+  /* v4: MIZAN is the only shipped template. Retire every saved shipped or
+     personal preset from the active selector after archiving it above. */
+  try{localStorage.setItem(DOC_PRESETS_KEY,'[]')}catch{}
+  try{localStorage.setItem(DOC_COMPARE_KEY,'1')}catch{}
   const main=docDefaultStyle();main.activePreset=MAIN_PRESET_ID;
   const saved=writeRawDocStyle(main);
   if(saved){try{localStorage.setItem(DOC_STYLE_MIGRATION_KEY,String(DOC_STYLE_MIGRATION_VERSION))}catch{}}
@@ -2200,8 +2194,8 @@ let DOC_STYLE_VERSION=0;
     const pv=preview.roles||DOC_STYLE.roles;
     const sample='<div class="ds-sample"><b style="'+roleStyleAttr(pv.title)+'">'+tt('عرض سداد تقديري','Estimated payment offer')+'</b><span style="'+roleStyleAttr(pv.main)+'">'+tt('الملخص المالي','Financial summary')+'</span><div class="ds-sample-line"><span style="'+roleStyleAttr(pv.label)+'">'+tt('سعر الوحدة','Unit price')+'</span><b style="'+roleStyleAttr(pv.value)+'"><span dir="ltr">'+tt('ج.م','EGP')+' 5,000,000</span></b></div><b class="ds-sample-total" style="'+roleStyleAttr(pv.total)+'">'+tt('إجمالي العرض','Offer total')+' · <span dir="ltr">'+tt('ج.م','EGP')+' 5,000,000</span></b></div>';
     const compareBar=docCompareMode()
-      ?'<div class="ds-compare-bar"><span>'+tt('وضع المقارنة مفعّل: جرّب القوالب ثم ثبّت النمط النهائي.','Comparison mode: try presets, then confirm the final style.')+'</span><span class="ds-compare-actions"><button type="button" class="ds-btn" data-ds-act="apply-legacy">'+tt('V9 السابق','Previous V9')+'</button><button type="button" class="ds-btn primary" data-ds-act="confirm-preset">'+tt('تثبيت القالب','Confirm template')+'</button></span></div>'
-      :'<div class="ds-compare-bar"><span>'+tt('تبديل القوالب مخفي من شريط المشاركة اليومي.','Preset switching is hidden from the daily Share bar.')+'</span><button type="button" class="ds-btn" data-ds-act="show-presets">'+tt('إظهار القوالب','Show presets')+'</button></div>';
+      ?'<div class="ds-compare-bar"><span>'+tt('القالب الأساسي: MIZAN. ثبّت القالب لإخفاء مبدّل القوالب.','Base template: MIZAN. Confirm to hide the preset switcher.')+'</span><span class="ds-compare-actions"><button type="button" class="ds-btn primary" data-ds-act="confirm-preset">'+tt('تثبيت القالب','Confirm template')+'</button></span></div>'
+      :'<div class="ds-compare-bar"><span>'+tt('تبديل القوالب مخفي من شريط المشاركة اليومي.','Preset switching is hidden from the daily Share bar.')+'</span><button type="button" class="ds-btn" data-ds-act="show-presets">'+tt('إظهار القالب','Show template')+'</button></div>';
     return '<div class="ds-head"><b>'+tt('تنسيق المستند','Document style')+'</b><button type="button" class="pdf-fb-close" data-ds-act="close" aria-label="'+tt('إغلاق','Close')+'">×</button></div>'+compareBar+
       '<div class="ds-grid"><div class="ds-col">'+
         '<div class="ds-block"><div class="ds-block-title">'+tt('القالب','Preset')+'</div>'+
@@ -2443,7 +2437,6 @@ let DOC_STYLE_VERSION=0;
     const a=act.dataset.dsAct;
     if(a==='close'){hideDocStylePanel();return}
     if(a==='apply-preset'){applyDocPreset(S.docPresetSel);return}
-    if(a==='apply-legacy'){applyDocPreset(LEGACY_PRESET_ID);renderDocStylePanel();return}
     if(a==='confirm-preset'){confirmDocPreset();return}
     if(a==='show-presets'){showDocPresets();return}
     if(a==='restore-defaults'){restoreDocDefaults();return}
