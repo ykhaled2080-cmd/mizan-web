@@ -330,7 +330,7 @@ const schedulePaymentRows=s=>(s&&Array.isArray(s.rows)?s.rows:[]).filter(r=>SCHE
 function table(s,printed=false){
  const rows=printed?s.rows:schedulePaymentRows(s);
  const headCols=[[t('نوع الدفعة','Payment type'),'type'],[t('تاريخ الدفعة','Payment date'),'date'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']];
- const cols=printed?'':'<colgroup><col class="col-check" style="width:30px"><col class="col-type" style="width:23%"><col class="col-date" style="width:23%"><col class="col-value" style="width:22%"><col class="col-balance" style="width:27%"></colgroup>';
+ const cols=printed?'':'<colgroup><col class="col-check" style="width:30px"><col class="col-type" style="width:23%"><col class="col-date" style="width:23%"><col class="col-value" style="width:22%"><col class="col-balance"></colgroup>';
  const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
  const allChecked=rows.length&&rows.every(r=>selected.has(r.id));
  const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(allChecked?'checked':'')+'></th>':'';
@@ -542,16 +542,20 @@ function scheduleVScroll(){return document.getElementById('scheduleVScroll')}
 function updateScheduleVScroll(){
  const wrap=scheduleTableWrap(),track=scheduleVScroll(),thumb=track&&track.querySelector('.schedule-vscroll-thumb');
  if(!wrap||!track||!thumb)return;
- if(matchMedia('(max-width:760px)').matches){track.hidden=true;return}
  const viewport=wrap.closest('.schedule-table-viewport')||wrap.parentElement;
+ const setHidden=hidden=>{
+  track.hidden=hidden;
+  if(viewport)viewport.classList.toggle('no-scroll',hidden);
+ };
+ if(matchMedia('(max-width:760px)').matches){setHidden(true);return}
  const head=wrap.querySelector('.schedule-grid thead th');
  const headH=head?Math.ceil(head.getBoundingClientRect().height):36;
  if(viewport)viewport.style.setProperty('--schedule-head-h',headH+'px');
  const max=wrap.scrollHeight-wrap.clientHeight;
- if(max<=1){track.hidden=true;return}
- track.hidden=false;
+ if(max<=1){setHidden(true);return}
+ setHidden(false);
  const th=track.clientHeight;
- if(th<=0){track.hidden=true;return}
+ if(th<=0){setHidden(true);return}
  const h=Math.max(28,Math.min(th,th*wrap.clientHeight/wrap.scrollHeight));
  thumb.style.height=h+'px';
  const travel=Math.max(0,th-h);
@@ -616,7 +620,9 @@ document.addEventListener('pointerdown',e=>{
  const wrap=scheduleTableWrap();if(!wrap)return;
  const thumb=track.querySelector('.schedule-vscroll-thumb');if(!thumb)return;
  const tr=track.getBoundingClientRect();
- if(e.target.closest('.schedule-vscroll-thumb')){
+ const thumbRect=thumb.getBoundingClientRect();
+ const nearThumb=e.clientY>=thumbRect.top-5&&e.clientY<=thumbRect.bottom+5;
+ if(e.target.closest('.schedule-vscroll-thumb')||nearThumb){
   vScrollDrag={track,wrap,id:e.pointerId,startY:e.clientY,startTop:wrap.scrollTop,thumbH:thumb.offsetHeight};
   track.classList.add('dragging');
   try{track.setPointerCapture(e.pointerId)}catch{}
@@ -646,16 +652,6 @@ function endVScrollDrag(){
 }
 document.addEventListener('pointerup',e=>{if(vScrollDrag&&e.pointerId===vScrollDrag.id)endVScrollDrag()});
 document.addEventListener('pointercancel',()=>endVScrollDrag());
-document.addEventListener('wheel',e=>{
- const track=e.target.closest('#scheduleVScroll');
- if(!track)return;
- const wrap=scheduleTableWrap();if(!wrap)return;
- e.preventDefault();
- const max=Math.max(0,wrap.scrollHeight-wrap.clientHeight);
- const factor=Math.max(1,wrap.scrollHeight/track.clientHeight);
- wrap.scrollTop=Math.min(max,Math.max(0,wrap.scrollTop+e.deltaY*factor));
- updateScheduleVScroll();
-},{passive:false});
 let rowToolsRow=null,rowToolsTimer=null;
 function scheduleRowTools(){return document.getElementById('scheduleRowTools')}
 function hideScheduleRowTools(){
@@ -1188,16 +1184,112 @@ document.addEventListener('wheel',e=>{
  e.preventDefault();
  stepDateInput(input,e.deltaY<0?1:-1);
 },{passive:false});
-document.addEventListener('wheel',e=>{
- if(e.defaultPrevented)return;
+/* One scoped coordinator owns the page -> schedule -> page wheel handoff.
+   It only runs inside the schedule workspace, never for controls, dialogs,
+   Share, or nested scrollable regions. */
+let scheduleWheelActive=false;
+function scheduleWheelDeltaPixels(e){
+ let delta=e.deltaY;
+ if(!delta)return 0;
+ if(e.deltaMode===1)delta*=18;
+ else if(e.deltaMode===2)delta*=window.innerHeight;
+ return delta;
+}
+function scheduleWheelHasOwnScroll(target,wrap){
+ let el=target;
+ while(el&&el!==document.body&&el!==document.documentElement){
+  if(el!==wrap&&el.nodeType===1){
+   const cs=getComputedStyle(el);
+   if(/(auto|scroll|overlay)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+1)return true;
+  }
+  el=el.parentElement;
+ }
+ return false;
+}
+function schedulePageRoomDown(){
+ return Math.max(0,document.documentElement.scrollHeight-window.innerHeight-window.scrollY);
+}
+function schedulePageNeedForTable(wrap){
+ const vh=window.innerHeight,margin=16;
+ const r=wrap.getBoundingClientRect();
+ const limit=vh-margin;
+ let need=0;
+ if(r.height>=vh-margin*2){
+  need=Math.max(0,r.top-margin);
+ }else{
+  need=Math.max(0,r.bottom-limit);
+ }
+ return Math.min(need,schedulePageRoomDown());
+}
+function scheduleWheelHandler(e){
+ if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey)return;
  if(matchMedia('(max-width:760px)').matches)return;
- const wrap=e.target.closest&&e.target.closest('.schedule-table-col .tablewrap');
+ if(document.body.classList.contains('share-open')||document.querySelector('.share-sheet'))return;
+ const target=e.target;
+ if(!target||!target.closest)return;
+ const direct=target.closest('.schedule-table-col');
+ const section=target.closest('.workspace > section');
+ if(!direct&&!section){scheduleWheelActive=false;return}
+ if(target.closest('input,textarea,select,button,a,label,summary,details.pop[open],[role="dialog"],[role="menu"],.doc-style-panel,.row-edit-line,.date-seg'))return;
+ if(document.querySelector('.modal,.dialog'))return;
+ const wrap=scheduleTableWrap();
  if(!wrap)return;
- if(e.target.closest('#scheduleVScroll'))return;
- // Ordinary table content keeps scrolling the page; the dedicated rail scrolls the table.
- e.preventDefault();
- window.scrollBy(0,e.deltaY);
-},{passive:false});
+ const max=Math.max(0,wrap.scrollHeight-wrap.clientHeight);
+ if(max<=1){scheduleWheelActive=false;return;}
+ if(!direct){
+  const wr=wrap.getBoundingClientRect();
+  if(wr.bottom<=24||wr.top>=window.innerHeight-24){scheduleWheelActive=false;return}
+ }
+ if(!direct&&!scheduleWheelActive&&schedulePageNeedForTable(wrap)>0)return;
+ if(scheduleWheelHasOwnScroll(target,wrap))return;
+ let delta=scheduleWheelDeltaPixels(e);
+ if(!delta)return;
+ let handled=false;
+ if(delta>0){
+  const need=schedulePageNeedForTable(wrap);
+  if(need>0){
+   const amount=Math.min(delta,need);
+   const before=window.scrollY;
+   window.scrollBy(0,amount);
+   const moved=window.scrollY-before;
+   if(moved>0.5){handled=true;delta-=moved}
+  }
+  if(delta>0){
+   const remain=max-wrap.scrollTop;
+   if(remain>0){
+    const amount=Math.min(delta,remain);
+    const before=wrap.scrollTop;
+    wrap.scrollTop=before+amount;
+    const moved=wrap.scrollTop-before;
+    if(moved>0.5){handled=true;delta-=moved;scheduleWheelActive=true;updateScheduleVScroll()}
+   }
+  }
+  if(delta>0){
+   const before=window.scrollY;
+   window.scrollBy(0,delta);
+   if(window.scrollY-before>0.5)handled=true;
+  }
+ }else{
+  const up=-delta;
+  const amount=Math.min(up,wrap.scrollTop);
+  if(amount>0){
+   const before=wrap.scrollTop;
+   wrap.scrollTop=before-amount;
+   const moved=before-wrap.scrollTop;
+   if(moved>0.5){handled=true;delta+=moved;scheduleWheelActive=true;updateScheduleVScroll()}
+  }
+  if(delta<0){
+   const before=window.scrollY;
+   window.scrollBy(0,delta);
+   if(before-window.scrollY>0.5){handled=true;scheduleWheelActive=false}
+  }
+ }
+ if(handled)e.preventDefault();
+}
+document.addEventListener('wheel',scheduleWheelHandler,{passive:false});
+document.addEventListener('pointerdown',e=>{
+ if(!e.target.closest||!e.target.closest('.workspace > section'))scheduleWheelActive=false;
+},true);
 document.addEventListener('scroll',e=>{
  const target=e.target;
  if(target&&target.classList&&target.classList.contains('tablewrap')){updateScheduleScrollButtons();refreshScheduleRowTools();updateScheduleVScroll()}

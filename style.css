@@ -553,8 +553,8 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 
 
 /* 1.0.39: slim external scroll rail on the physical right of the table. The
-   rail occupies a small reserved gutter so appearing/disappearing never
-   reflows the table or the sticky header. */
+   rail sits outside the table in its own grid column; when the table does
+   not overflow the column collapses so no empty gutter remains. */
 .schedule-table-viewport{position:relative;min-width:0;display:grid;grid-template-columns:7px minmax(0,1fr);grid-template-areas:"rail table";column-gap:3px;align-items:stretch}
 .schedule-table-viewport::before{display:none;content:none}
 @media(min-width:761px){
@@ -562,12 +562,15 @@ html,body,button,input,select,textarea,#app,#header,#mobilenav,#header .brand,#a
 .schedule-table-viewport>.tablewrap::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px;grid-template-areas:"table rail"}
 }
+.schedule-table-viewport.no-scroll{grid-template-columns:minmax(0,1fr);grid-template-areas:"table";column-gap:0}
+html[dir="ltr"] .schedule-table-viewport.no-scroll{grid-template-columns:minmax(0,1fr);grid-template-areas:"table"}
 .schedule-vscroll{grid-area:rail;position:relative;align-self:stretch;width:7px;margin-top:var(--schedule-head-h,36px);z-index:6;background:transparent;touch-action:none;user-select:none;-webkit-user-select:none}
-.schedule-vscroll::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:5px;transform:translateX(-50%);border-radius:999px;background:transparent;pointer-events:none}
-.schedule-vscroll:hover::before,.schedule-vscroll.dragging::before{background:rgba(20,97,79,.045)}
+.schedule-vscroll::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:4px;transform:translateX(-50%);border-radius:999px;background:transparent;pointer-events:none}
+.schedule-vscroll:hover::before,.schedule-vscroll.dragging::before{background:rgba(20,97,79,.04)}
+.schedule-vscroll::after{content:'';position:absolute;top:0;bottom:0;left:-4px;right:-3px;background:transparent;pointer-events:auto;z-index:0}
 .schedule-vscroll[hidden]{display:none}
-.schedule-vscroll-thumb{position:absolute;left:50%;top:0;width:5px;min-height:28px;border-radius:999px;background:rgba(74,106,92,.38);transform:translateX(-50%);transition:width .14s ease,background .14s ease;will-change:top,height}
-.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{width:5px;background:rgba(74,106,92,.56)}
+.schedule-vscroll-thumb{position:absolute;left:50%;top:0;width:4px;min-height:28px;border-radius:999px;background:rgba(74,106,92,.40);transform:translateX(-50%);transition:width .16s ease,background .16s ease,box-shadow .16s ease;will-change:top,height;z-index:1}
+.schedule-vscroll:hover .schedule-vscroll-thumb,.schedule-vscroll.dragging .schedule-vscroll-thumb{width:8px;background:rgba(74,106,92,.60)}
 [data-dark] .schedule-vscroll::before{background:transparent}
 [data-dark] .schedule-vscroll:hover::before,[data-dark] .schedule-vscroll.dragging::before{background:rgba(158,212,188,.07)}
 [data-dark] .schedule-vscroll-thumb{background:rgba(158,212,188,.38)}
@@ -613,8 +616,8 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 /* The three summary categories are one list each. RTL order is included
    (right), excluded (center), extras (left); no category is split into
    internal columns or masonry tracks. */
-.summary-classification{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px;padding:12px 16px 13px;background:transparent;align-items:start}
-.summary-classification.summary-three{grid-template-columns:minmax(0,.78fr) minmax(0,.72fr) minmax(0,1.5fr)}
+.summary-classification{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px;padding:12px 16px 13px 8px;background:transparent;align-items:start}
+.summary-classification.summary-three{grid-template-columns:minmax(0,.78fr) minmax(0,.72fr) minmax(300px,1.5fr)}
 .summary-classification.summary-two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .summary-classification.summary-one{grid-template-columns:1fr}
 .summary-classification .rail-group{min-width:0}
@@ -686,7 +689,7 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 .schedule-grid col.col-type{width:23%}
 .schedule-grid col.col-date{width:23%}
 .schedule-grid col.col-value{width:22%}
-.schedule-grid col.col-balance{width:27%}
+.schedule-grid col.col-balance{width:auto}
 .schedule-grid th,.schedule-grid td{padding:7px 10px}
 .schedule-grid th.cell-check,.schedule-grid td.cell-check{padding-inline:2px;text-align:start!important}
 .schedule-grid th.cell-type,.schedule-grid td.cell-type,
@@ -718,3 +721,7 @@ html[dir="ltr"] .schedule-table-viewport{grid-template-columns:minmax(0,1fr) 7px
 @media(max-width:760px){.core-grid{grid-template-columns:1fr 1fr;gap:10px 10px}.terms-title-wrap{gap:4px}}
 
 .increase-inline:not([open]) .increase-row{display:none}
+
+@media(min-width:761px){
+.schedule-table-col .tablewrap{border-right:1px solid var(--rule)}
+}

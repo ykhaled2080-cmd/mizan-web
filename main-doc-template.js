@@ -1,9 +1,9 @@
-﻿/* MIZAN Main document template - canonical built-in style.
-   Source: user-authored V9 configuration (backed up in release/template-backups).
-   This resource is version-controlled and shipped with every installation. */
+/* MIZAN official document template - canonical built-in style.
+   Source: user-authored saved MIZAN template (backed up in release/template-backups).
+   This resource is packaged with every installation. */
 (function(){
  window.MIZAN_MAIN_DOC_STYLE={
-  "activePreset": "main",
+  "activePreset": "mizan",
   "roles": {
     "title": {
       "font": "Arial,Helvetica,sans-serif",
@@ -58,7 +58,7 @@
     "brand": {
       "label": "فاصل رأس المستند",
       "visible": true,
-      "offset": 0,
+      "offset": 9.6,
       "thickness": 1,
       "color": "#194B3D",
       "length": 100,
@@ -196,5 +196,5 @@
     "folio": 19.2
   }
 };
- window.MIZAN_MAIN_TEMPLATE_META={id:'main',name:'Main',version:2,source:'V9'};
+ window.MIZAN_MAIN_TEMPLATE_META={id:'mizan',name:'MIZAN',version:3,source:'saved MIZAN template'};
 })();

@@ -957,6 +957,7 @@ html[dir=ltr] .share-format select{background-position:right 7px center}
 .pdf-page.pdf-dividers-ready .pdf-folio{border-top-color:transparent!important}
 .pdf-page .pdf-table td.pdf-has-moved-text,.pdf-page .pdf-table th.pdf-has-moved-text{overflow:visible!important}
 body.pdf-ctrl .pdf-page .pdf-edit-layer .pdf-divider{pointer-events:none}
+body:not(.divider-editing) .pdf-page .pdf-edit-layer .pdf-divider{pointer-events:none!important;cursor:default}
 body.divider-dragging,body.divider-dragging *{cursor:ns-resize!important;user-select:none!important}
 .pdf-page .pdf-title{font-family:var(--doc-title-font);font-size:var(--doc-title-size);font-weight:var(--doc-title-weight);color:var(--doc-title-color)}
 .pdf-page .pdf-sectionhead h2{font-family:var(--doc-main-font);font-size:var(--doc-main-size);font-weight:var(--doc-main-weight);color:var(--doc-main-color)}
