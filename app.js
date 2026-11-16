@@ -331,7 +331,7 @@ const schedulePaymentRows=s=>(s&&Array.isArray(s.rows)?s.rows:[]).filter(r=>SCHE
 function table(s,printed=false){
  const rows=printed?s.rows:schedulePaymentRows(s);
  const headCols=[[t('نوع الدفعة','Payment type'),'type'],[t('تاريخ الدفعة','Payment date'),'date'],[t('القيمة','Amount'),'value'],[t('رصيد الوحدة','Property balance'),'balance']];
- const cols=printed?'':'<colgroup><col class="col-check" style="width:28px"><col class="col-type" style="width:20%"><col class="col-date" style="width:24%"><col class="col-value" style="width:23%"><col class="col-balance"></colgroup>';
+ const cols=printed?'':'<colgroup><col class="col-check" style="width:30px"><col class="col-type" style="width:20%"><col class="col-date" style="width:24%"><col class="col-value" style="width:23%"><col class="col-balance"></colgroup>';
  const headTh=(h,c)=>'<th class="cell-'+c+'">'+h+'</th>';
  const allChecked=rows.length&&rows.every(r=>selected.has(r.id));
  const checkHead=!printed?'<th class="cell-check"><input type="checkbox" data-all aria-label="'+t('تحديد الكل','Select all')+'" '+(allChecked?'checked':'')+'></th>':'';
@@ -546,7 +546,7 @@ function updateScheduleVScroll(){
  const viewport=wrap.closest('.schedule-table-viewport')||wrap.parentElement;
  const setHidden=hidden=>{
   track.hidden=hidden;
-  if(viewport)viewport.classList.remove('no-scroll');
+  if(viewport)viewport.classList.toggle('has-rail',!hidden);
  };
  if(matchMedia('(max-width:760px)').matches){setHidden(true);return}
  const head=wrap.querySelector('.schedule-grid thead th');
