@@ -638,7 +638,7 @@ let DOC_STYLE_VERSION=0;
     return changed;
   }
   const REFLOW_KEY='mizan.pdfReflow';
-  const PDF_LAYOUT_VERSION=2;
+  const PDF_LAYOUT_VERSION=3;
   function reflowHash(text){
     let h=2166136261;
     for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}
@@ -1271,10 +1271,11 @@ let DOC_STYLE_VERSION=0;
       }
       pages.push(page);
     }
-    pages.forEach((sheet,i)=>{
+    const writePageFooters=()=>pages.forEach((sheet,i)=>{
       const footer=sheet.querySelector('.pdf-folio');
       footer.innerHTML='<span>'+esc(snapshot.unit||(lang==='ar'?'خطة السداد':'Payment plan'))+'</span><span>'+(lang==='ar'?'صفحة':'Page')+' <bdi>'+(i+1)+' / '+pages.length+'</bdi></span>';
     });
+    writePageFooters();
     if(!summaryOnly&&!s.cash&&pages.length){
       const last=pages[pages.length-1];
       const schedule=last.querySelector('.pdf-schedule');
@@ -1305,6 +1306,28 @@ let DOC_STYLE_VERSION=0;
            schedule.appendChild(note);
           }
         }
+      }
+      /* The total row is appended after row pagination. If a dense last sheet
+         no longer clears the footer, move it and the last rows forward. */
+      const repairTable=last&&last.querySelector('.pdf-table'),repairFolio=last&&last.querySelector('.pdf-folio');
+      if(repairTable&&repairFolio&&repairTable.getBoundingClientRect().bottom>repairFolio.getBoundingClientRect().top-1){
+        const next=makePage(lang,data,true,layout,false);
+        root.appendChild(next);pages.push(next);
+        const nextTable=next.querySelector('.pdf-table');
+        const newBody=nextTable&&nextTable.querySelector('tbody');
+        const oldFoot=repairTable.querySelector('tfoot');
+        if(oldFoot){
+          let newFoot=nextTable.querySelector('tfoot');
+          if(!newFoot){newFoot=document.createElement('tfoot');nextTable.appendChild(newFoot)}
+          while(oldFoot.firstChild)newFoot.appendChild(oldFoot.firstChild);
+          oldFoot.remove();
+        }
+        const oldBody=repairTable.querySelector('tbody');
+        while(oldBody&&newBody&&oldBody.children.length&&repairTable.getBoundingClientRect().bottom>repairFolio.getBoundingClientRect().top-16){
+          newBody.insertBefore(oldBody.lastElementChild,newBody.firstChild);
+        }
+        if(oldBody&&newBody&&!newBody.children.length&&oldBody.children.length)newBody.insertBefore(oldBody.lastElementChild,newBody.firstChild);
+        writePageFooters();
       }
     }
     // A hidden/background tab pauses requestAnimationFrame; never let that stall pagination.
@@ -1646,6 +1669,7 @@ let DOC_STYLE_VERSION=0;
     canonicalRefreshDividers(source);
     const clone=source.cloneNode(true);
     clone.dataset.contentSig=pdfReflowSignature();
+    clone.dataset.layoutVersion=String(PDF_LAYOUT_VERSION);
     clone.removeAttribute('contenteditable');
     clone.querySelectorAll('[contenteditable]').forEach(x=>x.removeAttribute('contenteditable'));
     clone.querySelectorAll('.pdf-divider.selected').forEach(x=>x.classList.remove('selected'));
@@ -1769,31 +1793,48 @@ let DOC_STYLE_VERSION=0;
     if(page.querySelector('.pdf-cash-included-list'))actual.included=expected.included;
     return ['included','excluded','extras'].every(k=>actual[k].join('|')===expected[k].join('|'));
   }
+  function storedPageFits(page){
+    const table=page.querySelector('.pdf-table');
+    const folio=page.querySelector('.pdf-folio');
+    if(!table||!folio)return true;
+    const t=table.getBoundingClientRect(),f=folio.getBoundingClientRect();
+    return !t.height||!f.height||t.bottom<=f.top-1;
+  }
   async function applyStoredPageEdits(built){
     try{
       const pages=readPageEdits()[pageEditKey()];
-      if(!Array.isArray(pages))return;
+      if(!Array.isArray(pages)||pages.length!==built.pages.length)return;
       const contentSig=pdfReflowSignature();
+      const ready=[];
       const temp=document.createElement('div');
       temp.style.cssText='position:fixed;left:-12000px;top:0;width:794px;z-index:-1;background:#fff;';
       document.body.appendChild(temp);
       try{
         for(let i=0;i<pages.length;i++){
-          if(!built.pages[i]||typeof pages[i]!=='string')continue;
+          if(!built.pages[i]||typeof pages[i]!=='string')return;
           temp.innerHTML=upgradeStoredPageHtml(pages[i]);
           const page=temp.querySelector('.pdf-page');
-          if(!page)continue;
-          if(page.dataset.contentSig&&page.dataset.contentSig!==contentSig)continue;
-          if(!storedPageMatchesSchedule(page))continue;
+          if(!page)return;
+          if(page.dataset.layoutVersion&&+page.dataset.layoutVersion!==PDF_LAYOUT_VERSION)return;
+          if(page.dataset.contentSig&&page.dataset.contentSig!==contentSig)return;
+          if(!storedPageMatchesSchedule(page))return;
           await waitForImages(page);
           normalizePdfGeometry([page],{force:true});
           applyPdfStyle(page);
+          /* Old page revisions can carry a pagination that no longer fits the
+             reflowed header. Never apply half a document: a single stale sheet
+             makes the whole saved revision unusable. */
+          if(!storedPageFits(page))return;
           positionWatermark(page,i===0);
-          built.pages[i].html=page.outerHTML;
-          built.pages[i].rasterDirty=true;
-          built.pages[i].renderPromise=null;
+          ready.push(page.outerHTML);
         }
       }finally{temp.remove()}
+      if(ready.length!==built.pages.length)return;
+      ready.forEach((html,i)=>{
+        built.pages[i].html=html;
+        built.pages[i].rasterDirty=true;
+        built.pages[i].renderPromise=null;
+      });
       built.htmlVersion=(built.htmlVersion||0)+1;
       built.vectorPdf=null;
     }catch{}
