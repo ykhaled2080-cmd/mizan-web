@@ -316,7 +316,7 @@ let DOC_STYLE_VERSION=0;
   function docLang(){return S.docLang||A.lang}
   function dt(ar,en){return docLang()==='ar'?ar:en}
   function offerTitleFor(o){return o&&o.offerType==='cash'?dt('عرض كاش','Cash offer'):dt('عرض سداد تقديري','Estimated payment offer')}
-  function money(cents){return localFormat(docLang()).intl.format(cents/100)+' '+dt('ج.م','EGP')}
+  function money(cents){return dt('ج.م','EGP')+' '+localFormat(docLang()).intl.format(cents/100)}
   function normalizedPhone(){
     let v=String(A.p.phone||'').replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776)).replace(/\D/g,'');
     if(/^01\d{9}$/.test(v))v='2'+v;
@@ -355,7 +355,7 @@ let DOC_STYLE_VERSION=0;
       const s=A.schedule(o);
       const hidden=S.showTotalOverride!==null?!S.showTotalOverride:o.showTotal===false;
       const shown=hidden?(+o.price||0)*100:(s.cash?s.price:s.total);
-      lines.push((i+1)+'. '+(o.unit||dt('عرض عقاري','Property offer'))+(o.client?' · '+o.client:'')+' · '+A.fmt(shown/100)+' '+dt('ج.م','EGP'));
+      lines.push((i+1)+'. '+(o.unit||dt('عرض عقاري','Property offer'))+(o.client?' · '+o.client:'')+' · '+dt('ج.م','EGP')+' '+A.fmt(shown/100));
     });
     return lines.join('\n');
   }
@@ -1146,7 +1146,7 @@ let DOC_STYLE_VERSION=0;
     const cash=cents=>data.f.intl.format(cents/100);
     const pct=n=>n>0?' ('+data.f.pct.format(n)+'%)':'';
     const non=t('غير محدد','Not specified');
-    const amount=cents=>'<bdi dir="ltr">'+cash(cents)+'</bdi> '+data.curr;
+    const amount=cents=>'<span class="pdf-amount" dir="ltr">'+data.curr+' <bdi>'+cash(cents)+'</bdi></span>';
     const dateBdi=month=>'<bdi dir="ltr">'+data.f.date(month)+'</bdi>';
     const dueJoin=(base,due)=>{
       if(!due)return base;
@@ -1188,7 +1188,7 @@ let DOC_STYLE_VERSION=0;
     const roundingAdjusted=baseEqual&&lastInstValue!==baseValues[0]&&lastDiff>0&&lastDiff<=inst.length*100;
     const fixedPlan=inst.length>0&&(values.length===1||roundingAdjusted);
     const fixedValue=values.length===1?values[0]:(baseValues.length?baseValues[0]:lastInstValue);
-    const priceBlock='<div class="pdf-price-block" data-divider-host="price"><span class="lbl">'+t('سعر الوحدة','Unit price')+'</span><b class="amt"><bdi dir="ltr">'+cash(s.price)+'</bdi> <small class="pdf-curr">'+data.curr+'</small></b></div>';
+    const priceBlock='<div class="pdf-price-block" data-divider-host="price"><span class="lbl">'+t('سعر الوحدة','Unit price')+'</span><b class="amt"><span class="pdf-amount" dir="ltr"><small class="pdf-curr">'+data.curr+'</small> <bdi>'+cash(s.price)+'</bdi></span></b></div>';
     const payItems=[];
     if(!s.cash&&s.down)payItems.push('<div class="pdf-pay-item pdf-pay-down" data-divider-host="down"><span class="lbl">'+names.down()+(p.mode==='rate'?pct(s.downPct):'')+'</span><b class="val">'+amount(s.down)+'</b></div>');
     if(!s.cash&&inst.length)payItems.push('<div class="pdf-pay-item pdf-pay-plan" data-divider-host="plan"><span class="lbl">'+t('خطة التقسيط','Payment plan')+'</span><b class="val">'+esc(planText)+'</b></div>');
@@ -1273,7 +1273,7 @@ let DOC_STYLE_VERSION=0;
     if(layout==='vertical'){
       const card=document.createElement('div');
       card.className='pdf-pay';card.dataset.rowId=r.id;card.dataset.payRow=r.id;
-      card.innerHTML='<div class="pdf-pay-head" data-pay-part="head"><span class="type">'+nm+'</span><span class="date">'+data.f.date(r.date)+'</span></div><div class="pdf-pay-line" data-pay-part="amount"><span class="lbl">'+t('القيمة','Amount')+'</span><b class="val">'+data.f.intl.format(r.value/100)+' '+data.curr+'</b></div><div class="pdf-pay-line" data-pay-part="balance"><span class="lbl">'+t('الرصيد','Balance')+'</span><b class="val">'+data.f.intl.format(r.balance/100)+' '+data.curr+'</b></div>';
+      card.innerHTML='<div class="pdf-pay-head" data-pay-part="head"><span class="type">'+nm+'</span><span class="date">'+data.f.date(r.date)+'</span></div><div class="pdf-pay-line" data-pay-part="amount"><span class="lbl">'+t('القيمة','Amount')+'</span><b class="val">'+data.curr+' '+data.f.intl.format(r.value/100)+'</b></div><div class="pdf-pay-line" data-pay-part="balance"><span class="lbl">'+t('الرصيد','Balance')+'</span><b class="val">'+data.curr+' '+data.f.intl.format(r.balance/100)+'</b></div>';
       return card;
     }
     const tr=document.createElement('tr');
@@ -1328,11 +1328,11 @@ let DOC_STYLE_VERSION=0;
       const reasons=[];
       const hiddenCount=(snapshot.hidden||[]).length;
       if(hiddenCount)reasons.push((lang==='ar'?'صفوف أساسية مخفية لا تدخل في مجموع الجدول: ':'Hidden principal rows excluded from the table total: ')+hiddenCount);
-      if(s.gap>0)reasons.push((lang==='ar'?'مبلغ غير مجدول خارج الجدول: ':'Unscheduled amount outside the table: ')+f.intl.format(s.gap/100)+' '+data.curr);
-      if(s.reconcile)reasons.push((lang==='ar'?'فرق تسوية التقريب المتبقي: ':'Remaining rounding reconciliation: ')+f.intl.format(Math.abs(s.reconcile)/100)+' '+data.curr);
+      if(s.gap>0)reasons.push((lang==='ar'?'مبلغ غير مجدول خارج الجدول: ':'Unscheduled amount outside the table: ')+data.curr+' '+f.intl.format(s.gap/100));
+      if(s.reconcile)reasons.push((lang==='ar'?'فرق تسوية التقريب المتبقي: ':'Remaining rounding reconciliation: ')+data.curr+' '+f.intl.format(Math.abs(s.reconcile)/100));
       if(s.overAllocated)reasons.push(lang==='ar'?'المخصص للأقساط يتجاوز رصيد الوحدة':'Installment allocation exceeds the property balance');
       const diff=pdfSum-s.price;
-      reasons.push((lang==='ar'?'الفرق بين مجموع الصفوف وسعر الوحدة: ':'Difference between displayed rows and unit price: ')+(diff>0?'+':'')+f.intl.format(diff/100)+' '+data.curr);
+      reasons.push((lang==='ar'?'الفرق بين مجموع الصفوف وسعر الوحدة: ':'Difference between displayed rows and unit price: ')+(diff>0?'+':'')+data.curr+' '+f.intl.format(diff/100));
       return reasons.join(' · ');
     })();
     let migrated=false,prepared=false;
@@ -1845,6 +1845,63 @@ let DOC_STYLE_VERSION=0;
     page.querySelectorAll('.pdf-table tfoot .num.total-amount,.pdf-table tfoot .total-amount').forEach(upgrade);
     page.querySelectorAll('.pdf-schedule-total b').forEach(upgrade);
   }
+  function upgradeStoredCurrencyOrder(page){
+    if(!page)return;
+    page.querySelectorAll('.pdf-price-block .amt').forEach(el=>{
+      if(el.querySelector('.pdf-amount'))return;
+      const bdi=el.querySelector('bdi');
+      const cur=el.querySelector('.pdf-curr,small');
+      if(!bdi||!cur||bdi.parentNode!==el||cur.parentNode!==el)return;
+      const wrap=document.createElement('span');
+      wrap.className='pdf-amount';wrap.setAttribute('dir','ltr');
+      el.insertBefore(wrap,el.firstChild);
+      wrap.appendChild(cur);
+      wrap.appendChild(document.createTextNode(' '));
+      wrap.appendChild(bdi);
+    });
+    page.querySelectorAll('bdi').forEach(bdi=>{
+      if(bdi.closest('.pdf-total-money,.pdf-amount'))return;
+      let node=bdi.nextSibling,curText='';
+      while(node){
+        if(node.nodeType===3){
+          const match=node.nodeValue.match(/(ج\.م|EGP)/);
+          if(match){
+            curText=match[1];
+            node.nodeValue=node.nodeValue.replace(match[1],'').replace(/\s+/g,' ').trim();
+            if(!node.nodeValue)node.remove();
+            break;
+          }
+        }else if(node.nodeType===1&&/^(ج\.م|EGP)$/.test(node.textContent.trim())){
+          curText=node.textContent.trim();
+          node.remove();
+          break;
+        }
+        node=node.nextSibling;
+      }
+      if(!curText)return;
+      const wrap=document.createElement('span');
+      wrap.className='pdf-amount';wrap.setAttribute('dir','ltr');
+      const cur=document.createElement('span');
+      cur.className='pdf-cur';cur.textContent=curText;
+      wrap.appendChild(cur);
+      wrap.appendChild(document.createTextNode(' '));
+      bdi.parentNode.insertBefore(wrap,bdi);
+      wrap.appendChild(bdi);
+    });
+    const walker=document.createTreeWalker(page,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const parent=node.parentElement;
+      if(!parent)return NodeFilter.FILTER_REJECT;
+      if(parent.closest('.pdf-total-money,.pdf-amount,.pdf-curr,.pdf-table td.num'))return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }});
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      const next=node.nodeValue.replace(/(\d[\d,\.]*)\s*(ج\.م|EGP)/g,(m,num,cur)=>cur+' '+num);
+      if(next!==node.nodeValue)node.nodeValue=next;
+    });
+    page.dataset.currencyOrder='before';
+  }
   function stripInactiveItemDates(page){
     page.querySelectorAll('.pdf-group.pdf-included-title .pdf-charge .lbl,.pdf-group.pdf-excluded-title .pdf-charge .lbl,.pdf-group.pdf-cash-included-title .pdf-charge .lbl,.pdf-group.pdf-cash-excluded-title .pdf-charge .lbl').forEach(label=>{
       label.querySelectorAll('.pdf-due').forEach(due=>{
@@ -1864,6 +1921,7 @@ let DOC_STYLE_VERSION=0;
       ensureSectionAccent(page);
       stripInactiveItemDates(page);
       upgradeStoredTotalCurrency(page);
+      upgradeStoredCurrencyOrder(page);
       const price=page.querySelector('.pdf-price-block');
       if(price)price.dataset.dividerHost='price';
       const payHosts=[['.pdf-pay-down','down'],['.pdf-pay-plan','plan'],['.pdf-pay-delivery','delivery'],['.pdf-pay-installment','installment']];
@@ -2140,7 +2198,7 @@ let DOC_STYLE_VERSION=0;
     const roleOptions=Object.entries(DOC_ROLE_DEFS).map(([key,def])=>'<option value="'+key+'" '+(key===roleKey?'selected':'')+'>'+def.label+'</option>').join('');
     const dividerOptions=Object.entries(DOC_DIVIDER_DEFS).map(([key,def])=>'<option value="'+key+'" '+(key===dividerKey?'selected':'')+'>'+def.label+'</option>').join('');
     const pv=preview.roles||DOC_STYLE.roles;
-    const sample='<div class="ds-sample"><b style="'+roleStyleAttr(pv.title)+'">'+tt('عرض سداد تقديري','Estimated payment offer')+'</b><span style="'+roleStyleAttr(pv.main)+'">'+tt('الملخص المالي','Financial summary')+'</span><div class="ds-sample-line"><span style="'+roleStyleAttr(pv.label)+'">'+tt('سعر الوحدة','Unit price')+'</span><b style="'+roleStyleAttr(pv.value)+'">5,000,000 ج.م</b></div><b class="ds-sample-total" style="'+roleStyleAttr(pv.total)+'">'+tt('إجمالي العرض','Offer total')+' · 5,000,000 ج.م</b></div>';
+    const sample='<div class="ds-sample"><b style="'+roleStyleAttr(pv.title)+'">'+tt('عرض سداد تقديري','Estimated payment offer')+'</b><span style="'+roleStyleAttr(pv.main)+'">'+tt('الملخص المالي','Financial summary')+'</span><div class="ds-sample-line"><span style="'+roleStyleAttr(pv.label)+'">'+tt('سعر الوحدة','Unit price')+'</span><b style="'+roleStyleAttr(pv.value)+'"><span dir="ltr">'+tt('ج.م','EGP')+' 5,000,000</span></b></div><b class="ds-sample-total" style="'+roleStyleAttr(pv.total)+'">'+tt('إجمالي العرض','Offer total')+' · <span dir="ltr">'+tt('ج.م','EGP')+' 5,000,000</span></b></div>';
     const compareBar=docCompareMode()
       ?'<div class="ds-compare-bar"><span>'+tt('وضع المقارنة مفعّل: جرّب القوالب ثم ثبّت النمط النهائي.','Comparison mode: try presets, then confirm the final style.')+'</span><span class="ds-compare-actions"><button type="button" class="ds-btn" data-ds-act="apply-legacy">'+tt('V9 السابق','Previous V9')+'</button><button type="button" class="ds-btn primary" data-ds-act="confirm-preset">'+tt('تثبيت القالب','Confirm template')+'</button></span></div>'
       :'<div class="ds-compare-bar"><span>'+tt('تبديل القوالب مخفي من شريط المشاركة اليومي.','Preset switching is hidden from the daily Share bar.')+'</span><button type="button" class="ds-btn" data-ds-act="show-presets">'+tt('إظهار القوالب','Show presets')+'</button></div>';

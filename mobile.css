@@ -95,7 +95,7 @@ button,summary,a{-webkit-tap-highlight-color:transparent}
   .schedule-grid td{display:block;border:0;padding:0;white-space:normal;overflow-wrap:anywhere;font-size:12px;text-align:start}
   .schedule-grid td.cell-check{grid-area:check;align-self:start;padding-top:1px!important}
   .schedule-grid td.cell-check input{width:16px;height:16px;min-width:16px;min-height:16px;margin:0;accent-color:var(--green)}
-@media(max-width:760px){:root{--action-h:40px}}
+@media(max-width:760px){:root{--action-h:38px}}
   .schedule-grid td.cell-type{grid-area:type;font-size:13px;font-weight:700;line-height:1.35;display:flex;align-items:center;min-height:22px}
   .schedule-grid td.cell-type .type{font-size:13px;gap:6px;max-width:100%}
   .schedule-grid td.cell-type .dot{width:7px;height:7px}
