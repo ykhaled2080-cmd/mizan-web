@@ -72,6 +72,7 @@ html.mizan-adaptive #header,
 html.mizan-adaptive .adaptive-head {background:var(--mobile-surface)}
 html.mizan-adaptive #mobilenav,
 html.mizan-adaptive .destination-nav {background:var(--mobile-surface)}
+html.mizan-adaptive .destination-nav {border-top:0}
 html.mizan-adaptive .adaptive-heading h1 {color:var(--mobile-text);font-weight:650}
 html.mizan-adaptive #adaptive-context {color:var(--mobile-sub)}
 html.mizan-adaptive .adaptive-tools>button,
