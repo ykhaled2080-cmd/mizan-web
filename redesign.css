@@ -73,7 +73,10 @@ html.mizan-adaptive .ms-financial-detail{margin:4px 0 0;border-top:1px solid var
 html.mizan-adaptive .ms-financial-detail summary{min-height:44px;display:flex;align-items:center;color:var(--mobile-sub);font-size:.8rem;font-weight:650;cursor:pointer}
 html.mizan-adaptive .ms-financial-detail .ms-metrics{border-top:0}
 html.mizan-adaptive .ms-details{padding-bottom:12px}
-html.mizan-adaptive .ms-details-identity{margin:0 0 16px;padding:0 0 14px;border-bottom:1px solid var(--mobile-border)}
+html.mizan-adaptive .ms-details-identity{margin:0;padding:0 0 10px;border-bottom:1px solid var(--mobile-border)}
+html.mizan-adaptive .ms-details-identity + .ms-details > .ms-detail-acc:first-child,
+html.mizan-adaptive .ms-details-identity + .ms-details > .ms-detail-clause:first-child,
+html.mizan-adaptive .ms-details-identity + .ms-details > .ms-detail-section:first-child{border-top:0}
 html.mizan-adaptive .ms-details-identity h2{margin:0 0 10px;font-size:1.02rem;font-weight:700;color:var(--mobile-text)}
 html.mizan-adaptive .ms-details-identity .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;min-width:0}
 html.mizan-adaptive .ms-details-identity .field{min-width:0;display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--mobile-sub)}

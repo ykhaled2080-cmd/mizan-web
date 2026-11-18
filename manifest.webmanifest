@@ -1,11 +1,11 @@
 {
-  "id": "./",
+  "id": "./?pwa=196",
   "name": "Mizan — عروض العقارات",
   "short_name": "Mizan",
   "description": "ميزان لعروض العقارات وحساب الأقساط وتصدير PDF احترافية",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./?source=pwa",
+  "start_url": "./?source=pwa&v=196",
   "scope": "./",
   "display": "standalone",
   "display_override": [
@@ -25,43 +25,43 @@
       "purpose": "any",
       "type": "image/png",
       "sizes": "64x64",
-      "src": "assets/brand-icon-64.png?v=20261118h1"
+      "src": "assets/brand-icon-64.png?v=20261118i1"
     },
     {
       "purpose": "any",
       "type": "image/png",
       "sizes": "152x152",
-      "src": "assets/brand-icon-152.png?v=20261118h1"
+      "src": "assets/brand-icon-152.png?v=20261118i1"
     },
     {
       "purpose": "any",
       "type": "image/png",
       "sizes": "167x167",
-      "src": "assets/brand-icon-167.png?v=20261118h1"
+      "src": "assets/brand-icon-167.png?v=20261118i1"
     },
     {
       "purpose": "any",
       "type": "image/png",
       "sizes": "180x180",
-      "src": "assets/brand-icon-180.png?v=20261118h1"
+      "src": "assets/brand-icon-180.png?v=20261118i1"
     },
     {
       "purpose": "any",
       "type": "image/png",
       "sizes": "192x192",
-      "src": "assets/brand-icon-192.png?v=20261118h1"
+      "src": "assets/brand-icon-192.png?v=20261118i1"
     },
     {
       "purpose": "any",
       "type": "image/png",
       "sizes": "512x512",
-      "src": "assets/brand-icon-512.png?v=20261118h1"
+      "src": "assets/brand-icon-512.png?v=20261118i1"
     },
     {
       "purpose": "maskable",
       "type": "image/png",
       "sizes": "512x512",
-      "src": "assets/brand-icon-512.png?v=20261118h1"
+      "src": "assets/brand-icon-512.png?v=20261118i1"
     }
   ]
 }
