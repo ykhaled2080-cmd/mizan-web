@@ -3627,12 +3627,22 @@ let DOC_STYLE_VERSION=0;
   function scrollMobilePage(step){
     const view=$('#msDocViewport'),pages=mobileWorkspacePages();
     if(!view||pages.length<=1)return;
+    const target=Math.max(0,Math.min(pages.length-1,S.workspacePage+step));
+    if(target===S.workspacePage)return;
     if(S.editMode)flushEditablePages();
-    S.workspacePage=Math.max(0,Math.min(pages.length-1,S.workspacePage+step));
+    S.workspacePage=target;
     view.innerHTML=mobileDocPageHtml(pages[S.workspacePage]);
     renderMobilePageIndicator();
     if(['fit-page','fit-width','fit-height'].includes(S.zoomMode))requestAnimationFrame(()=>fitWorkspace(S.zoomMode));
     else view.scrollTop=0;
+  }
+  /* A vertical finger swipe turns the document page, matching the page
+     indicator arrows. Swiping up advances and swiping down goes back. At a
+     scrollable page edge the swipe turns the page; elsewhere it scrolls, and
+     edit mode keeps text selection. */
+  function mobileSwipeStep(dx,dy){
+    if(Math.abs(dy)<56||Math.abs(dy)<Math.abs(dx)*1.25)return 0;
+    return dy<0?1:-1;
   }
   function mobileShareSheetHtml(){
     const count=mobileWorkspacePages().length;
@@ -5485,6 +5495,37 @@ let DOC_STYLE_VERSION=0;
     close();
   });
 
+  let msSwipeStart=null;
+  document.addEventListener('touchstart',e=>{
+    msSwipeStart=null;
+    if(!S.open||!adaptiveShare()||S.pv||S.editMode)return;
+    const view=e.target.closest&&e.target.closest('#msDocViewport');
+    if(!view||e.touches.length!==1)return;
+    const t=e.touches[0];
+    msSwipeStart={x:t.clientX,y:t.clientY,time:Date.now()};
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    const start=msSwipeStart;msSwipeStart=null;
+    if(!start||!S.open||!adaptiveShare()||S.pv||S.editMode)return;
+    const t=e.changedTouches&&e.changedTouches[0];
+    if(!t)return;
+    if(Date.now()-start.time>900)return;
+    const step=mobileSwipeStep(t.clientX-start.x,t.clientY-start.y);
+    if(!step)return;
+    const sel=window.getSelection&&window.getSelection();
+    if(sel&&!sel.isCollapsed)return;
+    const view=document.querySelector('#msDocViewport');
+    if(!view)return;
+    /* If the page is taller than the viewport, only turn the page when the
+       gesture starts at the matching edge; otherwise keep normal scrolling. */
+    const scrollable=view.scrollHeight>view.clientHeight+4;
+    if(scrollable){
+      if(step>0&&view.scrollTop+view.clientHeight<view.scrollHeight-4)return;
+      if(step<0&&view.scrollTop>4)return;
+    }
+    scrollMobilePage(step);
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{msSwipeStart=null},{passive:true});
   document.addEventListener('scroll',e=>{
     if(e.target&&e.target.id==='msDocViewport')updateMobilePageIndicatorFromScroll(e.target);
   },true);

@@ -76,6 +76,10 @@ html.mizan-adaptive .adaptive-tools>button,
 html.mizan-adaptive .adaptive-menu>summary {color:var(--mobile-sub)}
 html.mizan-adaptive .adaptive-tools [data-act="save"],
 html.mizan-adaptive .adaptive-tools [data-act="wa-share"] {color:var(--mobile-accent)}
+html.mizan-adaptive:not([data-dark]) .adaptive-tools>button,
+html.mizan-adaptive:not([data-dark]) .adaptive-menu>summary,
+html.mizan-adaptive:not([data-dark]) .adaptive-tools [data-act="save"],
+html.mizan-adaptive:not([data-dark]) .adaptive-tools [data-act="wa-share"] {color:#000}
 html.mizan-adaptive[data-dark]:not([data-theme-id="compare-teal"]) .adaptive-tools>button,
 html.mizan-adaptive[data-dark]:not([data-theme-id="compare-teal"]) .adaptive-menu>summary {color:color-mix(in srgb,var(--mobile-sub) 70%,var(--mobile-surface))}
 html.mizan-adaptive[data-dark]:not([data-theme-id="compare-teal"]) .adaptive-tools [data-act="save"],

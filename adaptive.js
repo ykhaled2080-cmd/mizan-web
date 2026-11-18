@@ -35,18 +35,11 @@ const MizanAdaptive = (() => {
   }
   function header() {
     const iconButton = (act, label, glyph) => '<button type="button" data-act="'+act+'" title="'+label+'" aria-label="'+label+'">'+icon(glyph,20)+'</button>';
-    const title = pageTitle();
-    const titleHtml = page==='saved'
-      ? '<span class="adaptive-title-line">'+t('العروض','Saved')+'</span><span class="adaptive-title-line">'+t('المحفوظة','Offers')+'</span>'
-      : title;
+    const titleHtml = pageTitle();
     const isOffer = ['calc','payments'].includes(page);
     const dark = document.documentElement.hasAttribute('data-dark');
-    const brandSrc = kind => window.MizanBrand ? MizanBrand.src(kind) : 'assets/mizan-original-mark-dark.png';
-    const brandKind = dark ? 'light' : 'dark';
-    const brandMask = brandSrc('dark');
-    const brandMark = '<span class="adaptive-brand-zone"><span class="adaptive-brand-wrap brand-with-switch" style="--brand-mask:url(\''+brandMask+'\')"><img class="adaptive-brand" data-brand-logo="'+brandKind+'" src="'+brandSrc(brandKind)+'" alt="Mizan"></span></span>';
     const toolsClass = isOffer ? 'adaptive-tools' : 'adaptive-tools tools-solo';
-    $('#header').innerHTML = '<div class="adaptive-head"><div class="adaptive-heading"><h1>'+titleHtml+'</h1>'+(isOffer?'<bdi dir="auto" id="adaptive-context"></bdi>':'')+'</div>'+brandMark+'<div class="'+toolsClass+'">'+
+    $('#header').innerHTML = '<div class="adaptive-head"><div class="adaptive-heading"><h1>'+titleHtml+'</h1>'+(isOffer?'<bdi dir="auto" id="adaptive-context"></bdi>':'')+'</div><div class="'+toolsClass+'">'+
       '<details class="adaptive-menu"><summary aria-label="'+t('خيارات','Options')+'">⋯</summary><div><button data-act="appearance">'+t('المظهر','Appearance')+'</button><button data-act="lang">'+t('English','العربية')+'</button><button data-act="theme-toggle">'+(dark?t('الوضع الفاتح','Light theme'):t('الوضع الداكن','Dark theme'))+'</button></div></details>'+
       (isOffer ? iconButton('save',t('حفظ العرض','Save offer'),'save')+iconButton('wa-share',t('مشاركة العرض','Share offer'),'share'):'')+
       '</div></div>';
