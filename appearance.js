@@ -5,11 +5,9 @@
   const mobileDefault=!!(window.Capacitor?.getPlatform?.()==='android'
     ||matchMedia('(max-width: 767px)').matches
     ||matchMedia('(min-width:768px) and (orientation:portrait) and (any-pointer:coarse)').matches);
-  const DEFAULT_THEME=mobileDefault?'compare-teal-light':'classic';
-  const DEFAULTS={version:1,theme:DEFAULT_THEME,offer:'A',details:'D',switchStyle:'A',navStyle:'A'};
+  const DEFAULTS={version:1,theme:'classic',offer:'A',details:'D',switchStyle:'A',navStyle:'A'};
   const THEMES=[
     {id:'classic',ar:'أخضر ميزان الكلاسيكي',en:'Classic Green',mode:'light',canvas:'#F5F6F2',surface:'#FFFFFF',text:'#192D29',primary:'#16483D',accent:'#7E9B86'},
-    {id:'compare-teal-light',ar:'فيروزي المقارنة — فاتح',en:'Compare Teal Light',mode:'light',canvas:'#EDF4F2',surface:'#FFFFFF',text:'#12332E',primary:'#146B60',accent:'#3B8F85'},
     {id:'stone-opal',ar:'حجر وأوبال',en:'Stone & Opal',mode:'light',canvas:'#F5F3EE',surface:'#FFFEFA',text:'#27313A',primary:'#2D6571',accent:'#B99C74'},
     {id:'ash-copper',ar:'رماد ونحاس',en:'Ash & Copper',mode:'light',canvas:'#F3F0E9',surface:'#FFFCF7',text:'#2B2E30',primary:'#64594F',accent:'#AC744F'},
     {id:'archive-blue',ar:'أزرق أرشيفي',en:'Archival Blue',mode:'light',canvas:'#F0F3F5',surface:'#FFFFFF',text:'#26343E',primary:'#345C81',accent:'#B79A72'},
@@ -38,8 +36,8 @@
   let stored=read();
   let committed=stored||{...DEFAULTS};
   let previewState=stored?{...stored}:null;
-  let lastLight=stored&&byId(stored.theme).mode==='light'?stored.theme:DEFAULT_THEME;
-  let lastDark=stored&&byId(stored.theme).mode==='dark'?stored.theme:(byId(DEFAULTS.theme).mode==='dark'?DEFAULTS.theme:(mobileDefault?'compare-teal':'petrol-night'));
+  let lastLight=stored&&byId(stored.theme).mode==='light'?stored.theme:'classic';
+  let lastDark=stored&&byId(stored.theme).mode==='dark'?stored.theme:'compare-teal';
   let sheet=null;
   function tokens(t){
     const dark=t.mode==='dark';
@@ -73,7 +71,7 @@
   function rememberFamily(s){const t=byId(s.theme);if(t.mode==='dark')lastDark=t.id;else lastLight=t.id}
   function commit(){committed={...(previewState||committed)};stored={...committed};previewState={...committed};rememberFamily(committed);write(committed);apply(committed);notify(false);close();return {...committed}}
   function cancel(){const had=!!stored;previewState=stored?{...committed}:null;if(!had){const root=document.documentElement;VARNAMES.forEach(v=>root.style.removeProperty(v));root.removeAttribute('data-dark');root.style.colorScheme=''}apply(committed);notify(false);close()}
-  function reset(){committed={...DEFAULTS};stored={...committed};previewState={...committed};lastLight=DEFAULT_THEME;lastDark=mobileDefault?'compare-teal':'petrol-night';write(committed);apply(committed);notify(false);refresh();return {...committed}}
+  function reset(){committed={...DEFAULTS};stored={...committed};previewState={...committed};lastLight='classic';lastDark='compare-teal';write(committed);apply(committed);notify(false);refresh();return {...committed}}
   function toggleMode(){
     const s=get();
     const target=byId(s.theme).mode==='dark'?lastLight:lastDark;
