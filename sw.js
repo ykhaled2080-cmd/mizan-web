@@ -1,5 +1,5 @@
 /* Mizan PWA shell. Registered only in a normal browser/PWA, never in Capacitor. */
-const CACHE = 'mizan-pwa-1.0.97-1';
+const CACHE = 'mizan-pwa-1.0.98-1';
 const CORE = [
   './',
   './index.html',
