@@ -59,7 +59,7 @@ function fontPickerHtml(){
   '<div class="font-picker-actions"><button type="button" class="btn" data-act="font-reset">استعادة الافتراضي</button></div>'+
  '</div>';
 }
-let lang=read('lang','ar'), theme=read('theme','system'), page='calc';
+let lang=read('lang','ar'), theme=read('theme','system'), page=MizanAdaptive.initial();
 let includeIntro=read('includeIntro',true), includeOutro=read('includeOutro',true);
 const t=(ar,en)=>lang==='ar'?ar:en;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,6 +69,7 @@ let defaultIntro=read('defaultIntro',''), defaultOutro=read('defaultOutro','');
 const newOffer=()=>{const o=structuredClone(defaults);o.intro=defaultIntro;o.outro=defaultOutro;return normalizeOffer(o)};
 let p=normalizeOffer(read('draft',newOffer())), saved=read('saved',[]).map(normalizeOffer), selected=new Set(),beforeDelete=null;
 let editing=null;
+let typeSwitchFrom=null;
 let itemFocusAfterRender=null;
 let allocYear='',allocAmount='',allocMonths=new Set(['0']);
 const defaultOpenSections=()=>new Set();
@@ -83,7 +84,7 @@ const readPlans=()=>{
  }).filter(plan=>plan.months>0);
 };
 let plans=readPlans(), search='', savedSel=new Set();
-const paths={logo:'M3 20V9l7-5v16M10 20V8l6-4v16M16 20v-9l5-3v12M2 21h20',calc:'M4 4h16v16H4zM8 8h8M8 12h2m4 0h2m-8 4h2m4 0h2',compare:'M4 20V9h4v11m2 0V4h4v16m2 0v-8h4v8',saved:'M4 5h6l2 2h8v12H4z',save:'M4 4h13l3 3v13H4zM8 4v6h8V4M8 20v-6h8v6',share:'M8 12h9m-4-4 4 4-4 4M6 5H3v14h3',check:'M20 6 9 17l-5-5',sun:'M12 3v2m0 14v2M3 12h2m14 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',moon:'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z',plus:'M12 5v14M5 12h14',trash:'M3 6h18M9 6V3h6v3M6 6l1 14h10l1-14M10 9v8m4-8v8',list:'M8 6h13M8 12h13M8 18h13M3 6h1m-1 6h1m-1 6h1',undo:'M8 4 3 9l5 5M4 9h9a6 6 0 0 1 0 12',palette:'M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 1.4-3 1.8 1.8 0 0 1 1.4-3H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9ZM7.5 10.5h.01M9.5 7h.01M13 6.5h.01M16 8h.01',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',note:'M5 3h10l4 4v14H5zM15 3v5h5M8 12h8M8 16h6',pen:'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16zM13 7l4 4'};
+const paths={logo:'M3 20V9l7-5v16M10 20V8l6-4v16M16 20v-9l5-3v12M2 21h20',details:'M5 3h10l4 4v14H5zM15 3v5h5M8 12h8M8 16h6',calc:'M4 4h16v16H4zM8 8h8M8 12h2m4 0h2m-8 4h2m4 0h2',compare:'M4 20V9h4v11m2 0V4h4v16m2 0v-8h4v8',saved:'M4 5h6l2 2h8v12H4z',save:'M4 4h13l3 3v13H4zM8 4v6h8V4M8 20v-6h8v6',bookmark:'M6 3h12v18l-6-4-6 4V3Z',share:'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6M8.6 13.5l6.8 4M15.4 6.5l-6.8 4',calendar:'M7 2v3M17 2v3M3 9h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2ZM8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01',check:'M20 6 9 17l-5-5',sun:'M12 3v2m0 14v2M3 12h2m14 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',moon:'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z',plus:'M12 5v14M5 12h14',trash:'M3 6h18M9 6V3h6v3M6 6l1 14h10l1-14M10 9v8m4-8v8',list:'M8 6h13M8 12h13M8 18h13M3 6h1m-1 6h1m-1 6h1',undo:'M8 4 3 9l5 5M4 9h9a6 6 0 0 1 0 12',palette:'M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 1.4-3 1.8 1.8 0 0 1 1.4-3H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9ZM7.5 10.5h.01M9.5 7h.01M13 6.5h.01M16 8h.01',up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',note:'M5 3h10l4 4v14H5zM15 3v5h5M8 12h8M8 16h6',pen:'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16zM13 7l4 4'};
 const icon=(k,size=18)=>'<svg aria-hidden="true" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" viewBox="0 0 24 24"><path d="'+paths[k]+'"/></svg>';
 const brandMark=()=>'<svg class="brand-mark" aria-hidden="true" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 38V24l8-6v20M14 38V15l11-6v29M25 38V26l9-5v17M4 40h40"/><path d="M9 27l5-3.5M9 32l5-3.5M17 21l8-4.5M17 27l8-4.5M28 30l6-3.5M28 35l6-3.5" opacity=".5" stroke-width="1.3"/><circle cx="39" cy="9" r="2.4" fill="#d6b778" stroke="none"/></svg>';
 const names={down:()=>t('مقدم التعاقد','Down payment'),delivery:()=>t('دفعة الاستلام','Handover payment'),installment:()=>t('قسط','Installment'),payment:()=>t('دفعة','Payment'),maintenance:()=>t('وديعة الصيانة','Maintenance deposit'),fee:()=>t('عمولة الوساطة','Brokerage commission'),garage:()=>t('الجراج','Garage'),storage:()=>t('المخزن','Storage room'),utilities:()=>t('المرافق','Utilities')};
@@ -126,7 +127,19 @@ const B=(act,label,ic='',cls='')=>'<button type="button" class="btn '+cls+'" dat
 const textField=(key,label,value=p[key],type='text',wide=false)=>'<label class="field '+(wide?'wide':'')+'"><span>'+label+'</span><input data-key="'+key+'" type="'+type+'" '+(type==='text'?'':'dir="ltr"')+' value="'+esc(value)+'"></label>';
 const numberField=(key,label,value=p[key],wide=false)=>textField(key,label,value,'text',wide).replace('class="field ','class="field has-grip ').replace('type="text"','type="text" dir="ltr" inputmode="decimal"').replace('</label>','<span class="grip" data-grip="'+key+'" aria-hidden="true">↔</span></label>');
 const monthParts=value=>{const m=/^(\d{4})-(\d{2})$/.exec(String(value||''));return m?{year:m[1],month:m[2]}:{year:'',month:''}};
-const dateSeg=(attrs,month,day,label)=>{const mp=monthParts(month);return '<span class="date-seg" dir="ltr" data-date-seg="1" '+attrs+'><input class="date-part date-day" data-date-part="day" type="text" inputmode="numeric" maxlength="2" value="'+esc(day||'')+'" placeholder="DD" aria-label="'+esc(label)+' · '+t('اليوم','Day')+'"><span class="date-sep" aria-hidden="true">/</span><input class="date-part date-month" data-date-part="month" type="text" inputmode="numeric" maxlength="2" value="'+esc(mp.month)+'" placeholder="MM" aria-label="'+esc(label)+' · '+t('الشهر','Month')+'"><span class="date-sep" aria-hidden="true">/</span><input class="date-part date-year" data-date-part="year" type="text" inputmode="numeric" maxlength="4" value="'+esc(mp.year)+'" placeholder="YYYY" aria-label="'+esc(label)+' · '+t('السنة','Year')+'"></span>';};
+const dateSeg=(attrs,month,day,label)=>{
+ const mp=monthParts(month);
+ const mobile=typeof MizanAdaptive!=='undefined'&&MizanAdaptive.enabled();
+ if(!mobile){
+  return '<span class="date-seg" dir="ltr" data-date-seg="1" '+attrs+'><input class="date-part date-day" data-date-part="day" type="text" inputmode="numeric" maxlength="2" value="'+esc(day||'')+'" placeholder="DD" aria-label="'+esc(label)+' · '+t('اليوم','Day')+'"><span class="date-sep" aria-hidden="true">/</span><input class="date-part date-month" data-date-part="month" type="text" inputmode="numeric" maxlength="2" value="'+esc(mp.month)+'" placeholder="MM" aria-label="'+esc(label)+' · '+t('الشهر','Month')+'"><span class="date-sep" aria-hidden="true">/</span><input class="date-part date-year" data-date-part="year" type="text" inputmode="numeric" maxlength="4" value="'+esc(mp.year)+'" placeholder="YYYY" aria-label="'+esc(label)+' · '+t('السنة','Year')+'"></span>';
+ }
+ const iso=mp.year&&mp.month?mp.year+'-'+mp.month+'-'+String(Math.min(31,Math.max(1,num(day)||1))).padStart(2,'0'):'';
+ const part=(name,cls,max,ph,aria)=>'<input class="date-part '+cls+'" data-date-part="'+name+'" type="text" inputmode="numeric" maxlength="'+max+'" value="'+esc(name==='day'?(day||''):name==='month'?mp.month:mp.year)+'" placeholder="'+ph+'" aria-label="'+esc(label)+' · '+aria+'">';
+ return '<span class="date-seg" dir="ltr" data-date-seg="1" '+attrs+'>'+
+  '<span class="date-fields">'+part('day','date-day',2,'DD',t('اليوم','Day'))+'<span class="date-sep" aria-hidden="true">/</span>'+part('month','date-month',2,'MM',t('الشهر','Month'))+'<span class="date-sep" aria-hidden="true">/</span>'+part('year','date-year',4,'YYYY',t('السنة','Year'))+'</span>'+
+  '<input class="date-native" type="date" tabindex="-1" aria-hidden="true" data-date-native value="'+esc(iso)+'">'+
+  '<button type="button" class="date-calendar" data-date-calendar aria-label="'+esc(label)+' · '+t('فتح التقويم','Open calendar')+'" title="'+t('فتح التقويم','Open calendar')+'">'+icon('calendar',18)+'</button></span>';
+};
 const monthDayField=(key,label,month=p[key],day=p[key+'Day'],dayKey=key+'Day')=>'<label class="field"><span>'+label+'</span>'+dateSeg('data-date-key="'+key+'" data-date-day-key="'+dayKey+'"',month,day,label)+'</label>';
 const options=(key,label,items,val=p[key])=>'<label class="field"><span>'+label+'</span><select data-key="'+key+'">'+items.map(([v,l])=>'<option value="'+v+'" '+(String(val)===String(v)?'selected':'')+'>'+l+'</option>').join('')+'</select></label>';
 const noteField=(key,label)=>{
@@ -138,19 +151,34 @@ const noteField=(key,label)=>{
   '<button type="button" class="mini-btn" data-act="save-main-preset" data-note-type="'+key+'">'+t('حفظ Preset','Save preset')+'</button></div></div>';
 };
 const frequency=()=>({1:t('شهري','Monthly'),3:t('ربع سنوي','Quarterly'),6:t('نصف سنوي','Semiannual'),12:t('سنوي','Annual')});
-const titles=()=>({calc:t('خطة السداد','Payment plan'),compare:t('مقارنة العروض','Compare offers'),saved:t('العروض المحفوظة','Saved offers')});
+const tabletMode=()=>!MizanAdaptive.enabled()&&!(window.chrome?.webview&&/Windows/i.test(navigator.userAgent))&&matchMedia('(min-width:768px) and (pointer:coarse)').matches;
+const titles=()=>{
+ if(!tabletMode()) return {calc:t('خطة السداد','Payment plan'),compare:t('مقارنة العروض','Compare offers'),saved:t('العروض المحفوظة','Saved offers')};
+ const out={calc:t('خطة السداد','Payment plan')};
+ if(p.offerType!=='cash') out.payments=t('الدفعات','Payments');
+ out.saved=t('العروض المحفوظة','Saved offers');
+ out.compare=t('مقارنة العروض','Compare offers');
+ return out;
+};
+function brandHeader(){return '';}
 function drawHeader(){
  applyUiFonts();
- const dark=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+ const appearanceMode=window.MizanAppearance?.mode?.();
+ const dark=appearanceMode?appearanceMode==='dark':(theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches));
  document.documentElement.toggleAttribute('data-native',!!window.chrome?.webview);
  document.documentElement.lang=lang; document.documentElement.dir=lang==='ar'?'rtl':'ltr';
  document.documentElement.toggleAttribute('data-dark',dark);
+ try{const meta=document.querySelector('meta[name="theme-color"]');const surface=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();if(meta&&surface)meta.setAttribute('content',surface)}catch{}
  document.title=t('ميزان | إعداد العروض العقارية','Mizan | Real Estate Offer Builder');
  try{if(window.chrome&&window.chrome.webview)window.chrome.webview.postMessage({type:'mizan-ui',dark,lang})}catch{}
+ const adaptive=MizanAdaptive.enabled();
+ document.documentElement.classList.toggle('mizan-adaptive',adaptive);
+ if(adaptive){MizanAdaptive.header();return}
  const themeLabel=dark?t('الوضع الفاتح','Light mode'):t('الوضع الداكن','Dark mode');
- $('#header').innerHTML='<div class="top"><nav class="desktop-nav">'+Object.entries(titles()).map(([k,v])=>'<button class="nav '+(k===page?'on':'')+'" data-act="'+k+'">'+icon(k)+v+'</button>').join('')+'</nav><div class="tools">'+B('lang',t('EN','عربي'),'','tools-btn')+'<button type="button" class="btn iconbtn tools-btn" data-act="theme-toggle" aria-label="'+themeLabel+'" title="'+themeLabel+'">'+icon(dark?'sun':'moon')+'</button>'+(logoPickerHidden?'':'<span class="tools-sep" aria-hidden="true"></span><button type="button" class="btn iconbtn tools-btn" data-act="logo-picker" aria-label="'+t('تخصيص شكل الشعار','Customize logo')+'" title="'+t('تخصيص شكل الشعار','Customize logo')+'" aria-expanded="false">'+icon('palette')+'</button>')+'</div></div>'+(logoPickerHidden?'':logoPickerHtml());
- const mobile=[['calc',t('الخطة','Plan'),'calc'],['terms',t('الشروط','Terms'),'list'],['compare',t('المقارنة','Compare'),'compare'],['saved',t('المحفوظة','Saved'),'saved'],['wa-share',t('مشاركة','Share'),'share']];
- $('#mobilenav').innerHTML='<nav class="mobile-nav" aria-label="'+t('التنقل','Navigation')+'">'+mobile.map(([k,label,ic])=>'<button type="button" class="mobile-tab '+(k===page?'on':'')+(k==='wa-share'?' accent':'')+'" data-act="'+k+'" '+(k===page?'aria-current="page"':'')+'>'+icon(ic,20)+'<span>'+label+'</span></button>').join('')+'</nav>';
+ $('#header').innerHTML='<div class="top">'+brandHeader()+'<nav class="desktop-nav">'+Object.entries(titles()).map(([k,v])=>'<button class="nav '+(k===page?'on':'')+'" data-act="'+k+'">'+icon(k)+v+'</button>').join('')+'</nav><div class="tools">'+B('lang',t('EN','عربي'),'','tools-btn')+'<button type="button" class="btn iconbtn tools-btn" data-act="theme-toggle" aria-label="'+themeLabel+'" title="'+themeLabel+'">'+icon(dark?'sun':'moon')+'</button>'+(logoPickerHidden?'':'<span class="tools-sep" aria-hidden="true"></span><button type="button" class="btn iconbtn tools-btn" data-act="logo-picker" aria-label="'+t('تخصيص شكل الشعار','Customize logo')+'" title="'+t('تخصيص شكل الشعار','Customize logo')+'" aria-expanded="false">'+icon('palette')+'</button>')+'</div></div>'+(logoPickerHidden?'':logoPickerHtml());
+ if(window.MizanBrand)MizanBrand.apply();
+ $('#mobilenav').innerHTML='';
+
 }
 function logoPickerHtml(){
  return '<div class="logo-picker" id="logoPicker" hidden>'+
@@ -170,10 +198,20 @@ function pinLogoPicker(){
  drawHeader();
  note(t('تم تثبيت شكل الشعار','Logo style pinned'));
 }
-const logoMarkup=(skin=logoSkin,cls='')=>'<div class="hero-brand '+cls+'" data-skin="'+skin+'" role="img" aria-label="Mizan"><i class="hb-layer hb-base" aria-hidden="true"></i><i class="hb-layer hb-outline" aria-hidden="true"></i><i class="hb-layer hb-letters" aria-hidden="true"></i><i class="hb-layer hb-left" aria-hidden="true"></i><i class="hb-layer hb-i" aria-hidden="true"></i><i class="hb-layer hb-z" aria-hidden="true"></i><i class="hb-layer hb-corner" aria-hidden="true"></i><i class="hb-layer hb-interiors" aria-hidden="true"></i></div>';
+const logoMarkup=(skin=logoSkin,cls='')=>{
+ if(window.MizanBrand&&MizanBrand.get()==='buildings'&&!String(cls).includes('skin-preview'))
+  return '<div class="hero-brand brand-original '+cls+'" role="img" aria-label="Mizan"><i class="hb-layer hb-base" aria-hidden="true"></i></div>';
+ return '<div class="hero-brand '+cls+'" data-skin="'+skin+'" role="img" aria-label="Mizan"><i class="hb-layer hb-base" aria-hidden="true"></i><i class="hb-layer hb-outline" aria-hidden="true"></i><i class="hb-layer hb-letters" aria-hidden="true"></i><i class="hb-layer hb-left" aria-hidden="true"></i><i class="hb-layer hb-i" aria-hidden="true"></i><i class="hb-layer hb-z" aria-hidden="true"></i><i class="hb-layer hb-corner" aria-hidden="true"></i><i class="hb-layer hb-interiors" aria-hidden="true"></i></div>';
+};
+window.addEventListener('mizan:brandchange',()=>{
+ document.querySelectorAll('.hero-brand').forEach(el=>{
+  if(el.classList.contains('skin-preview'))return;
+  el.outerHTML=logoMarkup();
+ });
+});
 function hero(s){
  if(s.cash){
-  const label=p.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total');
+  const label=t('إجمالي العرض','Offer total');
   return '<section class="cash-total"><div class="cash-total-title">'+label+'</div><div class="cash-total-value">'+moneyPair(s.price,true)+'</div></section>';
  }
  const k=t('قيمة القسط','Installment amount'),vk=t('قيمة الأقساط','Installment values');
@@ -188,7 +226,11 @@ function hero(s){
  const instBig=(s.valid&&s.count)?(fixed?moneyPair(fixedVal,true):t('متغيرة','Variable')):'—';
  const termMonths=s.termMonths||Math.round((+p.years||0)*12);
  const termText=termMonths>0?(termMonths%12===0?(termMonths/12===1?t('سنة واحدة','one year'):termMonths/12===2?t('سنتان','two years'):(termMonths/12)+' '+t('سنوات','years')):termMonths+' '+t('شهرًا','months')):'';
- return '<section class="hero"><div class="herogrid"><div><div class="kicker">'+(fixed?k:vk)+' · '+frequency()[p.period]+'</div><div class="big">'+instBig+'</div><div class="kicker">'+[termText,s.count+' '+t('قسطًا','installments')].filter(Boolean).join(' · ')+'</div></div><div class="metrics">'+[[t('سعر الوحدة','Unit price'),s.price],[names.down(),s.down],[t('الموزّع على الأقساط','Financed amount'),s.financed]].map(([k,v])=>'<div><span>'+k+'</span>'+money(v)+'</div>').join('')+'</div>'+logoMarkup()+'</div></section>';
+ const periodHtml='<div class="kicker hero-head"><span class="hero-amount-label">'+(fixed?k:vk)+'</span><span class="hero-sep"> · </span><span class="hero-period"><span class="hero-period-label">'+t('دورية القسط','Payment frequency')+'</span><span class="hero-period-value">'+frequency()[p.period]+'</span></span></div>';
+ const termHtml=termText?'<span class="hero-fact hero-term"><span class="hero-fact-label">'+t('مدة التقسيط','Term')+'</span><span class="hero-fact-value">'+termText+'</span></span>':'';
+ const countText=s.count+' '+t('قسطًا','installments');
+ const metaHtml='<div class="kicker hero-meta">'+termHtml+(termHtml?'<span class="hero-sep"> · </span>':'')+'<span class="hero-fact hero-count"><span class="hero-fact-label">'+t('عدد الأقساط','Installments count')+'</span><span class="hero-fact-value">'+countText+'</span></span></div>';
+ return '<section class="hero"><div class="herogrid"><div class="hero-main">'+periodHtml+'<div class="big">'+instBig+'</div>'+metaHtml+'</div><div class="metrics">'+[[t('سعر الوحدة','Unit price'),s.price],[names.down(),s.down],[t('الموزّع على الأقساط','Financed amount'),s.financed]].map(([k,v])=>'<div><span>'+k+'</span>'+money(v)+'</div>').join('')+'</div>'+logoMarkup()+'</div></section>';
 }
 function showTotalValue(s){return s.total}
 function details(id,name,body){return '<details class="line" data-section="'+id+'" '+(sectionOpen.has(id)?'open':'')+'><summary>'+name+'</summary><div class="fields">'+body+'</div></details>'}
@@ -197,7 +239,8 @@ function increaseBlock(s){
 }
 function typeSwitch(){
  const cash=p.offerType==='cash';
- return '<div class="offer-type" role="group" aria-label="'+t('نوع العرض','Offer type')+'">'+
+ const from=typeSwitchFrom&&typeSwitchFrom!==p.offerType?' data-switch-from="'+typeSwitchFrom+'"':'';
+ return '<div class="offer-type"'+from+' role="group" aria-label="'+t('نوع العرض','Offer type')+'">'+
   '<button type="button" data-act="type-cash" class="'+(cash?'on':'')+'" aria-pressed="'+cash+'" title="'+t('عرض كاش','Cash offer')+'">'+t('كاش','Cash')+'</button>'+
   '<button type="button" data-act="type-installments" class="'+(!cash?'on':'')+'" aria-pressed="'+(!cash)+'" title="'+t('عرض تقسيط','Installment offer')+'">'+t('تقسيط','Installments')+'</button>'+
  '</div>';
@@ -259,11 +302,11 @@ function allocationEditor(s){
 }
 function editor(s){
  const cash=s.cash;
- const coreFields='<div class="fields core-grid">'+
-  textField('client',t('اسم العميل','Client name'))+
+ const identityFields=textField('client',t('اسم العميل','Client name'))+
   textField('phone',t('رقم واتساب','WhatsApp number'))+
   textField('unit',t('الوحدة','Unit'),p.unit,'text')+
-  numberField('price',t('سعر الوحدة','Unit price')+' · '+curr(),p.price)+
+  numberField('price',t('سعر الوحدة','Unit price')+' · '+curr(),p.price);
+ const coreFields='<div class="fields core-grid">'+identityFields+
   (cash?'':numberField('rate',t('نسبة مقدم التعاقد','Down payment')+' %',p.mode==='rate'?p.down:+(s.down/s.price*100||0).toFixed(5))+
    numberField('amount',t('مبلغ مقدم التعاقد','Down payment amount'),Math.round(s.down/100)))+
   '</div>';
@@ -283,6 +326,27 @@ function editor(s){
   details('items',t('الجراج والمخزن والمرافق','Garage, storage & utilities'),'<div class="wide">'+itemEditor()+'</div>')+
   details('legal',t('الحالة المالية والقانونية','Financial & legal status'),'<div class="wide">'+legalEditor()+'</div>')+
   details('notes',t('المقدمة والخاتمة','Intro & closing'),noteField('intro',t('مقدمة','Introduction'))+noteField('outro',t('خاتمة','Closing'))+checkline('data-show-total',t('إظهار الإجمالي في العرض','Show the overall total'),p.showTotal!==false))+'</aside>';
+}
+function detailGroupBodies(s){
+ const cash=s.cash;
+ return {
+  fees:{name:names.fee()+(s.commission?' · '+curr()+' '+fmt(s.commission/100):''),body:options('feeMode',t('طريقة الحساب','Calculation'),[['rate',t('نسبة من السعر','Percentage')],['amount',t('مبلغ ثابت','Fixed amount')]])+numberField('fee',names.fee()+' · '+(p.feeMode==='rate'?'%':curr()),p.feeMode==='amount'?Math.round(p.fee):p.fee)+options('payer',t('يتحملها','Paid by'),[['buyer',t('المشتري','Buyer')],['seller',t('البائع','Seller')]])},
+  handover:{name:t('الاستلام والصيانة والتواريخ','Handover, maintenance & dates'),body:
+   (cash?'':numberField('delivery',names.delivery()+' %')+options('deliveryDateMode',t('موعد دفعة الاستلام','Handover payment date'),[['handover',t('عند الاستلام','At handover')],['date',t('تاريخ محدد','Specific date')],['none',t('بدون ذكر','No timing')]])+(p.deliveryDateMode==='date'?monthDayField('deliveryDate',t('تاريخ دفعة الاستلام','Handover payment date'),p.deliveryDate||p.handover,p.deliveryDay,'deliveryDay'):''))+
+   options('maintenanceState',names.maintenance(),['unspecified','included','extra'].map(v=>[v,itemStateLabel(v,lang)]))+
+   (p.maintenanceState==='extra'?numberField('maintenance',names.maintenance()+' %')+options('maintenanceDateMode',t('موعد وديعة الصيانة','Maintenance due'),[['handover',t('عند الاستلام','At handover')],['date',t('تاريخ محدد','Specific date')],['split',t('خلال أول سنتين','Over first two years')],['none',t('بدون ذكر','No timing')]])+(p.maintenanceDateMode==='date'?monthDayField('maintenanceDate',t('تاريخ وديعة الصيانة','Maintenance date'),p.maintenanceDate||p.handover,p.maintenanceDay,'maintenanceDay'):''):'')+
+   monthDayField('start',t('تاريخ التعاقد','Contract date'),p.start,p.startDay)+
+   monthDayField('handover',t('تاريخ الاستلام','Handover date'),p.handover,p.handoverDay)},
+  items:{name:t('الجراج والمخزن والمرافق','Garage, storage & utilities'),body:'<div class="wide">'+itemEditor()+'</div>'},
+  legal:{name:t('الحالة المالية والقانونية','Financial & legal status'),body:'<div class="wide">'+legalEditor()+'</div>'},
+  notes:{name:t('المقدمة والخاتمة','Intro & closing'),body:noteField('intro',t('مقدمة','Introduction'))+noteField('outro',t('خاتمة','Closing'))+checkline('data-show-total',t('إظهار الإجمالي في العرض','Show the overall total'),p.showTotal!==false)}
+ };
+}
+function detailGroups(s){const groups=detailGroupBodies(s);return Object.keys(groups).map(id=>({id,name:groups[id].name,body:groups[id].body}))}
+function advancedOfferFields(s){return detailGroups(s).map(g=>details(g.id,g.name,g.body)).join('')}
+function detailsPage(s){
+ const layout=window.MizanAppearance?MizanAppearance.get().details:'D';
+ return '<div class="titleline"><h1>'+t('تفاصيل العرض','Offer details')+'</h1></div><div class="details-page details-layout-'+layout+'">'+(window.MizanMobileScreens?.details?MizanMobileScreens.details(s,layout):advancedOfferFields(s))+'</div>';
 }
 function rowEditorPanel(s){
  if(!editing)return '';
@@ -408,6 +472,9 @@ function tableSummary(s){
  const totalRow='<div class="ts-row ts-total"><span class="ts-label">'+t('إجمالي سداد الوحدة','Unit payment total')+'</span><b class="ts-val">'+moneyPair(s.total)+'</b></div>';
  return '<div class="table-summary">'+totalRow+rows.map(([label,value])=>'<div class="ts-row"><span class="ts-label">'+label+'</span><span class="ts-val">'+esc(value)+'</span></div>').join('')+'</div>';
 }
+function paymentsPage(s){
+ return '<div class="titleline"><h1>'+t('الدفعات','Payments')+'</h1></div><div class="tablet-payments-page">'+MizanPayments.html(s)+'</div>';
+}
 function calculator(){
  const s=schedule(p), good=s.valid;
  const paymentRows=schedulePaymentRows(s);
@@ -506,13 +573,16 @@ function offerKey(o){
  return JSON.stringify([o.unit,o.client,o.price,o.mode,o.down,o.delivery,o.maintenance,o.maintenanceState,o.offerType,o.showTotal,o.items,o.legal,o.period,o.years,o.termMonths,o.feeMode,o.fee,o.payer,o.start,o.startDay,o.handover,o.handoverDay,o.deliveryDateMode,o.deliveryDate,o.deliveryDay,o.maintenanceDateMode,o.maintenanceDate,o.maintenanceDay,o.allocations,o.customRows,o.types,o.edits]);
 }
 function render(){
- if(page==='calc'){
+ if(tabletMode()&&['details','payments'].includes(page)&&!titles()[page])page='calc';
+ if(page==='calc'&&!MizanAdaptive.enabled()){
   const sections=[...document.querySelectorAll('[data-section]')];
   if(sections.length)sectionOpen=new Set(sections.filter(e=>e.open).map(e=>e.dataset.section));
  }
  const scroll=$('.tablewrap')?.scrollTop||0;
  hideScheduleRowTools();
- drawHeader(); A.innerHTML=page==='calc'?calculator():page==='compare'?compare():'<div class="titleline"><h1>'+titles().saved+'</h1></div><div id="records">'+savedRows()+'</div>';
+ drawHeader();
+ if(MizanAdaptive.enabled()) MizanAdaptive.renderScreen();
+ else A.innerHTML=page==='calc'?calculator():page==='details'?detailsPage(schedule(p)):page==='payments'?paymentsPage(schedule(p)):page==='compare'?compare():'<div class="titleline"><h1>'+titles().saved+'</h1></div><div id="records">'+savedRows()+'</div>';
  if($('.tablewrap'))$('.tablewrap').scrollTop=scroll;
  const all=$('[data-all]');
  if(all){
@@ -695,6 +765,14 @@ function refreshScheduleRowTools(){
  showScheduleRowTools(rowToolsRow);
 }
 function refreshTerms(){
+ if(MizanAdaptive.enabled()){
+  const state=schedule(p);
+  MizanAdaptive.context();
+  if($('[data-screen="calc"]')) MizanMobileScreens.refreshOffer(state);
+  if($('[data-screen="details"]')) MizanMobileScreens.refreshDetails?.(state);
+  if($('[data-screen="payments"]')) MizanPayments.refresh(state);
+  return;
+ }
  // Keep the active form controls mounted when tabbing or clicking another field.
  const wrap=$('.workspace .tablewrap');
  const top=wrap?.scrollTop||0,left=wrap?.scrollLeft||0;
@@ -794,7 +872,7 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
  const dueJoin=(base,due)=>due?base+' '+due:base;
  const includes=Array.isArray(s.includes)?s.includes:[];
  if(s.cash){
-  const totalLabel=src.showTotal===false?t('سعر الوحدة','Unit price'):t('إجمالي العرض','Offer total');
+  const totalLabel=t('إجمالي العرض','Offer total');
   summary.push(totalLabel+': '+value(s.price));
   const cashCharges=[];
   for(const e of (Array.isArray(s.extras)?s.extras:[])){
@@ -824,7 +902,7 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
    for(const c of cashCharges)summary.push(dueJoin('- '+c.name+': '+value(c.amount),c.due));
   }
  }else{
-  summary.push(t('سعر الوحدة','Unit price')+': '+value(s.price));
+  if(src.showTotal!==false)summary.push(t('سعر الوحدة','Unit price')+': '+value(s.price));
   if(s.down)summary.push(names.down()+(src.mode==='rate'?pct(s.downPct):'')+': '+value(s.down));
   if(inst.length){
    summary.push('');
@@ -871,7 +949,7 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
  const parts=[];
  if(intro&&showIntro)parts.push(intro);
  parts.push(summary.join('\n'));
- if(s.gap&&src.showTotal!==false)parts.push(t('غير مجدول','Unscheduled')+': '+value(s.gap));
+ if(s.gap)parts.push(t('غير مجدول','Unscheduled')+': '+value(s.gap));
  if(withRows&&!s.cash&&s.rows.length){
   const allInstallments=s.rows.every(r=>r.type==='installment');
   const movementCount=s.rows.length;
@@ -927,27 +1005,27 @@ function clientText(s,withRows=false,language=lang,layout='vertical',showIntro=i
  if(outro&&showOutro)parts.push(outro);
  return directedText(parts.join('\n\n'),language);
 }
-function clearRowSource(r,src){
+function clearRowSource(r,src,paymentOffer=p){
  if(!r||!src)return;
- if(src.kind==='down'){p.down=0;p.mode='amount'}
- else if(src.kind==='delivery')p.delivery=0;
- else if(src.kind==='maintenance'){p.maintenance=0;p.maintenanceState='unspecified';p.maintenanceDateMode='handover'}
- else if(src.kind==='fee')p.fee=0;
- else if(src.kind==='item'&&p.items[src.key])p.items[src.key]={state:'unspecified',amount:0,due:'',day:''};
- else if(src.kind==='custom')p.customRows=(p.customRows||[]).filter(x=>x.id!==r.id);
- if(p.edits)delete p.edits[r.id];
- if(p.types)delete p.types[r.id];
+ if(src.kind==='down'){paymentOffer.down=0;paymentOffer.mode='amount'}
+ else if(src.kind==='delivery')paymentOffer.delivery=0;
+ else if(src.kind==='maintenance'){paymentOffer.maintenance=0;paymentOffer.maintenanceState='unspecified';paymentOffer.maintenanceDateMode='handover'}
+ else if(src.kind==='fee')paymentOffer.fee=0;
+ else if(src.kind==='item'&&paymentOffer.items[src.key])paymentOffer.items[src.key]={state:'unspecified',amount:0,due:'',day:''};
+ else if(src.kind==='custom')paymentOffer.customRows=(paymentOffer.customRows||[]).filter(x=>x.id!==r.id);
+ if(paymentOffer.edits)delete paymentOffer.edits[r.id];
+ if(paymentOffer.types)delete paymentOffer.types[r.id];
 }
-function addCustomPayment(date,type,valueCents){
+function addCustomPayment(date,type,valueCents,paymentOffer=p){
  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
- p.customRows=[...(p.customRows||[]),{id,date,type:type==='payment'?'payment':'installment',value:valueCents/100}];
+ paymentOffer.customRows=[...(paymentOffer.customRows||[]),{id,date,type:type==='payment'?'payment':'installment',value:valueCents/100}];
  return id;
 }
-function applyRowEdit(r,type,parsed,valueCents){
- const s=schedule(p),src=rowSource(r);
+function applyRowEdit(r,type,parsed,valueCents,paymentOffer=p){
+ const s=schedule(paymentOffer),src=rowSource(r);
  if(!r||!src||!parsed)return false;
  const date=fullDate(parsed.month,parsed.day);
- if(date<p.start){invalid();return false}
+ if(date<paymentOffer.start){invalid();return false}
  const price=s.price||0;
  const pctOf=v=>price?v/price*100:0;
  const hasDown=s.rows.some(x=>x.id==='down'&&x.id!==r.id);
@@ -957,58 +1035,58 @@ function applyRowEdit(r,type,parsed,valueCents){
  if(src.kind==='maintenanceSplit'){
   if(type!=='maintenance'){note(t('لا يمكن تحويل دفعة صيانة موزعة إلى نوع آخر.','A split maintenance payment cannot be converted to another type.'));return false}
   const total=Math.max(0,s.maintenance+valueCents-r.value);
-  p.maintenance=pctOf(total);
-  p.maintenanceState='extra';p.maintenanceDateMode='split';p.split=true;
-  p.edits={...p.edits,[r.id]:{value:valueCents,date}};
+  paymentOffer.maintenance=pctOf(total);
+  paymentOffer.maintenanceState='extra';paymentOffer.maintenanceDateMode='split';paymentOffer.split=true;
+  paymentOffer.edits={...paymentOffer.edits,[r.id]:{value:valueCents,date}};
   return true;
  }
  if(src.kind==='installment'){
   if(!['installment','payment','delivery'].includes(type)){note(t('قسط الخطة يمكن تحويله إلى قسط أو دفعة أو دفعة استلام.','A plan installment can become an installment, payment or handover payment.'));return false}
-  p.edits={...p.edits,[r.id]:{value:valueCents,date}};
-  if(type==='installment')delete p.types[r.id];else p.types={...p.types,[r.id]:type};
+  paymentOffer.edits={...paymentOffer.edits,[r.id]:{value:valueCents,date}};
+  if(type==='installment')delete paymentOffer.types[r.id];else paymentOffer.types={...paymentOffer.types,[r.id]:type};
   return true;
  }
  if(src.kind==='custom'){
-  const custom=(p.customRows||[]).find(x=>x.id===r.id);
+  const custom=(paymentOffer.customRows||[]).find(x=>x.id===r.id);
   if(!custom)return false;
   if(type==='down'){
-   p.down=(hasDown?s.down:0)/100+valueCents/100;p.mode='amount';p.start=parsed.month;p.startDay=parsed.day;
+   paymentOffer.down=(hasDown?s.down:0)/100+valueCents/100;paymentOffer.mode='amount';paymentOffer.start=parsed.month;paymentOffer.startDay=parsed.day;
   }else if(type==='delivery'){
-   p.delivery=pctOf((hasDelivery?s.delivery:0)+valueCents);p.deliveryDateMode='date';p.deliveryDate=parsed.month;p.deliveryDay=parsed.day;
+   paymentOffer.delivery=pctOf((hasDelivery?s.delivery:0)+valueCents);paymentOffer.deliveryDateMode='date';paymentOffer.deliveryDate=parsed.month;paymentOffer.deliveryDay=parsed.day;
   }else if(type==='maintenance'){
-   p.maintenance=pctOf((hasMaintenance?s.maintenance:0)+valueCents);p.maintenanceState='extra';p.maintenanceDateMode='date';p.maintenanceDate=parsed.month;p.maintenanceDay=parsed.day;p.split=false;
+   paymentOffer.maintenance=pctOf((hasMaintenance?s.maintenance:0)+valueCents);paymentOffer.maintenanceState='extra';paymentOffer.maintenanceDateMode='date';paymentOffer.maintenanceDate=parsed.month;paymentOffer.maintenanceDay=parsed.day;paymentOffer.split=false;
   }else if(ITEM_KEYS.includes(type)){
-   const key=type,old=p.items[key]||{},base=old.state==='extra'?(+old.amount||0)*100:0;
-   p.items[key]={state:'extra',amount:(base+valueCents)/100,due:parsed.month,day:parsed.day};
+   const key=type,old=paymentOffer.items[key]||{},base=old.state==='extra'?(+old.amount||0)*100:0;
+   paymentOffer.items[key]={state:'extra',amount:(base+valueCents)/100,due:parsed.month,day:parsed.day};
   }else if(type==='installment'||type==='payment'){
    custom.value=valueCents/100;custom.date=date;custom.type=type;
    return true;
   }else return false;
-  p.customRows=(p.customRows||[]).filter(x=>x.id!==r.id);
+  paymentOffer.customRows=(paymentOffer.customRows||[]).filter(x=>x.id!==r.id);
   return true;
  }
  if(same){
-  if(src.kind==='down'){p.down=valueCents/100;p.mode='amount';p.start=parsed.month;p.startDay=parsed.day}
-  else if(src.kind==='delivery'){p.delivery=pctOf(valueCents);p.deliveryDateMode='date';p.deliveryDate=parsed.month;p.deliveryDay=parsed.day}
-  else if(src.kind==='maintenance'){p.maintenance=pctOf(valueCents);p.maintenanceState='extra';p.maintenanceDateMode='date';p.maintenanceDate=parsed.month;p.maintenanceDay=parsed.day;p.split=false}
-  else if(src.kind==='fee'){p.feeMode='amount';p.fee=valueCents/100;p.edits={...p.edits,[r.id]:{date}}}
-  else if(src.kind==='item'){p.items[src.key]={state:'extra',amount:valueCents/100,due:parsed.month,day:parsed.day}}
+  if(src.kind==='down'){paymentOffer.down=valueCents/100;paymentOffer.mode='amount';paymentOffer.start=parsed.month;paymentOffer.startDay=parsed.day}
+  else if(src.kind==='delivery'){paymentOffer.delivery=pctOf(valueCents);paymentOffer.deliveryDateMode='date';paymentOffer.deliveryDate=parsed.month;paymentOffer.deliveryDay=parsed.day}
+  else if(src.kind==='maintenance'){paymentOffer.maintenance=pctOf(valueCents);paymentOffer.maintenanceState='extra';paymentOffer.maintenanceDateMode='date';paymentOffer.maintenanceDate=parsed.month;paymentOffer.maintenanceDay=parsed.day;paymentOffer.split=false}
+  else if(src.kind==='fee'){paymentOffer.feeMode='amount';paymentOffer.fee=valueCents/100;paymentOffer.edits={...paymentOffer.edits,[r.id]:{date}}}
+  else if(src.kind==='item'){paymentOffer.items[src.key]={state:'extra',amount:valueCents/100,due:parsed.month,day:parsed.day}}
   return true;
  }
  if(src.kind==='installment')return false;
  if(type==='fee'){note(t('لا يمكن تحويل صف إلى عمولة وساطة.','A row cannot be converted to brokerage commission.'));return false}
- clearRowSource(r,src);
+ clearRowSource(r,src,paymentOffer);
  if(type==='down'){
-  p.down=((hasDown?s.down:0)+valueCents)/100;p.mode='amount';p.start=parsed.month;p.startDay=parsed.day;
+  paymentOffer.down=((hasDown?s.down:0)+valueCents)/100;paymentOffer.mode='amount';paymentOffer.start=parsed.month;paymentOffer.startDay=parsed.day;
  }else if(type==='delivery'){
-  p.delivery=pctOf((hasDelivery?s.delivery:0)+valueCents);p.deliveryDateMode='date';p.deliveryDate=parsed.month;p.deliveryDay=parsed.day;
+  paymentOffer.delivery=pctOf((hasDelivery?s.delivery:0)+valueCents);paymentOffer.deliveryDateMode='date';paymentOffer.deliveryDate=parsed.month;paymentOffer.deliveryDay=parsed.day;
  }else if(type==='maintenance'){
-  p.maintenance=pctOf((hasMaintenance?s.maintenance:0)+valueCents);p.maintenanceState='extra';p.maintenanceDateMode='date';p.maintenanceDate=parsed.month;p.maintenanceDay=parsed.day;p.split=false;
+  paymentOffer.maintenance=pctOf((hasMaintenance?s.maintenance:0)+valueCents);paymentOffer.maintenanceState='extra';paymentOffer.maintenanceDateMode='date';paymentOffer.maintenanceDate=parsed.month;paymentOffer.maintenanceDay=parsed.day;paymentOffer.split=false;
  }else if(ITEM_KEYS.includes(type)){
-  const key=type,old=p.items[key]||{},base=old.state==='extra'?(+old.amount||0)*100:0;
-  p.items[key]={state:'extra',amount:(base+valueCents)/100,due:parsed.month,day:parsed.day};
+  const key=type,old=paymentOffer.items[key]||{},base=old.state==='extra'?(+old.amount||0)*100:0;
+  paymentOffer.items[key]={state:'extra',amount:(base+valueCents)/100,due:parsed.month,day:parsed.day};
  }else if(type==='installment'||type==='payment'){
-  addCustomPayment(date,type,valueCents);
+  addCustomPayment(date,type,valueCents,paymentOffer);
  }else return false;
  return true;
 }
@@ -1047,6 +1125,16 @@ function insertPaymentRow(afterId){
  requestAnimationFrame(()=>{const f=$('#rowValue');if(f){f.focus();f.select()}});
 }
 document.addEventListener('change',e=>{
+ if(e.target.matches('[data-date-native]')){
+  const seg=e.target.closest('[data-date-seg]');
+  const value=e.target.value||'';
+  const bits=value.split('-');
+  if(!seg||bits.length!==3)return;
+  const set=(name,val)=>{const input=seg.querySelector('[data-date-part="'+name+'"]');if(input)input.value=val};
+  set('year',bits[0]);set('month',bits[1]);set('day',bits[2]);
+  applyDateSeg(seg);
+  return;
+ }
  const el=e.target,k=el.dataset.key;
  const mainPreset=el.closest('[data-main-preset]');
  if(mainPreset){
@@ -1094,6 +1182,9 @@ document.addEventListener('change',e=>{
   p[k]=parsed.month;p[el.dataset.dayKey]=parsed.day;
   beforeDelete=null;selected.clear();persist();render();return;
  }
+ if(MizanAdaptive.enabled() && ['client','unit','phone'].includes(k)){
+  p[k]=el.value;persist();MizanAdaptive.context();return;
+ }
  if(k==='intro'||k==='outro'){p[k]=el.value;persist();return}
  if(k==='maintenanceState'){p.maintenanceState=el.value;persist();render();return}
  if(k==='deliveryDateMode'||k==='maintenanceDateMode'){
@@ -1108,13 +1199,20 @@ document.addEventListener('change',e=>{
  const dayKeys=['startDay','handoverDay','deliveryDay','maintenanceDay'];
  if(k==='termMonths'&&el.value.trim()===''){p.termMonths=0;p.edits={};persist();render();return}
  const numeric=['price','rate','amount','fee','delivery','maintenance','period','termMonths'].includes(k)||dayKeys.includes(k);
+ const rejectValue=message=>{
+  if(!MizanAdaptive.enabled()){invalid();render();return}
+  el.setAttribute('aria-invalid','true');
+  el.setCustomValidity(message);
+  el.reportValidity();
+ };
+ el.removeAttribute('aria-invalid');el.setCustomValidity('');
  let v=numeric?num(el.value):el.value;
  if(dayKeys.includes(k)){
   if(el.value==='')v='';
-  else if(!Number.isInteger(v)||v<1||v>31){invalid();render();return}
- }else if(numeric&&(!Number.isFinite(v)||v<0||v>1e12||(['rate','delivery','maintenance'].includes(k)&&v>100)||(k==='termMonths'&&(!Number.isInteger(v)||v<1||v>600)))){invalid();render();return}
- if(['start','handover'].includes(k)&&!isMonth(v)){invalid();render();return}
- if(['deliveryDate','maintenanceDate'].includes(k)&&v!==''&&!isMonth(v)){invalid();render();return}
+  else if(!Number.isInteger(v)||v<1||v>31){rejectValue(t('أدخل قيمة صحيحة ضمن النطاق المسموح.','Enter a value within the allowed range.'));return}
+ }else if(numeric&&(!Number.isFinite(v)||v<0||v>1e12||(['rate','delivery','maintenance'].includes(k)&&v>100)||(k==='termMonths'&&(!Number.isInteger(v)||v<1||v>600)))){rejectValue(t('أدخل قيمة صحيحة ضمن النطاق المسموح.','Enter a value within the allowed range.'));return}
+ if(['start','handover'].includes(k)&&!isMonth(v)){rejectValue(t('أدخل قيمة صحيحة ضمن النطاق المسموح.','Enter a value within the allowed range.'));return}
+ if(['deliveryDate','maintenanceDate'].includes(k)&&v!==''&&!isMonth(v)){rejectValue(t('أدخل قيمة صحيحة ضمن النطاق المسموح.','Enter a value within the allowed range.'));return}
  if(numeric&&(k==='price'||k==='amount'||(k==='fee'&&p.feeMode==='amount')))v=Math.round(v);
  if(k==='rate'||k==='amount'){p.mode=k==='rate'?'rate':'amount';p.down=v}
  else if(k==='feeMode'){const s=schedule(p);p.fee=v==='amount'?s.commission/100:(s.price?+(100*s.commission/s.price).toFixed(6):0);p.feeMode=v}
@@ -1124,7 +1222,7 @@ document.addEventListener('change',e=>{
  beforeDelete=null;selected.clear();persist();refreshTerms();
 });
 document.addEventListener('input',e=>{const field=e.target, key=field.dataset.key;
- if(field.dataset.datePart){field.value=field.value.replace(/\D/g,'').slice(0,field.maxLength);const inputs=[...field.parentElement.querySelectorAll('input')];const i=inputs.indexOf(field);if(field.value.length>=field.maxLength&&i>=0&&inputs[i+1])inputs[i+1].focus();return}
+ if(field.dataset.datePart){field.value=field.value.replace(/[٠-٩۰-۹]/g,c=>String(num(c))).replace(/\D/g,'').slice(0,field.maxLength);const inputs=[...field.parentElement.querySelectorAll('input')];const i=inputs.indexOf(field);if(field.value.length>=field.maxLength&&i>=0&&inputs[i+1])inputs[i+1].focus();return}
  const allocAmountEl=e.target.closest('[data-alloc="amount"]');
  if(allocAmountEl){allocAmount=allocAmountEl.value;return}
  if(field.matches('textarea[data-key="intro"],textarea[data-key="outro"]')){
@@ -1133,11 +1231,13 @@ document.addEventListener('input',e=>{const field=e.target, key=field.dataset.ke
   persist();
   return;
  }
+ // A scrub drag owns the field until finger-up; refresh the model once at the end.
+ if(field.matches('input[inputmode="decimal"]') && document.documentElement.classList.contains('drag-number')) return;
  if(field.type==='text' && key && (['unit','phone','client'].includes(key) || field.value.trim()!=='' && Number.isFinite(num(field.value)) && num(field.value)>=0 && num(field.value)<=1e12 && (!['rate','delivery','maintenance'].includes(key)||num(field.value)<=100) && (key!=='termMonths'||Number.isInteger(num(field.value))&&num(field.value)>=1&&num(field.value)<=600))){
  const original=field.value;field.dispatchEvent(new Event('change',{bubbles:true}));if(field.isConnected)field.value=original;
  }
  if(e.target.id==='search'){
-  search=e.target.value;const table=$('#savedTable');if(table)table.innerHTML=savedTableHtml();
+  search=e.target.value;const table=$('#savedTable');if(table)table.innerHTML=MizanAdaptive.enabled()?MizanMobileScreens.savedList():savedTableHtml();
   const sa=$('[data-saved-all]');
   if(sa){const matches=filteredSaved(),every=matches.length>0&&matches.every(o=>savedSel.has(o.id));sa.checked=every;sa.indeterminate=!every&&matches.some(o=>savedSel.has(o.id))}
  }});
@@ -1373,6 +1473,21 @@ document.addEventListener('focusin',e=>{
  const input=e.target.closest('.date-seg input');
  if(input)input.select();
 });
+document.addEventListener('toggle',e=>{const d=e.target.closest?.('details[data-section]');if(!d)return;if(d.open)sectionOpen.add(d.dataset.section);else sectionOpen.delete(d.dataset.section)},true);
+document.addEventListener('click',e=>{
+ const trigger=e.target.closest('[data-date-calendar]');
+ if(!trigger)return;
+ e.preventDefault();
+ const seg=trigger.closest('[data-date-seg]');
+ const native=seg&&seg.querySelector('[data-date-native]');
+ if(!native)return;
+ const part=name=>{const input=seg.querySelector('[data-date-part="'+name+'"]');return input?input.value.trim():''};
+ const y=part('year'),m=part('month'),d=part('day');
+ if(y&&m)native.value=y+'-'+m+'-'+String(Math.min(31,Math.max(1,num(d)||1))).padStart(2,'0');
+ try{
+  if(typeof native.showPicker==='function')native.showPicker();else{native.focus();native.click()}
+ }catch{native.focus();native.click()}
+});
 document.addEventListener('click',async e=>{
  const skinBtn=e.target.closest('[data-logo-skin]');
  if(skinBtn){selectLogoSkin(skinBtn.dataset.logoSkin);return}
@@ -1423,9 +1538,14 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(a==='logo-picker'){const p=$('#logoPicker');if(p){p.hidden=!p.hidden;btn.setAttribute('aria-expanded',String(!p.hidden))}return}
+ if(a==='appearance'){window.MizanAppearance?.open?.();return}
  if(a==='logo-pin'){pinLogoPicker();return}
  if(a==='saved-share'){shareSavedOffers();return}
- if(a==='type-cash'||a==='type-installments'){p.offerType=a==='type-cash'?'cash':'installments';selected.clear();editing=null;beforeDelete=null;persist();render();return}
+ if(a==='type-cash'||a==='type-installments'){
+  const from=p.offerType,next=a==='type-cash'?'cash':'installments';
+  typeSwitchFrom=from===next?null:from;
+  p.offerType=next;selected.clear();editing=null;beforeDelete=null;persist();render();typeSwitchFrom=null;return
+ }
  if(a==='saved-all'){const matches=filteredSaved();const all=matches.length&&matches.every(o=>savedSel.has(o.id));matches.forEach(o=>all?savedSel.delete(o.id):savedSel.add(o.id));render();return}
  if(a==='saved-clear'){savedSel.clear();render();return}
  if(a==='saveAllPlans'){
@@ -1441,9 +1561,12 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(['save','print','copy','whatsapp','wa-share'].includes(a)){
+  const invalidField=MizanAdaptive.enabled() && document.querySelector('#app [aria-invalid="true"]:invalid');
+  if(invalidField){invalidField.reportValidity();invalidField.focus();return}
   const missing=missingExtraItem();
   if(missing){
    note(t('أدخل مبلغًا أكبر من صفر للبند الإضافي','Enter a positive amount for the additional item'));
+   if(MizanAdaptive.enabled()) MizanAdaptive.navigate('calc');
    const section=$('[data-section="items"]');if(section)section.open=true;
    const field=$('[data-item="'+missing+'"][data-item-prop="amount"]');
    if(field){field.setAttribute('aria-invalid','true');field.focus();field.scrollIntoView({block:'center',behavior:'smooth'})}
@@ -1451,12 +1574,7 @@ document.addEventListener('click',async e=>{
   }
   if(!s.valid){invalid();return}
  }
- if(['calc','compare','saved'].includes(a)){page=a;render();animate();if(matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'smooth'});return}
- if(a==='terms'){
-  const box=$('#terms');
-  if(box){box.scrollIntoView({behavior:'smooth',block:'start'});box.classList.remove('flash');void box.offsetWidth;box.classList.add('flash');setTimeout(()=>box.classList.remove('flash'),1400)}
-  return
- }
+ if((tabletMode()&&a==='payments')||['calc','compare','saved'].includes(a)){page=a;render();animate();return}
  if(a==='wa-share'){window.MizanShare.open('pdf',{rows:[...selected]});return}
  if(a==='editSelected'){
   if(selected.size!==1){note(t('حدد صفًا واحدًا للتعديل.','Select one row to edit.'));return}
@@ -1512,10 +1630,10 @@ document.addEventListener('click',async e=>{
  else if(a==='undo'){p.hidden=beforeDelete||[];beforeDelete=null;selected.clear()}
  else if(a==='addPlan'){plans.push({down:Math.round(100*s.down/(s.price||1)),months:p.termMonths||84});write('plans',plans)}
  else if(a.startsWith('remove-')){plans.splice(+a.slice(7),1);write('plans',plans)}
- else if(a.startsWith('use-')){const o=plans[+a.slice(4)];if(!schedule({...p,...o,mode:'rate',termMonths:+o.months||0}).valid){invalid();return}Object.assign(p,{edits:{},down:o.down,mode:'rate',years:Math.round((+o.months||0)/12*1000)/1000,termMonths:+o.months||0,hidden:[],offerType:'installments'});sectionOpen=defaultOpenSections();coreOpen=true;selected.clear();beforeDelete=null;page='calc'}
+ else if(a.startsWith('use-')){const o=plans[+a.slice(4)];if(!schedule({...p,...o,mode:'rate',termMonths:+o.months||0}).valid){invalid();return}Object.assign(p,{edits:{},down:o.down,mode:'rate',years:Math.round((+o.months||0)/12*1000)/1000,termMonths:+o.months||0,hidden:[],offerType:'installments'});sectionOpen=defaultOpenSections();coreOpen=true;selected.clear();beforeDelete=null;page=MizanAdaptive.activatedFromAction('calc')}
  else if(/^(open|clone|drop)-/.test(a)){const cut=a.indexOf('-'),op=a.slice(0,cut),id=a.slice(cut+1);const offer=saved.find(o=>o.id===id);if(!offer)return;
  if(op==='drop'){if(!confirm(t('حذف العرض المحفوظ؟','Delete saved offer?')))return;saved=saved.filter(o=>o.id!==id);write('saved',saved);if(p.id===id)delete p.id}
- else{p=normalizeOffer(structuredClone(offer));if(op==='clone'){delete p.id;p.unit=(p.unit||t('عرض','Offer'))+' · '+t('نسخة','Copy')}sectionOpen=defaultOpenSections();coreOpen=true;selected.clear();beforeDelete=null;page='calc'}}
+ else{p=normalizeOffer(structuredClone(offer));if(op==='clone'){delete p.id;p.unit=(p.unit||t('عرض','Offer'))+' · '+t('نسخة','Copy')}sectionOpen=defaultOpenSections();coreOpen=true;selected.clear();beforeDelete=null;page=MizanAdaptive.activatedFromAction('calc')}}
  else if(a==='print'){window.MizanShare.open('pdf');return}
  else if(a==='copy'){try{await navigator.clipboard.writeText(clientText(s,true));note(t('تم النسخ','Copied'))}catch{note(t('تعذر النسخ','Copy unavailable'))}return}
  else if(a==='whatsapp'){window.MizanShare.open('pdf');return}
@@ -1548,22 +1666,19 @@ if(window.chrome&&window.chrome.webview){
  });
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(theme==='system')drawHeader()});
+window.addEventListener('mizan:appearance',()=>{
+ if(MizanAdaptive.enabled()){drawHeader();MizanAdaptive.renderScreen()}else render();
+});
 window.MizanApp={
  get p(){return p}, get lang(){return lang}, get theme(){return theme}, get selected(){return selected},
  get includeIntro(){return includeIntro}, get includeOutro(){return includeOutro},
  setNoteVisibility:(intro,outro)=>{includeIntro=!!intro;includeOutro=!!outro;write('includeIntro',includeIntro);write('includeOutro',includeOutro)},
  setNoteDefault:(type,text)=>{if(type!=='intro'&&type!=='outro')return;p[type]=String(text||'');write(type==='intro'?'defaultIntro':'defaultOutro',p[type]);write('draft',p);const area=document.querySelector('textarea[data-key="'+type+'"]');if(area)area.value=p[type]},
- schedule, normalizeOffer, names, frequency, dateLabel, dateNum, offerTitle, itemName, fmt, curr, money, feeLabel, legalLines, clientText, directedText, fillOfferText, paymentColumns, note, esc, t, icon, brandMark,
- isMobile:()=>matchMedia('(max-width:760px)').matches
+ schedule, normalizeOffer, names, frequency, dateLabel, dateNum, offerTitle, itemName, fmt, curr, money, feeLabel, legalLines, clientText, directedText, fillOfferText, paymentColumns, note, esc, t, icon, brandMark, detailGroups, allocationEditor,
+ isMobile:MizanAdaptive.enabled
 };
 window.MizanNativeBack=()=>{
- const shareSheet=document.querySelector('.share-sheet');
- if(shareSheet&&window.MizanShare&&typeof window.MizanShare.close==='function'){window.MizanShare.close();return true}
- const openPop=document.querySelector('details.pop[open]');
- if(openPop){openPop.open=false;return true}
- const openDetails=[...document.querySelectorAll('details[open]:not(.pop)')];
- if(openDetails.length){openDetails[openDetails.length-1].open=false;return true}
- if(page!=='calc'){page='calc';render();return true}
+ if(MizanAdaptive.back())return true;
  return false;
 };
 render();

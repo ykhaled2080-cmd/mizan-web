@@ -1,0 +1,612 @@
+/* Unified immersive document workspace for the adaptive mobile shell. */
+html.mizan-adaptive .share-sheet.share-workspace {
+  position: relative;
+  inset: auto;
+  top: auto;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--mobile-bg);
+  overflow: hidden;
+}
+html.mizan-adaptive .share-workspace .share-body.ms-doc-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--mobile-bg);
+  overflow: hidden;
+}
+html.mizan-adaptive .share-workspace .share-doc.ms-doc-viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-items: safe center;
+  direction: ltr;
+  gap: 18px;
+  overflow: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  padding: 10px 12px 58px;
+  background: var(--mobile-bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--mobile-border) transparent;
+}
+html.mizan-adaptive .share-workspace .share-doc.ms-doc-viewport.is-editing {
+  touch-action: auto;
+}
+html.mizan-adaptive .share-workspace .ms-doc-page.doc-page {
+  width: auto;
+  max-width: none;
+  direction: rtl;
+  margin: 0 auto;
+  padding: 0;
+  flex: none;
+  border: 1px solid var(--mobile-border);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(18,45,37,.12);
+  overflow: hidden;
+}
+html.mizan-adaptive .share-workspace .ms-doc-page .pdf-page-host {
+  will-change: zoom;
+}
+html.mizan-adaptive .share-workspace .ms-doc-page .pdf-page-host[contenteditable="false"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+html.mizan-adaptive .share-workspace .ms-doc-page .pdf-page-host[contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+html.mizan-adaptive[data-dark] .share-workspace .ms-doc-page.doc-page {
+  border-color: var(--mobile-border);
+  box-shadow: 0 5px 18px rgba(0,0,0,.32);
+}
+
+/* Loading state opens immediately, before the heavier export pass. */
+html.mizan-adaptive .share-workspace .ms-doc-loading {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  padding: 16px;
+}
+html.mizan-adaptive .share-workspace .ms-doc-skeleton {
+  width: min(84%, 340px);
+  aspect-ratio: 794 / 1123;
+  border-radius: 4px;
+  border: 1px solid var(--mobile-border);
+  background: var(--mobile-surface);
+  box-shadow: 0 5px 18px var(--mobile-shadow);
+  position: relative;
+  overflow: hidden;
+}
+html.mizan-adaptive .share-workspace .ms-doc-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 25%, color-mix(in srgb, var(--mobile-surface-muted) 82%, transparent) 50%, transparent 75%);
+  transform: translateX(-100%);
+  animation: ms-doc-sheen 1.25s ease-in-out infinite;
+}
+html.mizan-adaptive .share-workspace .ms-doc-loading-copy {
+  text-align: center;
+  color: var(--mobile-sub);
+  font-size: .82rem;
+}
+html.mizan-adaptive .share-workspace .ms-doc-loading-copy b {
+  display: block;
+  color: var(--mobile-text);
+  font-size: .9rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+html.mizan-adaptive .share-workspace .ms-doc-loading-copy .progress {max-width: 230px;margin: 0 auto 8px}
+html.mizan-adaptive .share-workspace .ms-doc-loading-copy small {font-size: .72rem;color: var(--mobile-muted)}
+@keyframes ms-doc-sheen {to{transform:translateX(100%)}}
+html.mizan-adaptive .share-workspace .ms-doc-empty,
+html.mizan-adaptive .share-workspace .ms-doc-error {
+  margin: auto;
+  padding: 24px;
+  text-align: center;
+  color: var(--mobile-sub);
+}
+html.mizan-adaptive .share-workspace .ms-doc-error b {color: var(--mobile-text);display:block;margin-bottom:6px}
+html.mizan-adaptive .share-workspace .ms-doc-error p {margin: 0 0 14px;color: var(--mobile-sub);font-size:.85rem}
+
+/* One compact toolbar. */
+html.mizan-adaptive .share-workspace .share-foot.ms-doc-toolbar {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+  align-items: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--mobile-border);
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
+  flex-wrap: nowrap;
+}
+html.mizan-adaptive .share-workspace .ms-tool-edge{display:flex;align-items:center;gap:4px;min-width:0}
+html.mizan-adaptive .share-workspace .ms-tool-edge.start{justify-self:start}
+html.mizan-adaptive .share-workspace .ms-tool-edge.end{justify-self:end}
+html.mizan-adaptive .share-workspace .ms-tool-center{justify-self:center;display:flex;align-items:center;min-width:0}
+html.mizan-adaptive .share-workspace .ms-zoom-value[hidden]{display:none!important}
+html.mizan-adaptive .share-workspace .ms-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mobile-sub);
+  font-size: .78rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+  white-space: nowrap;
+}
+html.mizan-adaptive .share-workspace .ms-tool-btn:hover,
+html.mizan-adaptive .share-workspace .ms-tool-btn:active {background: var(--mobile-surface-muted);color: var(--mobile-text)}
+html.mizan-adaptive .share-workspace .ms-tool-btn:disabled {opacity: .36;cursor: default}
+html.mizan-adaptive .share-workspace .ms-tool-btn.ms-tool-close {color: var(--mobile-sub)}
+html.mizan-adaptive .share-workspace .ms-tool-btn.ms-zoom-value {
+  min-width: 52px;
+  padding: 0 6px;
+  color: var(--mobile-text);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+html.mizan-adaptive .share-workspace .ms-tool-spacer {flex: 1 1 auto;min-width: 2px}
+html.mizan-adaptive .share-workspace .ms-share-primary {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--mobile-primary);
+  border-radius: 10px;
+  font-weight: 650;
+  box-shadow: none;
+}
+html.mizan-adaptive .share-workspace .ms-share-primary:hover,
+html.mizan-adaptive .share-workspace .ms-share-primary:active {background: var(--mobile-surface-muted);color: var(--mobile-text)}
+html.mizan-adaptive .share-workspace .ms-share-primary:focus-visible,
+html.mizan-adaptive .share-workspace .ms-tool-btn:focus-visible {outline:2px solid var(--mobile-accent);outline-offset:-2px}
+html.mizan-adaptive .share-workspace .ms-more {font-size: 1.35rem;letter-spacing: 0;padding-bottom: 3px}
+html.mizan-adaptive .share-workspace .ms-tool-label {display:none}
+
+/* Page pill appears only when a document has more than one page. */
+html.mizan-adaptive .share-workspace .ms-page-indicator {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 66px;
+  margin: auto;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mobile-surface) 93%, transparent);
+  color: var(--mobile-text);
+  box-shadow: 0 4px 14px var(--mobile-shadow);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 4;
+}
+html.mizan-adaptive .share-workspace .ms-page-indicator[hidden] {display: none}
+html.mizan-adaptive .share-workspace .ms-page-indicator button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mobile-sub);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+html.mizan-adaptive .share-workspace .ms-page-indicator button:hover {background: var(--mobile-surface-muted);color: var(--mobile-text)}
+html.mizan-adaptive .share-workspace .ms-page-current {
+  min-width: 3.2rem;
+  text-align: center;
+  font-size: .74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+
+/* Export progress is a small status pill, not a blocking screen. */
+html.mizan-adaptive .share-workspace .ms-action-status {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 108px;
+  margin: auto;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 999px;
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
+  box-shadow: 0 6px 20px var(--mobile-shadow-strong);
+  font-size: .78rem;
+  z-index: 5;
+}
+html.mizan-adaptive .share-workspace .ms-action-status[hidden] {display: none}
+html.mizan-adaptive .share-workspace .ms-action-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--mobile-border);
+  border-top-color: var(--mobile-accent);
+  border-radius: 50%;
+  animation: ms-spin .7s linear infinite;
+  flex: none;
+}
+@keyframes ms-spin {to{transform:rotate(360deg)}}
+
+/* Contextual sheets. */
+html.mizan-adaptive .share-workspace .ms-sheet-host {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+}
+html.mizan-adaptive .share-workspace .ms-sheet-host.on {display: block}
+html.mizan-adaptive .share-workspace .ms-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 24, 19, .34);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: ms-fade-in .18s ease-out;
+}
+html.mizan-adaptive .share-workspace .ms-sheet {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  margin: auto;
+  width: 100%;
+  max-width: 36rem;
+  max-height: min(78%, 620px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--mobile-border);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
+  box-shadow: 0 -12px 45px rgba(10, 24, 19, .24);
+  overflow: hidden;
+  animation: ms-sheet-up .22s cubic-bezier(.2,.8,.2,1);
+}
+html.mizan-adaptive .share-workspace .ms-sheet-grab {
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 2px;
+  border-radius: 999px;
+  background: var(--mobile-border);
+  flex: none;
+}
+html.mizan-adaptive .share-workspace .ms-sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px 10px;
+  border-bottom: 1px solid var(--mobile-border);
+  flex: none;
+}
+html.mizan-adaptive .share-workspace .ms-sheet-head h2 {font-size: 1.02rem;line-height:1.35;font-weight:650;color:var(--mobile-text);margin:0}
+html.mizan-adaptive .share-workspace .ms-sheet-head p {font-size:.76rem;line-height:1.45;color:var(--mobile-sub);margin:3px 0 0}
+html.mizan-adaptive .share-workspace .ms-sheet-x {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--mobile-border);
+  border-radius: 999px;
+  background: var(--mobile-surface-muted);
+  color: var(--mobile-sub);
+}
+html.mizan-adaptive .share-workspace .ms-sheet-scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 10px 14px 14px;
+  min-height: 0;
+}
+html.mizan-adaptive .share-workspace .ms-sheet-hint {
+  margin: 10px 2px 0;
+  color: var(--mobile-sub);
+  font-size: .72rem;
+  line-height: 1.55;
+}
+html.mizan-adaptive .share-workspace .ms-sheet-section + .ms-sheet-section {margin-top: 14px}
+html.mizan-adaptive .share-workspace .ms-sheet-section h3 {
+  margin: 0 2px 6px;
+  font-size: .76rem;
+  line-height: 1.4;
+  font-weight: 650;
+  color: var(--mobile-sub);
+}
+html.mizan-adaptive .share-workspace .ms-sheet-card {
+  border: 1px solid var(--mobile-border);
+  border-radius: 12px;
+  background: var(--mobile-surface);
+  overflow: hidden;
+}
+html.mizan-adaptive .share-workspace .ms-format-list {display:grid;gap:8px}
+html.mizan-adaptive .share-workspace .ms-utility-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 9px;
+}
+html.mizan-adaptive .share-workspace .ms-utility-row button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 10px;
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
+  font-size: .72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+html.mizan-adaptive .share-workspace .ms-utility-row button:hover,
+html.mizan-adaptive .share-workspace .ms-utility-row button:active {background: var(--mobile-surface-muted)}
+html.mizan-adaptive .share-workspace .ms-utility-row button svg {color: var(--mobile-accent);flex:none}
+html.mizan-adaptive .share-workspace .ms-quick-card {margin-bottom: 14px;border-color: var(--mobile-border);box-shadow: 0 1px 2px var(--mobile-shadow)}
+html.mizan-adaptive .share-workspace .ms-format-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 62px;
+  padding: 9px 11px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 12px;
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
+  text-align: start;
+}
+html.mizan-adaptive .share-workspace .ms-format-row:hover,
+html.mizan-adaptive .share-workspace .ms-format-row:active {background: var(--mobile-surface-muted)}
+html.mizan-adaptive .share-workspace .ms-format-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--mobile-surface-muted);
+  color: var(--mobile-accent);
+}
+html.mizan-adaptive .share-workspace .ms-format-copy {display:grid;gap:2px;min-width:0;flex:1}
+html.mizan-adaptive .share-workspace .ms-format-copy b {font-size:.9rem;font-weight:650;color:var(--mobile-text)}
+html.mizan-adaptive .share-workspace .ms-format-copy small {font-size:.72rem;line-height:1.45;color:var(--mobile-sub)}
+html.mizan-adaptive .share-workspace .ms-format-chev {color:var(--mobile-muted);font-size:1.15rem;flex:none}
+html.mizan-adaptive .share-workspace .ms-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--mobile-border);
+}
+html.mizan-adaptive .share-workspace .ms-row:last-child {border-bottom: 0}
+html.mizan-adaptive .share-workspace .ms-row-label {font-size:.83rem;color:var(--mobile-text)}
+html.mizan-adaptive .share-workspace .ms-row-block {display:grid;justify-content:stretch;gap:7px}
+html.mizan-adaptive .share-workspace .ms-row-action {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  padding: 7px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--mobile-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--mobile-text);
+  text-align: start;
+  font-size: .83rem;
+}
+html.mizan-adaptive .share-workspace .ms-row-action:last-child {border-bottom: 0}
+html.mizan-adaptive .share-workspace .ms-row-action:hover,
+html.mizan-adaptive .share-workspace .ms-row-action:active {background: var(--mobile-surface-muted)}
+html.mizan-adaptive .share-workspace .ms-row-action svg {color: var(--mobile-accent);flex:none}
+html.mizan-adaptive .share-workspace .ms-row-action span:nth-child(2) {flex:1}
+html.mizan-adaptive .share-workspace .ms-row-action.on {background: var(--mobile-surface-muted)}
+html.mizan-adaptive .share-workspace .ms-switch {
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--mobile-border);
+  background: var(--mobile-surface-muted);
+  position: relative;
+  flex: none;
+}
+html.mizan-adaptive .share-workspace .ms-switch::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 3px;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--mobile-sub);
+  transition: inset-inline-start .18s ease, background-color .18s ease;
+}
+html.mizan-adaptive .share-workspace .ms-row-action.on .ms-switch {border-color: var(--mobile-accent);background: color-mix(in srgb, var(--mobile-accent) 18%, var(--mobile-surface))}
+html.mizan-adaptive .share-workspace .ms-row-action.on .ms-switch::after {inset-inline-start:17px;background:var(--mobile-accent)}
+html.mizan-adaptive .share-workspace .ms-mini-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 9px;
+  background: var(--mobile-surface-muted);
+  flex: none;
+}
+html.mizan-adaptive .share-workspace .ms-mini-seg button {
+  min-height: 36px;
+  min-width: 52px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--mobile-sub);
+  font-size: .75rem;
+  font-weight: 600;
+}
+html.mizan-adaptive .share-workspace .ms-mini-seg button.on {
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
+  box-shadow: 0 1px 2px var(--mobile-shadow);
+}
+html.mizan-adaptive .share-workspace .ms-inline-select {
+  min-width: 0;
+  max-width: 55%;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  background: var(--mobile-field, var(--field));
+  color: var(--mobile-text);
+  font-size: .8rem;
+}
+html.mizan-adaptive .share-workspace .ms-check {width:20px;height:20px;accent-color:var(--mobile-accent);flex:none}
+html.mizan-adaptive .share-workspace .ms-pages-row {display:grid;gap:8px;padding:10px 12px}
+html.mizan-adaptive .share-workspace .ms-page-chips {display:flex;flex-wrap:wrap;gap:6px}
+html.mizan-adaptive .share-workspace .ms-page-chip {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  background: var(--mobile-surface);
+  color: var(--mobile-sub);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+html.mizan-adaptive .share-workspace .ms-page-chip.on {
+  border-color: var(--mobile-accent);
+  background: var(--mobile-surface-muted);
+  color: var(--mobile-text);
+  box-shadow: inset 0 0 0 1px var(--mobile-accent);
+}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-picker {display:block;width:100%}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-btn {
+  display:flex;width:100%;justify-content:space-between;min-height:38px;
+  border:1px solid var(--mobile-border);border-radius:8px;background:var(--mobile-surface);
+  color:var(--mobile-text);padding:0 10px;font-size:.8rem;
+}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-menu {
+  position:static;display:none;width:100%;max-height:220px;overflow:auto;margin-top:6px;
+  border:1px solid var(--mobile-border);border-radius:10px;background:var(--mobile-surface);
+  box-shadow:none;padding:5px;
+}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-picker.open .share-preset-menu {display:block}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-menu-head {padding:5px 7px;border-bottom:1px solid var(--mobile-border);font-size:.72rem;color:var(--mobile-sub)}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-menu-head b {display:block;color:var(--mobile-text);font-size:.8rem;margin-top:2px}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-item,
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-action {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:36px;
+  padding:5px 7px;border:0;border-radius:7px;background:transparent;color:var(--mobile-text);font-size:.78rem;text-align:start;
+}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-item:hover,
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-action:hover {background:var(--mobile-surface-muted)}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-item.on {background:var(--mobile-surface-muted);color:var(--mobile-text)}
+html.mizan-adaptive .share-workspace .ms-preset-host .share-preset-menu-actions {border-top:1px solid var(--mobile-border);margin-top:3px;padding-top:3px}
+
+/* Zoom sheet */
+html.mizan-adaptive .share-workspace .ms-zoom-stepper {
+  display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 0 14px;
+}
+html.mizan-adaptive .share-workspace .ms-zoom-stepper button {
+  width:44px;height:44px;border:1px solid var(--mobile-border);border-radius:12px;
+  background:var(--mobile-surface-muted);color:var(--mobile-text);font-size:1.35rem;line-height:1;
+}
+html.mizan-adaptive .share-workspace .ms-zoom-stepper b {min-width:4.5rem;text-align:center;font-size:1.3rem;font-variant-numeric:tabular-nums}
+html.mizan-adaptive .share-workspace .ms-zoom-options {display:grid;gap:6px}
+html.mizan-adaptive .share-workspace .ms-zoom-option {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;
+  padding:7px 11px;border:1px solid var(--mobile-border);border-radius:9px;
+  background:var(--mobile-surface);color:var(--mobile-text);font-size:.82rem;text-align:start;
+}
+html.mizan-adaptive .share-workspace .ms-zoom-option.on {border-color:var(--mobile-accent);background:var(--mobile-surface-muted);box-shadow:inset 0 0 0 1px var(--mobile-accent)}
+html.mizan-adaptive .share-workspace .ms-zoom-option small {color:var(--mobile-sub);font-size:.72rem;font-variant-numeric:tabular-nums}
+
+/* Notes panel becomes a sheet above the toolbar. */
+html.mizan-adaptive .share-workspace .share-notes {
+  position:absolute;inset:0;z-index:24;display:none;
+  background:rgba(10,24,19,.34);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  padding: 10px;
+}
+html.mizan-adaptive .share-workspace .share-notes.on {display:flex;align-items:flex-end}
+html.mizan-adaptive .share-workspace .share-notes>.notes-panel {
+  width:100%;max-height:min(78%,620px);overflow:auto;
+  background:var(--mobile-surface);border:1px solid var(--mobile-border);border-radius:18px 18px 0 0;
+  box-shadow:0 -12px 45px rgba(10,24,19,.24);padding:12px 14px 14px;
+  animation:ms-sheet-up .22s cubic-bezier(.2,.8,.2,1);
+}
+html.mizan-adaptive .share-workspace .notes-grid {grid-template-columns:1fr}
+html.mizan-adaptive .share-workspace .notes-panel-head {position:sticky;top:-12px;z-index:2;background:var(--mobile-surface);padding:2px 0 8px;border-bottom:1px solid var(--mobile-border)}
+html.mizan-adaptive .share-workspace .notes-col textarea {background:var(--field);color:var(--mobile-text);border-color:var(--mobile-border);min-height:96px}
+html.mizan-adaptive .share-workspace .notes-head select {background:var(--field);color:var(--mobile-text);border-color:var(--mobile-border)}
+html.mizan-adaptive .share-workspace .ms-sheet-scroll::-webkit-scrollbar,
+html.mizan-adaptive .share-workspace .share-notes>.notes-panel::-webkit-scrollbar {width:5px}
+html.mizan-adaptive .share-workspace .ms-sheet-scroll::-webkit-scrollbar-thumb,
+html.mizan-adaptive .share-workspace .share-notes>.notes-panel::-webkit-scrollbar-thumb {background:var(--mobile-border);border-radius:99px}
+
+@keyframes ms-sheet-up {from{opacity:.65;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes ms-fade-in {from{opacity:0}to{opacity:1}}
+
+@media(max-width:360px){
+  html.mizan-adaptive .share-workspace .share-foot.ms-doc-toolbar {gap:2px;padding-inline:5px}
+  html.mizan-adaptive .share-workspace .ms-tool-btn {min-width:42px;padding-inline:5px}
+  html.mizan-adaptive .share-workspace .ms-tool-btn .ms-tool-label {display:none}
+  html.mizan-adaptive .share-workspace .ms-share-primary {width:42px;min-width:42px;padding:0}
+  html.mizan-adaptive .share-workspace .ms-zoom-value {min-width:48px}
+  html.mizan-adaptive .share-workspace .ms-utility-row button {font-size:.68rem;gap:4px;padding:0 4px}
+  html.mizan-adaptive .share-workspace .ms-page-indicator {bottom:62px}
+}
+@media(prefers-reduced-motion:reduce){
+  html.mizan-adaptive .share-workspace *,
+  html.mizan-adaptive .share-workspace *::before,
+  html.mizan-adaptive .share-workspace *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

@@ -748,3 +748,4 @@ html[dir="ltr"] .schedule-grid th.cell-check input,html[dir="ltr"] .schedule-gri
 }
 
 .money-pair{display:inline-flex;align-items:baseline;gap:3px;direction:ltr;unicode-bidi:isolate;white-space:nowrap}
+.hero .hero-period-label,.hero .hero-fact-label{display:none}

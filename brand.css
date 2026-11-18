@@ -1,0 +1,36 @@
+/* Almost invisible brand-switch: a 3 px dot with a 44 px hit target.
+   The control never contributes to layout because it is absolutely placed
+   inside the existing logo or tools area. */
+.brand-with-switch{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.brand-switch{
+  position:absolute;
+  z-index:9;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:inherit;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.brand-switch-dot{
+  display:block;
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:.26;
+  transition:opacity .14s ease,transform .14s ease;
+  pointer-events:none;
+}
+.brand-switch:hover .brand-switch-dot,
+.brand-switch:active .brand-switch-dot,
+.brand-switch:focus-visible .brand-switch-dot{opacity:.72;transform:scale(1.35)}
+.brand-switch:focus-visible{outline:2px solid currentColor;outline-offset:-10px}
+@media(prefers-reduced-motion:reduce){.brand-switch-dot{transition:none}}

@@ -17,6 +17,7 @@
 .top{position:relative;gap:34px}
 .brand-strip{display:flex;align-items:center;flex:none;background:transparent;border-radius:0;padding:0;box-shadow:none;z-index:2}
 .brand-logo{height:48px;width:auto;display:block}
+.header-brand-switch{left:50%;top:50%;transform:translate(-50%,-50%);color:var(--sub)}
 html[data-dark] .brand-logo{filter:brightness(0) invert(1);opacity:.94}
 .desktop-nav{flex:1;justify-content:flex-start;min-width:0}
 .top>.tools{flex:none;margin-inline-start:0}
@@ -352,6 +353,7 @@ html[dir=rtl] #header .desktop-nav{direction:rtl;justify-content:flex-start}
 .pdf-page{padding:34px 46px 38px;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 .pdf-brandline{justify-content:space-between;gap:20px;margin:0 0 20px;padding-bottom:13px;border-bottom:1px solid #D8E2DB}
 .pdf-brandline img{width:162px;height:45px;object-fit:contain}
+.pdf-brandline img.pdf-brandmark{width:auto;height:45px;max-width:192px;object-fit:contain}
 .pdf-title{font-size:26px}
 .pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:0 0 12px}
 .pdf-meta-item{display:flex;align-items:baseline;gap:8px;background:none;border:0;border-radius:0;padding:0}
@@ -418,6 +420,9 @@ html[dir=rtl] #header .desktop-nav{direction:rtl;justify-content:flex-start}
 
 .pdf-page>.pdf-watermark{position:absolute;top:50%;left:50%;width:55%;height:auto;transform:translate(-50%,-50%);opacity:.067;pointer-events:none}
 .hero-brand{position:relative;width:min(96%,300px);aspect-ratio:1253/321;justify-self:center;isolation:isolate;--logo-light:#d1dfbb;--logo-muted:#83aa96}
+.hero-brand.brand-original{width:min(82%,300px);aspect-ratio:1253/321}
+.hero-brand.brand-original .hb-base{display:block;background:url(assets/logo-original-light.png) center/contain no-repeat;-webkit-mask-image:none;mask-image:none}
+.hero-brand.brand-original .hb-layer:not(.hb-base){display:none!important}
 .hb-layer{position:absolute;inset:0;display:none;pointer-events:none;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain}
 .hb-base{display:block;-webkit-mask-image:url(assets/logo-approved.png);mask-image:url(assets/logo-approved.png);background:linear-gradient(112deg,#83aa96,#d1dfbb 55%,#91ae9d)}
 .hero-brand[data-skin=letters] .hb-base,.hero-brand[data-skin=letters-left] .hb-base,.hero-brand[data-skin=muted] .hb-base{background:var(--logo-muted)}

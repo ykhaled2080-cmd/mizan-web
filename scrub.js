@@ -166,11 +166,19 @@
     const grip=e.target.closest('.grip');
     const input=grip?grip.closest('.field')?.querySelector(selector):(e.target.matches(selector)?e.target:null);
     if(!input)return;
+    const touch=e.pointerType==='touch'||e.pointerType==='pen';
+    // A phone swipe starting on an unfocused numeric field belongs to the page.
+    // Only an already-editing field (keyboard open) owns the horizontal gesture.
+    if(touch && document.activeElement!==input) return;
     input._mizanWheelArmed=true;
     const value=num(input.value);
     if(!Number.isFinite(value))return;
-    if(grip)e.preventDefault();
-    drag={kind:'number',input,field:fieldOf(input),grip,id:e.pointerId,x:e.clientX,y:e.clientY,origin:value,original:input.value,range:limits(input),active:false,touch:e.pointerType==='touch'||e.pointerType==='pen'};
+    if(grip||touch)e.preventDefault();
+    drag={kind:'number',input,field:fieldOf(input),grip,id:e.pointerId,x:e.clientX,y:e.clientY,origin:value,original:input.value,range:limits(input),active:false,touch};
+    // Keep the gesture alive across the field, keyboard and page edges.
+    if(touch){
+      try{document.documentElement.setPointerCapture(e.pointerId);drag.capture=document.documentElement}catch{}
+    }
   });
   function finish(){
     if(!drag)return;
@@ -179,8 +187,9 @@
     d.field?.classList.remove('is-dragging');
     d.grip?.classList.remove('drag-active');
     document.documentElement.classList.remove('drag-number','drag-vertical');
-    if(d.input.hasPointerCapture(d.id))d.input.releasePointerCapture(d.id);
-    if(d.active && d.input.value!==d.original && (d.kind==='month'||d.kind==='datepart'||d.input.dataset.plan!==undefined||(d.input.dataset.item&&d.input.dataset.itemProp==='amount')||/Day$/.test(d.input.dataset.key||'')||d.input.dataset.itemProp==='day'))
+    const cap=d.capture||d.input;
+    if(cap.hasPointerCapture?.(d.id))cap.releasePointerCapture(d.id);
+    if(d.active && d.input.value!==d.original && (d.kind==='number'||d.kind==='month'||d.kind==='datepart'||d.input.dataset.plan!==undefined||(d.input.dataset.item&&d.input.dataset.itemProp==='amount')||/Day$/.test(d.input.dataset.key||'')||d.input.dataset.itemProp==='day'))
       d.input.dispatchEvent(new Event('change',{bubbles:true}));
   }
   document.addEventListener('pointermove',e=>{
@@ -249,7 +258,7 @@
       d.vertical=vertical;
       document.documentElement.classList.toggle('drag-vertical',!!d.vertical);
       d.active=true;
-      if(d.grip||d.touch)d.input.blur();
+      // Keep the focused field and keyboard alive for the whole touch drag.
       try{d.input.setPointerCapture(d.id)}catch{}
       d.input.classList.add('drag-active');
       d.field?.classList.add('is-dragging');

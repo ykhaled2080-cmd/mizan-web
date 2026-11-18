@@ -28,7 +28,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site
-          cp -R index.html style.css share.css mobile.css native.css main-doc-template.js engine.js app.js scrub.js share.js native.js manifest.webmanifest assets vendor _site/
+          find . -maxdepth 1 -type f -exec cp {} _site/ \;
+          cp -R assets vendor _site/
           node scripts/stamp.mjs
 
       - name: Configure Pages
